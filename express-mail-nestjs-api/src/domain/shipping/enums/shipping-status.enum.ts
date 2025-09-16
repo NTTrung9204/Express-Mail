@@ -1,0 +1,5 @@
+export enum ShippingStatus {
+  PICKUP_REQUESTED = 'PICKUP_REQUESTED',
+  SHIPPING = 'SHIPPING',
+  RETURNING = 'RETURNING',
+}
