@@ -22,7 +22,6 @@ const menuItems = [
 const Sidebar = ({ active = "Quản lý đơn hàng" }) => {
   return (
     <aside className="bg-white w-64 min-h-screen border-r border-gray-200 flex flex-col p-3">
-      {/* User Info */}
       <div className="flex flex-col items-center p-4 border border-gray-400 rounded-sm">
         <div className="flex justify-center items-center">
             <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-3xl">
@@ -41,7 +40,6 @@ const Sidebar = ({ active = "Quản lý đơn hàng" }) => {
           <button className="bg-gray-200 w-full mt-2 p-2 rounded-sm hover:bg-orange-400 hover:text-white transition cursor-pointer">Verify account</button>
         </div>
       </div>
-      {/* Navigation Menu */}
       <nav className="flex-1 mt-4">
         <ul>
           {menuItems.map((item) => (
