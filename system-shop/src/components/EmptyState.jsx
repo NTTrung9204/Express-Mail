@@ -4,7 +4,6 @@ const EmptyState = () => {
   return (
     <div className="flex flex-col items-center justify-center h-full py-24">
       <div className="mb-6">
-        {/* Illustration/Icon */}
         <span className="text-7xl text-gray-300">📭</span>
       </div>
       <div className="text-xl font-semibold mb-2">No Data</div>
