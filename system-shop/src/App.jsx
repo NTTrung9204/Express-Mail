@@ -6,6 +6,7 @@ import FilterBar from "./components/FilterBar";
 import EmptyState from "./components/EmptyState";
 import Orders from "./components/Orders";
 import CreateOrderPage from "./pages/CreateOrderPage";
+import OrderDeliverPage from "./pages/OrderDeliverPage";
 
 const App = () => {
 
@@ -14,7 +15,7 @@ const App = () => {
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar active="Quản lý đơn hàng" />
       
-        <CreateOrderPage/>
+        <OrderDeliverPage/>
       </div>
   );
 };
