@@ -28,6 +28,7 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  flutter_svg: ^2.0.9
   flutter:
     sdk: flutter
 
@@ -56,6 +57,21 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/drawable/
+
+  fonts:
+    - family: Inter_Bold
+      fonts:
+        - asset: assets/fonts/inter_bold.ttf
+          weight: 700
+
+    - family: Inter_Regular
+      fonts:
+        - asset: assets/fonts/inter_regular.ttf
+
 
   # To add assets to your application, add an assets section, like this:
   # assets:
