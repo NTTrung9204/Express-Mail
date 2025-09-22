@@ -1,9 +1,16 @@
-import React from 'react'
+import React, { useState } from 'react'
 import Sidebar from '../components/Sidebar';
+import AddressModal from '../components/AddressModal';
 
 const CreateOrderPage = () => {
+
+  const [open, setOpen] = useState(true);
+
   return (
+   
+    
     <div className="bg-gray-50 min-h-screen p-6">
+      <AddressModal open={open} onClose={()=>setOpen(false)}/>
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
        <div className="lg:col-span-3 space-y-6">
           <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
@@ -173,14 +180,14 @@ const CreateOrderPage = () => {
         </div>
 
         <aside className="bg-white rounded-xl border border-gray-200 p-6 h-fit">
-          <h2 className="text-lg font-semibold mb-4">Shipping Estimate</h2>
+          <h2 className="text-lg font-semibold mb-4">Ước tính chi phí</h2>
           <div className="border border-gray-200 rounded-lg flex flex-col items-center justify-center h-40 mb-4 text-center text-gray-500 text-sm">
-            Complete the address to estimate the shipping cost.
+            Hoàn thành địa chỉ để ước tính chi phí giao hàng.
           </div>
           <ul className="space-y-2 text-sm text-gray-600">
-            <li>Distance: -- km</li>
-            <li>Estimated Cost: $--</li>
-            <li>Delivery Time: -- hours</li>
+            <li>Khoảng cách: -- km</li>
+            <li>Chi phí ước tính: $--</li>
+            <li>Thời gian giao hàng: -- giờ</li>
           </ul>
         </aside>
       </div>
