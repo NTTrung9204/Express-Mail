@@ -2,7 +2,7 @@
 URL configuration for core project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.1/topics/http/urls/
+    https://docs.djangoproject.com/en/5.2/topics/http/urls/
 Examples:
 Function views
     1. Add an import:  from my_app import views
@@ -16,11 +16,30 @@ Including another URLconf
 """
 from django.conf import settings
 from django.urls import path, include
-from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
-
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularSwaggerView,
+    SpectacularRedocView,
+)
 from core.routes import admin, system
+from shared.jwt.views import (
+    CustomTokenObtainPairView,
+    LogoutView,
+    CustomTokenRefreshView,
+)
 
 urlpatterns = [
+    path(
+        "api/v1/auth/login/",
+        CustomTokenObtainPairView.as_view(),
+        name="token_obtain_pair",
+    ),
+    path(
+        "api/v1/auth/refresh/",
+        CustomTokenRefreshView.as_view(),
+        name="token_refresh",
+    ),
+    path("api/v1/auth/logout/", LogoutView.as_view(), name="logout"),
     path("api/v1/system/", include(system)),
     path("api/v1/admin/", include(admin)),
 ]
@@ -40,4 +59,3 @@ if settings.DEBUG:
             name="docs",
         ),
     ]
-
