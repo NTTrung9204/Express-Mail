@@ -28,7 +28,7 @@ const Sidebar = ({ active = "Quản lý đơn hàng" }) => {
                 <span role="img" aria-label="avatar">👤</span>
             </div>
             <div className="ml-2 flex flex-col">
-                <div className="font-semibold text-sm">John Doe</div>
+                <div className="font-semibold text-sm">Cường Bùi</div>
                 <div className="text-gray-500 text-sm">+84 123 456 789</div>
             </div>
         </div>
@@ -37,7 +37,7 @@ const Sidebar = ({ active = "Quản lý đơn hàng" }) => {
                 <label htmlFor="" className="text-gray-600 font-bold">Số dư: </label>
                 <span className="font-bold text-orange-500 mr-2">₫1,000,000</span>
             </div>
-          <button className="bg-gray-200 w-full mt-2 p-2 rounded-sm hover:bg-orange-400 hover:text-white transition cursor-pointer">Verify account</button>
+          <button className="bg-gray-200 w-full mt-2 p-2 rounded-sm hover:bg-orange-400 hover:text-white transition cursor-pointer">Xác thực tài khoản</button>
         </div>
       </div>
       <nav className="flex-1 mt-4">
