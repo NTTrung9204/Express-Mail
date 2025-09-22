@@ -1,5 +1,7 @@
 import React from "react";
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import { Link } from 'react-router-dom';
+
 
 const TopNav = () => {
   return (
@@ -12,12 +14,12 @@ const TopNav = () => {
         />
       </div>
       <div className="flex items-center gap-3 ml-8">
-        <button className="px-4 py-2 rounded-lg bg-orange-500 text-white font-semibold hover:bg-orange-600 transition cursor-pointer">
+        <Link to="/create-order" className="px-4 py-2 rounded-lg bg-orange-500 text-white font-semibold hover:bg-orange-600 transition cursor-pointer">
           Hàng nhẹ {'<'} 20kg
-        </button>
-        <button className="px-4 py-2 rounded-lg bg-gray-800 text-white font-semibold hover:bg-gray-900 transition cursor-pointer">
+        </Link>
+        <Link className="px-4 py-2 rounded-lg bg-gray-800 text-white font-semibold hover:bg-gray-900 transition cursor-pointer">
           Hàng nặng {'>'} 20kg
-        </button>
+        </Link>
         <button className="ml-4 text-gray-500 hover:text-orange-500 text-2xl cursor-pointer">
           <NotificationsIcon/>
         </button>

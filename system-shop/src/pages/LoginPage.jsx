@@ -1,4 +1,7 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom';
+import { toast} from 'react-toastify';
+
 import bgImg from '../assets/ghn.png';
 import logoImg from '../assets/logo.png';
 import appStoreImg from '../assets/appstore.png';
@@ -6,22 +9,25 @@ import chPlayImg from '../assets/chplay.png';
 
 
 const LoginPage = () => {
-   const validPhones = ["0901234567", "0987654321"];
+  const validPhones = ["0901234567", "0987654321"];
 
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
+  const navigate = useNavigate();
+
   const handleContinue = () => {
     if (validPhones.includes(phone.trim())) {
       setShowPassword(true);
     } else {
-      alert("Số điện thoại không tồn tại (fake data)");
+      toast.error('Số điện thoại không tồn tại');
     }
   };
 
   const handleLogin = () => {
-    alert(`Đăng nhập thành công\nPhone: ${phone}\nPassword: ${password}`);
+    toast.success('Đăng nhập thành công')
+    navigate('/order-delivery');
   };
 
   return (

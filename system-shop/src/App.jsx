@@ -9,15 +9,33 @@ import CreateOrderPage from "./pages/CreateOrderPage";
 import OrderDeliverPage from "./pages/OrderDeliverPage";
 import LoginPage from "./pages/LoginPage";
 
+
+import { Route, Routes } from 'react-router-dom'
+import { ToastContainer} from 'react-toastify';
+import MainLayout from "./pages/MainLayout";
+
+
 const App = () => {
 
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar active="Quản lý đơn hàng" />
-      
-        <CreateOrderPage/>
-      </div>
+    <div>
+      <ToastContainer/>
+    <Routes>
+        <Route path="/" element={<LoginPage />} />
+
+        <Route path="/create-order" element={
+          <MainLayout>
+            <CreateOrderPage />
+          </MainLayout>
+        }/>
+        <Route path="/order-delivery" element={
+          <MainLayout>
+            <OrderDeliverPage />
+          </MainLayout>
+        }/>
+      </Routes>
+    </div>
   );
 };
 
