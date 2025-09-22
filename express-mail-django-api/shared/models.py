@@ -1,50 +1,47 @@
 from django.db import models
-from django.utils.timezone import now
+from django.conf import settings
+from django.utils import timezone
+from safedelete import SOFT_DELETE_CASCADE
+from safedelete.models import SafeDeleteModel
 
 
-class SoftDeleteManager(models.Manager):
+class BaseModel(SafeDeleteModel):
     """
-    Custom manager to filter out soft-deleted objects (where deleted_at is not set).
+    Abstract base model with created_at, updated_at, and soft delete cascade functionality.
     """
 
-    def get_queryset(self):
-        """
-        Return queryset excluding soft-deleted objects.
-        """
-
-        return super().get_queryset().filter(deleted_at__isnull=True)
-
-
-class BaseModel(models.Model):
-    """
-    Abstract base model that adds created_at, updated_at, and soft delete functionality.
-    """
+    _safedelete_policy = SOFT_DELETE_CASCADE
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    deleted_at = models.DateTimeField(null=True, default=None)
-    objects = SoftDeleteManager()
-    all_objects = models.Manager()
 
-    def soft_delete(self):
+    class Meta:
+        abstract = True
+
+
+class AccessTokenWhiteList(BaseModel):
+    """
+    Model to store whitelisted access tokens for users.
+    """
+
+    token = models.CharField(max_length=512, unique=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="access_tokens",
+    )
+    expires_at = models.DateTimeField()
+
+    def is_valid(self):
         """
-        Soft delete the object by setting deleted_at to current time.
+        Check if the token has not expired.
         """
 
-        self.deleted_at = now()
-        self.save()
-
-    def restore(self):
-        """
-        Restore a soft-deleted object by setting deleted_at to None.
-        """
-
-        self.deleted_at = None
-        self.save()
+        return timezone.now() < self.expires_at
 
     class Meta:
         """
-        Mark this model as abstract so it won't create a database table.
+        Meta class for the AccessTokenWhiteList model.
         """
 
-        abstract = True
+        db_table = "access_token_whitelist"
