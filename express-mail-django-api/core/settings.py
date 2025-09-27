@@ -55,6 +55,8 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'core',
     'shared',
+    'apps.post_offices',
+    'apps.users'
 ]
 
 MIDDLEWARE = [
@@ -161,9 +163,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'ja'
+LANGUAGE_CODE = 'en'
 
-TIME_ZONE = 'Asia/Tokyo'
+TIME_ZONE = 'Asia/Ho_Chi_Minh'
 
 USE_I18N = True
 
@@ -257,3 +259,5 @@ SPECTACULAR_SETTINGS = {
     "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAuthenticated"],
     "SERVE_AUTHENTICATION": ["shared.authentication.SwaggerBasicAuthentication"],
 }
+
+AUTH_USER_MODEL = "users.User"
