@@ -1,7 +1,10 @@
 from django.contrib.auth.models import AbstractUser, UserManager
+from safedelete.managers import SafeDeleteManager
+
 from shared.models import BaseModel
 
-class SoftDeleteUserManager(UserManager):
+
+class SoftDeleteUserManager(UserManager, SafeDeleteManager):
     """
     Custom user manager that filters out soft-deleted users.
     """
@@ -11,7 +14,9 @@ class SoftDeleteUserManager(UserManager):
         Returns a queryset excluding users with a non-null deleted_at field.
         """
 
-        return super().get_queryset().filter(deleted_at__isnull=True)
+        qs = SafeDeleteManager.get_queryset(self)
+        return qs.filter(deleted__isnull=True)
+
 
 class User(AbstractUser, BaseModel):
     """
@@ -26,4 +31,4 @@ class User(AbstractUser, BaseModel):
         Meta class for the User model.
         """
 
-        db_table = 'users'
+        db_table = "users"

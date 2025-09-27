@@ -36,18 +36,25 @@ class SwaggerBasicAuthentication(BaseAuthentication):
                 )
             username, password = decoded_credentials.split(":", 1)
         except (TypeError, ValueError, UnicodeDecodeError, binascii.Error):
-            raise AuthenticationFailed(ERROR_MESSAGES["common"]["invalid_basic_auth"])
+            raise AuthenticationFailed(
+                ERROR_MESSAGES["common"]["invalid_basic_auth"]
+            )
 
         if self.authenticate_credentials(username, password):
             # Create a mock user object
             user = type(
                 "User",
                 (object,),
-                {"id": username, "is_authenticated": True},  # The User model has used `id` to authenticated
+                {
+                    "username": username,
+                    "is_authenticated": True,
+                },  # The User model has used `username` to authenticated
             )()
             return user, None
 
-        raise AuthenticationFailed(ERROR_MESSAGES["common"]["invalid_basic_auth"])
+        raise AuthenticationFailed(
+            ERROR_MESSAGES["common"]["invalid_basic_auth"]
+        )
 
     @staticmethod
     def authenticate_credentials(username, password):
@@ -55,7 +62,7 @@ class SwaggerBasicAuthentication(BaseAuthentication):
         Authenticate credentials from ENV.
         """
 
-        env_username = os.getenv("BASIC_AUTH_EMAIL")
+        env_username = os.getenv("BASIC_AUTH_USERNAME")
         env_password = os.getenv("BASIC_AUTH_PASSWORD")
         return username == env_username and password == env_password
 
