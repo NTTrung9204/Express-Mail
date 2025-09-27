@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="PostOffice",
+            name="AccessTokenWhiteList",
             fields=[
                 (
                     "id",
@@ -34,14 +34,11 @@ class Migration(migrations.Migration):
                 ),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
-                ("name", models.CharField(max_length=100)),
-                ("province_city", models.CharField(max_length=100)),
-                ("ward_commune", models.CharField(max_length=100)),
-                ("address", models.TextField()),
-                ("coordinate", models.TextField()),
+                ("token", models.CharField(max_length=512, unique=True)),
+                ("expires_at", models.DateTimeField()),
             ],
             options={
-                "db_table": "post_offices",
+                "db_table": "access_token_whitelist",
             },
         ),
     ]
