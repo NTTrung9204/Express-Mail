@@ -6,7 +6,10 @@ _ERROR_MESSAGES = {
         "common": {
             "invalid_token": "Invalid token.",
             "invalid_basic_auth": "Invalid basic authentication credentials.",
-        }
+            "not_authenticated": "Not authenticated.",
+            "permission_denied": "Permission denied.",
+            "validation_error": "Validation failed.",
+        },
     },
 }
 
