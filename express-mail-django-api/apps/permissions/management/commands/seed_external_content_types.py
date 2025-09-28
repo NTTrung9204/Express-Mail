@@ -2,6 +2,8 @@ from django.core.management import BaseCommand
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 
+from shared.constants import ExternalModels
+
 
 class Command(BaseCommand):
     """
@@ -16,26 +18,18 @@ class Command(BaseCommand):
         Handle the command execution: Seed ContentType.
         """
 
-        external_models = [
-            {"app_label": "external_app", "model": "order"},
-            {"app_label": "external_app", "model": "product"},
-            {"app_label": "external_app", "model": "shipping"},
-        ]
-
-        for item in external_models:
+        for app_label, model in ExternalModels.values():
             content_type, created = ContentType.objects.get_or_create(
-                app_label=item["app_label"], model=item["model"]
+                app_label=app_label, model=model
             )
             if created:
                 self.stdout.write(
-                    self.style.SUCCESS(
-                        f"Created ContentType: {item['app_label']}.{item['model']}"
-                    )
+                    self.style.SUCCESS(f"Created ContentType: {app_label}.{model}")
                 )
             else:
                 self.stdout.write(
                     self.style.NOTICE(
-                        f"ContentType already exists: {item['app_label']}.{item['model']}"
+                        f"ContentType already exists: {app_label}.{model}"
                     )
                 )
 
