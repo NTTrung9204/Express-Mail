@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser, UserManager
 from safedelete.managers import SafeDeleteManager
+from django.db import models
 
 from shared.models import BaseModel
 
@@ -23,6 +24,7 @@ class User(AbstractUser, BaseModel):
     Custom user model extending Django's AbstractUser and BaseModel.
     """
 
+    email = models.EmailField(unique=True)
     objects = SoftDeleteUserManager()
     all_objects = UserManager()
 
