@@ -160,7 +160,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = "en"
+LANGUAGE_CODE = "vi"
 
 TIME_ZONE = "Asia/Ho_Chi_Minh"
 
@@ -213,9 +213,7 @@ REST_FRAMEWORK = {
         "shared.jwt.authentication.WhitelistJWTAuthentication",
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_FILTER_BACKENDS": [
-        "django_filters.rest_framework.DjangoFilterBackend"
-    ],
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "DEFAULT_PAGINATION_CLASS": "shared.pagination.BasePagination",
     "PAGE_SIZE": 20,
     "EXCEPTION_HANDLER": "shared.exceptions.custom_exception_handler",
@@ -253,9 +251,7 @@ SPECTACULAR_SETTINGS = {
     },
     # Use Basic Authentication to protect the swagger API.
     "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAuthenticated"],
-    "SERVE_AUTHENTICATION": [
-        "shared.authentication.SwaggerBasicAuthentication"
-    ],
+    "SERVE_AUTHENTICATION": ["shared.authentication.SwaggerBasicAuthentication"],
 }
 
 AUTH_USER_MODEL = "users.User"
