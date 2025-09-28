@@ -1,3 +1,15 @@
-# Constants token
-DEFAULT_TOKEN_EXPIRATION_BY_SECONDS = 60 * 60 * 24  # It's mean 24 hours
-ACCESS_TOKEN_LIFETIME_BY_SECONDS = 4 * 60 * 60  # It's mean 4 hours
+from shared.enum_choices import EnumChoices
+
+
+class ExternalModels(EnumChoices):
+    ORDER = ("external_app", "order")
+    PRODUCT = ("external_app", "product")
+    SHIPPING = ("external_app", "shipping")
+
+
+class Groups(EnumChoices):
+    ADMIN = "admin"
+    POST_OFFICE_MANAGER = "post_office_manager"
+    POST_OFFICE_STAFF = "post_office_staff"
+    SHOP = "shop"
+    SHIPPER = "shipper"

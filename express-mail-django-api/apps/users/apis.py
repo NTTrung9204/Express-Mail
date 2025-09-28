@@ -1,21 +1,21 @@
 from drf_spectacular.utils import extend_schema
+from rest_framework.permissions import DjangoModelPermissions
 from rest_framework.viewsets import ModelViewSet
 
 from apps.users.models import User
 from apps.users.serializers import UserSerializer
 from services.users.user_services import UserService
 from shared.apis import BaseAPIViewSet
-from shared.permissions import IsAdminAuthenticated
 
 
 @extend_schema(tags=["Admin > Users"])
 class AdminUserViewSet(ModelViewSet, BaseAPIViewSet):
     """
-    API endpoint to interact with the User model, use for Admin site.
+    API endpoint to interact with the User model, use in admin site.
     """
 
     serializer_class = UserSerializer
-    permission_classes = [IsAdminAuthenticated]
+    permission_classes = [DjangoModelPermissions]
     queryset = User.objects.all()
 
     def perform_create(self, serializer):
