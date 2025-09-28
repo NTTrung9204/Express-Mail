@@ -1,27 +1,40 @@
-from django.core.management import BaseCommand
-import os
+from django.core.management.base import BaseCommand
 from apps.users.models import User
+from faker import Faker
+from django.db import transaction
 
 
 class Command(BaseCommand):
     """
-    Management command to seed admin account.
+    Management command to seed normal user data.
     """
 
-    help = "Seed data for admin account"
+    help = "Seed 50 normal users for User Model"
 
+    @transaction.atomic
     def handle(self, *args, **options):
         """
-        Handle the command execution: Seed admin account.
+        Handle the command execution: Seed normal users.
         """
 
-        username = os.environ.get("ADMIN_USERNAME")
-        password = os.environ.get("ADMIN_PASSWORD")
+        fake = Faker()
+        num_users = 50
 
-        admin, _ = User.all_objects.get_or_create(username=username)
+        for i in range(num_users):
+            username = f"user{i + 1}"
+            email = f"user{i + 1}@example.com"
+            first_name = fake.first_name()
+            last_name = fake.last_name()
+            password = "123456"
 
-        admin.is_superuser = True
-        admin.set_password(password)
-        admin.save()
+            user, created = User.all_objects.get_or_create(username=username)
+            if created:
+                user.email = email
+                user.first_name = first_name
+                user.last_name = last_name
+                user.set_password(password)
+                user.save()
 
-        self.stdout.write(self.style.SUCCESS("Successfully seed admin account!!"))
+        self.stdout.write(
+            self.style.SUCCESS(f"Successfully seeded {num_users} normal users!!")
+        )

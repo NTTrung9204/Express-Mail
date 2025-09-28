@@ -228,7 +228,7 @@ SIMPLE_JWT = {
 # https://drf-spectacular.readthedocs.io/en/latest/settings.html
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Express Mail API",
+    "TITLE": "Express Mail APIs",
     "DESCRIPTION": "Using Python, Django, DRF and development with Docker Compose.",
     "VERSION": "v1",
     "SERVE_INCLUDE_SCHEMA": False,
