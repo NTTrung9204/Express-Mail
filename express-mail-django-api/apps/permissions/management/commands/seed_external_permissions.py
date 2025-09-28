@@ -3,6 +3,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import Permission
 from django.db import transaction
 
+from shared.constants import ExternalModels
+
 
 class Command(BaseCommand):
     """
@@ -17,30 +19,20 @@ class Command(BaseCommand):
         Handle the command execution: Seed permissions.
         """
 
-        external_models = [
-            {"app_label": "external_app", "model": "order"},
-            {"app_label": "external_app", "model": "product"},
-            {"app_label": "external_app", "model": "shipping"},
-        ]
-
         basic_perms = ["add", "change", "delete", "view"]
 
-        for item in external_models:
+        for app_label, model in ExternalModels.values():
             try:
-                content_type = ContentType.objects.get(
-                    app_label=item["app_label"], model=item["model"]
-                )
+                content_type = ContentType.objects.get(app_label=app_label, model=model)
             except ContentType.DoesNotExist:
                 self.stdout.write(
-                    self.style.ERROR(
-                        f"ContentType not found: {item['app_label']}.{item['model']}"
-                    )
+                    self.style.ERROR(f"ContentType not found: {app_label}.{model}")
                 )
                 continue
 
             for perm in basic_perms:
-                codename = f"{perm}_{item['model']}"
-                name = f"Can {perm} {item['model']}"
+                codename = f"{perm}_{model}"
+                name = f"Can {perm} {model}"
 
                 permission, created = Permission.objects.get_or_create(
                     codename=codename,
