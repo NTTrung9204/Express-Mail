@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "shared",
     "apps.post_offices",
     "apps.users",
+    "apps.permissions",
 ]
 
 MIDDLEWARE = [
