@@ -1,10 +1,10 @@
 from django.apps import AppConfig
 
 
-class PostOfficesConfig(AppConfig):
+class PermissionsConfig(AppConfig):
     """
-    AppConfig for post_offices.
+    Appconfig for permissions.
     """
 
     default_auto_field = "django.db.models.BigAutoField"
-    name = "apps.post_offices"
+    name = "apps.permissions"
