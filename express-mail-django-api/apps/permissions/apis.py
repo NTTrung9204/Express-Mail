@@ -6,7 +6,7 @@ from apps.permissions.serializers import PermissionSerializer, GroupSerializer
 from shared.permissions import IsAdminAuthenticated
 
 
-@extend_schema(tags=["Admin > Permission"])
+@extend_schema(tags=["Admin > Permissions"])
 class AdminPermissionViewSet(ReadOnlyModelViewSet):
     """
     API endpoint for Permission model.
@@ -18,7 +18,7 @@ class AdminPermissionViewSet(ReadOnlyModelViewSet):
     pagination_class = None
 
 
-@extend_schema(tags=["Admin > Group"])
+@extend_schema(tags=["Admin > Groups"])
 class AdminGroupViewSet(ModelViewSet):
     """
     API endpoint for Group model.
