@@ -20,15 +20,20 @@ export class OrderTransition {
   @JoinColumn({ name: 'order_id' })
   order: Order;
 
-  @Column({ name: 'current_post_office', nullable: true })
-  currentPostOfficeId: string;
+  @Column('varchar', {
+    name: 'current_post_office',
+    length: 255,
+    nullable: true,
+  })
+  currentPostOfficeId: string | null;
 
-  @Column({ name: 'next_post_office', nullable: true })
-  nextPostOfficeId: string;
+  @Column('varchar', { name: 'next_post_office', length: 255, nullable: true })
+  nextPostOfficeId: string | null;
 
   @Column({
     type: 'enum',
     enum: OrderTransitionStatus,
+    default: OrderTransitionStatus.PENDING,
   })
   status: OrderTransitionStatus;
 

@@ -1,17 +1,25 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Order } from './entities/order.entity';
 import { OrderTransition } from './entities/order-transition.entity';
 import { OrderPostOffice } from './entities/post-office-order.entity';
 import { OrderService } from './order.service';
 import { OrderController } from './order.controller';
+import { ProductModule } from '../product/product.module';
+import { JwtModule } from '@nestjs/jwt';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Order, OrderTransition, OrderPostOffice]),
+    forwardRef(() => ProductModule),
+    JwtModule.register({
+      secret: process.env.JWT_ACCESS_SECRET,
+      signOptions: { expiresIn: '1h' },
+    }),
   ],
   controllers: [OrderController],
-  providers: [OrderService],
+  providers: [OrderService, JwtAuthGuard],
   exports: [OrderService],
 })
 export class OrderModule {}
