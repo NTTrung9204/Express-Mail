@@ -13,6 +13,7 @@ import LoginPage from "./pages/LoginPage";
 import { Route, Routes } from 'react-router-dom'
 import { ToastContainer} from 'react-toastify';
 import MainLayout from "./pages/MainLayout";
+import OrderDraftPage from "./pages/OrderDraftPage";
 
 
 const App = () => {
@@ -32,6 +33,11 @@ const App = () => {
         <Route path="/order-delivery" element={
           <MainLayout>
             <OrderDeliverPage />
+          </MainLayout>
+        }/>
+        <Route path="/order-draft" element={
+          <MainLayout>
+            <OrderDraftPage />
           </MainLayout>
         }/>
       </Routes>
