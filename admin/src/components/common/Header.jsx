@@ -1,9 +1,9 @@
 import React from "react";
 
-const Header = () => {
+const Header = ({title}) => {
   return (
     <div className="bg-white shadow p-4 flex justify-between items-center">
-      <h2 className="text-2xl font-bold">Dashboard</h2>
+      <h2 className="text-2xl font-bold">{ title }</h2>
       <button className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600">
         Đăng xuất
       </button>
