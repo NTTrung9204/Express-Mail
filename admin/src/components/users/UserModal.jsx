@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 
 const UserModal= ({ open, onClose, mode = "add", user = {}, onSave }) => {
   const [form, setForm] = useState({
-    name: "",
     username: "",
     password: "",
     email: "",
-    role: "",
+    phone: "",
+    cardId: "",
     status: "active",
     permissions: [],
   });
@@ -65,17 +65,6 @@ const UserModal= ({ open, onClose, mode = "add", user = {}, onSave }) => {
         </div>
 
         <div className="grid grid-cols-2 gap-6">
-          <div>
-            <label className="block mb-1 font-medium">Họ và tên</label>
-            <input
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              disabled={isView}
-              placeholder="Nhập họ và tên"
-              className="w-full p-2 border rounded focus:border-orange-500 outline-none"
-            />
-          </div>
 
           <div>
             <label className="block mb-1 font-medium">Tên đăng nhập</label>
@@ -115,19 +104,27 @@ const UserModal= ({ open, onClose, mode = "add", user = {}, onSave }) => {
           </div>
 
           <div>
-            <label className="block mb-1 font-medium">Vai trò</label>
-            <select
-              name="role"
-              value={form.role}
+            <label className="block mb-1 font-medium">Số điện thoại</label>
+            <input
+              name="phone"
+              value={form.phone}
               onChange={handleChange}
               disabled={isView}
+              placeholder="Nhập số điện thoại"
               className="w-full p-2 border rounded focus:border-orange-500 outline-none"
-            >
-              <option value="">Chọn vai trò</option>
-              <option value="Admin">Admin</option>
-              <option value="Manager">Manager</option>
-              <option value="User">User</option>
-            </select>
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Mã thẻ</label>
+            <input
+              name="cardId"
+              value={form.cardId}
+              onChange={handleChange}
+              disabled={isView}
+              placeholder=""
+              className="w-full p-2 border rounded focus:border-orange-500 outline-none"
+            />
           </div>
 
           <div>
