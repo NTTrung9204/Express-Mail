@@ -26,6 +26,14 @@ function App() {
             </MainLayout>
           }
         />
+        <Route
+        path="/warehouses"
+        element={
+          <MainLayout>
+            <Warehouses />
+          </MainLayout>
+        }
+      />
       </Routes>
   );
 }

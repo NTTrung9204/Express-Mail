@@ -5,12 +5,12 @@ import UserModal from "../components/users/UserModal";
 import { Add } from "@mui/icons-material";
 
 const initialUsers = [
-  { id: 1, name: "Nguyễn Văn An", email: "an@example.com", role: "Admin", status: "active", permissions: [] },
-  { id: 2, name: "Trần Thị Bình", email: "binh@example.com", role: "User", status: "active", permissions: [] },
-  { id: 3, name: "Lê Văn Cường", email: "cuong@example.com", role: "Manager", status: "inactive", permissions: [] },
-  { id: 4, name: "Phạm Thị Dung", email: "dung@example.com", role: "User", status: "active", permissions: [] },
-  
+  { id: 1, username:"an", password:"", email: "an@example.com", phone:"0123456789", cardId:"", status: "active", permissions: [] },
+  { id: 2, username:"binh", password:"", email: "binh@example.com", phone:"0123456789", cardId:"", status: "active", permissions: [] },
+  { id: 3, username:"cuong", password:"", email: "cuong@example.com", phone:"0123456789", cardId:"", status: "inactive", permissions: [] },
+  { id: 4, username:"dung", password:"", email: "dung@example.com", phone:"0123456789", cardId:"", status: "active", permissions: [] },
 ];
+
 
 const Users = () => {
   const [search, setSearch] = useState("");
@@ -22,7 +22,6 @@ const Users = () => {
 
   const filtered = users.filter(
     (u) =>
-      u.name.toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -43,7 +42,7 @@ const Users = () => {
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-        <h1 className="text-2xl font-bold"> Chào mừng đến trang Quản lý người dùng</h1>
+        <SearchBar value={search} onChange={setSearch} />
         <button
           onClick={() => handleOpen("add")}
           className="flex items-center gap-1 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 cursor-pointer"
@@ -52,7 +51,6 @@ const Users = () => {
         </button>
       </div>
 
-      <SearchBar value={search} onChange={setSearch} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.map((user) => (
