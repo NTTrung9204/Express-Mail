@@ -1,8 +1,8 @@
-import { djangoApi } from './axiosConfig';
+import baseAPI from './axiosConfig';
 
 export const authService = {
   login: async (credentials) => {
-    const response = await djangoApi.post('/auth/login/', credentials);
+    const response = await baseAPI.post('/auth/login/', credentials);
     const { access, refresh } = response.data;
     localStorage.setItem('accessToken', access);
     localStorage.setItem('refreshToken', refresh);
@@ -11,7 +11,7 @@ export const authService = {
 
   logout: async () => {
     try {
-      await djangoApi.post('/auth/logout/');
+      await baseAPI.post('/auth/logout/');
     } finally {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
@@ -20,11 +20,11 @@ export const authService = {
 
   refreshToken: async () => {
     const refreshToken = localStorage.getItem('refreshToken');
-    const response = await djangoApi.post('/auth/refresh/', {
+    const response = await baseAPI.post('/auth/refresh/', {
       refresh: refreshToken,
     });
     const { access } = response.data;
     localStorage.setItem('accessToken', access);
     return access;
-  },
+  }
 };

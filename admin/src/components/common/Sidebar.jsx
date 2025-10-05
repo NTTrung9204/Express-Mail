@@ -13,7 +13,7 @@ const Sidebar = ({setTitle}) => {
         <h1 className="text-xl font-bold mb-8">Admin Panel</h1>
         <nav className="flex flex-col gap-2">
           <NavLink
-            to="/"
+            to="/home"
             end
             className={({ isActive }) =>
               `${linkStyle} ${isActive ? activeStyle : ""}`
