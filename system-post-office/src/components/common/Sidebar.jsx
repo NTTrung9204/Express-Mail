@@ -1,0 +1,66 @@
+import React from "react";
+import { NavLink} from "react-router-dom";
+import { Dashboard, LocalShipping, Inventory2, People } from "@mui/icons-material";
+
+const Sidebar = () => {
+  const linkClasses =
+    "flex items-center p-4 rounded-lg transition-all duration-200 hover:bg-orange-400 text-sm";
+  const activeClasses = "bg-orange-500";
+
+
+  return (
+    <div className="w-64 bg-[#4b1d09] text-white min-h-screen p-5">
+      <h1 className="text-lg font-bold mb-3">Post Office</h1>
+      <hr className="border-t border-orange-400 mb-6" />
+
+      <ul className="space-y-3">
+        <li>
+          <NavLink
+            to="/post-office/home"
+            end
+            className={({ isActive }) =>
+              `${linkClasses} ${isActive ? activeClasses : ""}`
+            }
+          >
+            <Dashboard className="mr-3 text-base" /> Dashboard
+          </NavLink>
+        </li>
+
+        <li>
+          <NavLink
+            to="/post-office/shippers"
+            className={({ isActive }) =>
+              `${linkClasses} ${isActive ? activeClasses : ""}`
+            }
+          >
+            <LocalShipping className="mr-3 text-base" /> Quản lý Shipper
+          </NavLink>
+        </li>
+
+        <li>
+          <NavLink
+            to="/post-office/orders"
+            className={({ isActive }) =>
+              `${linkClasses} ${isActive ? activeClasses : ""}`
+            }
+          >
+            <Inventory2 className="mr-3 text-base" /> Quản lý Đơn hàng
+          </NavLink>
+        </li>
+
+        <li>
+          <NavLink
+            to="/post-office/employees"
+            className={({ isActive }) =>
+              `${linkClasses} ${isActive ? activeClasses : ""}`
+            }
+          >
+            <People className="mr-3 text-base" /> Quản lý Nhân viên
+          </NavLink>
+        </li>
+      </ul>
+    </div>
+  );
+};
+
+export default Sidebar;
