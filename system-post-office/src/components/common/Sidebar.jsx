@@ -1,12 +1,13 @@
 import React from "react";
-import { NavLink} from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { Dashboard, LocalShipping, Inventory2, People } from "@mui/icons-material";
 
 const Sidebar = () => {
+  const location = useLocation();
+
   const linkClasses =
     "flex items-center p-4 rounded-lg transition-all duration-200 hover:bg-orange-400 text-sm";
   const activeClasses = "bg-orange-500";
-
 
   return (
     <div className="w-64 bg-[#4b1d09] text-white min-h-screen p-5">
@@ -39,9 +40,13 @@ const Sidebar = () => {
 
         <li>
           <NavLink
-            to="/post-office/orders"
-            className={({ isActive }) =>
-              `${linkClasses} ${isActive ? activeClasses : ""}`
+            to="/post-office/orders/received"
+            className={() =>
+              `${linkClasses} ${
+                location.pathname.startsWith("/post-office/orders")
+                  ? activeClasses
+                  : ""
+              }`
             }
           >
             <Inventory2 className="mr-3 text-base" /> Quản lý Đơn hàng
