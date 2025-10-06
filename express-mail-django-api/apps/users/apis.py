@@ -1,4 +1,5 @@
 from drf_spectacular.utils import extend_schema
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import DjangoModelPermissions
 from rest_framework.viewsets import ModelViewSet
 
@@ -18,6 +19,16 @@ class AdminUserViewSet(ModelViewSet, BaseAPIViewSet):
     permission_classes = [DjangoModelPermissions]
     queryset = User.objects.all()
 
+    def get_queryset(self):
+        """
+        If current user is not superuser, return queryset without superuser.
+        """
+
+        qs = super().get_queryset()
+        if not self.request.user.is_superuser:
+            qs = qs.exclude(is_superuser=True)
+        return qs
+
     def perform_create(self, serializer):
         """
         Create a new User instance with hashed password.
@@ -33,3 +44,14 @@ class AdminUserViewSet(ModelViewSet, BaseAPIViewSet):
 
         user = UserService.update(self.get_object(), serializer.validated_data)
         serializer.instance = user
+
+    def perform_destroy(self, instance):
+        """
+        Prevent deleting superuser.
+        """
+
+        delete_user = self.get_object()
+        if delete_user.is_superuser:
+            raise PermissionDenied()
+
+        instance.delete()
