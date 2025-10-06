@@ -22,7 +22,7 @@ from drf_spectacular.views import (
     SpectacularRedocView,
 )
 from core.routes import admin, system
-from shared.jwt.views import (
+from apps.jwt_auth.apis import (
     CustomTokenObtainPairView,
     LogoutView,
     CustomTokenRefreshView,

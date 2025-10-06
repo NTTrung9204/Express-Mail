@@ -49,9 +49,11 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
     "core",
     "shared",
+    "apps.jwt_auth",
     "apps.post_offices",
     "apps.users",
     "apps.permissions",
@@ -61,6 +63,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -211,7 +214,7 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.AllowAny",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "shared.jwt.authentication.WhitelistJWTAuthentication",
+        "shared.jwt_authentication.WhitelistJWTAuthentication",
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
@@ -252,7 +255,9 @@ SPECTACULAR_SETTINGS = {
     },
     # Use Basic Authentication to protect the swagger API.
     "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAuthenticated"],
-    "SERVE_AUTHENTICATION": ["shared.authentication.SwaggerBasicAuthentication"],
+    "SERVE_AUTHENTICATION": [
+        "shared.swagger_authentication.SwaggerBasicAuthentication"
+    ],
 }
 
 AUTH_USER_MODEL = "users.User"

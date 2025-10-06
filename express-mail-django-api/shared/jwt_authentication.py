@@ -2,7 +2,7 @@ from drf_spectacular.extensions import OpenApiAuthenticationExtension
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken
 
-from shared.models import AccessTokenWhiteList
+from apps.jwt_auth.models import AccessTokenWhiteList
 
 
 class WhitelistJWTAuthenticationExtension(OpenApiAuthenticationExtension):
@@ -10,7 +10,7 @@ class WhitelistJWTAuthenticationExtension(OpenApiAuthenticationExtension):
     OpenAPI extension for WhitelistJWTAuthentication to be recognized by drf-spectacular.
     """
 
-    target_class = "shared.jwt.authentication.WhitelistJWTAuthentication"
+    target_class = "shared.jwt_authentication.WhitelistJWTAuthentication"
     name = "JWT"
 
     def get_security_definition(self, auto_schema):
@@ -42,9 +42,7 @@ class WhitelistJWTAuthentication(JWTAuthentication):
         user, token = result
         token_str = str(token)
 
-        if not AccessTokenWhiteList.objects.filter(
-            token=token_str, user=user
-        ).exists():
+        if not AccessTokenWhiteList.objects.filter(token=token_str, user=user).exists():
             raise InvalidToken
 
         return user, token
