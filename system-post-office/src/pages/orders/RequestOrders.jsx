@@ -33,7 +33,7 @@ const RequestOrders = () => {
 
   return (
     <div className="bg-[#fff6f1] min-h-screen">
-      <div className="bg-white rounded-xl shadow p-5">
+      <div className="bg-white rounded-xl shadow p-4">
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -44,7 +44,7 @@ const RequestOrders = () => {
         </div>
         <div className="overflow-hidden rounded-lg border border-orange-100">
           <table className="w-full text-sm">
-            <thead className="bg-orange-50 text-[#4b1d09]">
+            <thead className="bg-orange-100 text-[#4b1d09] font-semibold text-left">
               <tr>
                 <th className="text-left p-3">Mã đơn</th>
                 <th className="text-left p-3">Từ bưu cục</th>

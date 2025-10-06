@@ -17,7 +17,7 @@ const Dashboard = () => {
 
   return (
     <div className="flex-1 bg-orange-50 p-5 min-h-screen">
-      <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+      <h1 className="text-3xl font-bold mb-2">Trang chủ</h1>
       <p className="text-gray-500 text-base mb-10">Tổng quan hoạt động bưu cục</p>
 
       <div className="grid grid-cols-3 gap-8 mb-10">
