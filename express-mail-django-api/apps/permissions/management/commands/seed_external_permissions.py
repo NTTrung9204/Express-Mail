@@ -42,9 +42,5 @@ class Command(BaseCommand):
 
                 if created:
                     self.stdout.write(self.style.SUCCESS(f"Created permission: {name}"))
-                else:
-                    self.stdout.write(
-                        self.style.NOTICE(f"Permission already exists: {name}")
-                    )
 
         self.stdout.write(self.style.SUCCESS("Successfully seeded all permissions!"))
