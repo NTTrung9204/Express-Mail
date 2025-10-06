@@ -36,56 +36,58 @@ const ClassifiedOrders = () => {
           />
         </div>
 
-      <table className="w-full text-sm border-collapse">
-        <thead className="text-left text-gray-700 border-b border-gray-200 bg-orange-50">
-          <tr>
-            <th className="p-3">Mã đơn</th>
-            <th className="p-3">Người gửi</th>
-            <th className="p-3">Người nhận</th>
-            <th className="p-3">Tỉnh/Thành nhận</th>
-            <th className="p-3">Trạng thái</th>
-            <th className="p-3">Ngày phân loại</th>
-            <th className="p-3 text-center">Hành động</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {orders.map((order, i) => (
-            <tr
-              key={i}
-              className="border-b border-gray-100 hover:bg-orange-50 transition"
-            >
-              <td className="p-3 font-semibold text-gray-800">{order.code}</td>
-              <td className="p-3">{order.sender}</td>
-              <td className="p-3">{order.receiver}</td>
-              <td className="p-3">{order.province}</td>
-              <td className="p-3">
-                <span
-                  className={`px-3 py-1 rounded-full text-xs ${
-                    order.status === "Đã phân loại"
-                      ? "bg-orange-500 text-white"
-                      : "bg-orange-100 text-orange-600"
-                  }`}
-                >
-                  {order.status}
-                </span>
-              </td>
-              <td className="p-3 text-gray-700">{order.date}</td>
-              <td className="p-3 text-center">
-                <button
-                  onClick={() => {
-                    setSelectedOrder(order);
-                    setOpenDetail(true);
-                  }}
-                  className="border border-orange-200 text-orange-700 hover:bg-orange-50 text-sm transition px-3 py-1 rounded-lg items-center gap-1 inline-flex cursor-pointer"
-                >
-                  <Visibility fontSize="small" /> Chi tiết
-                </button>
-              </td>
+      <div className="overflow-hidden rounded-lg border border-orange-100">
+        <table className="w-full text-sm border-collapse">
+          <thead className="bg-orange-100 text-[#4b1d09] font-semibold text-left">
+            <tr>
+              <th className="p-3">Mã đơn</th>
+              <th className="p-3">Người gửi</th>
+              <th className="p-3">Người nhận</th>
+              <th className="p-3">Tỉnh/Thành nhận</th>
+              <th className="p-3">Trạng thái</th>
+              <th className="p-3">Ngày phân loại</th>
+              <th className="p-3 text-center">Hành động</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {orders.map((order, i) => (
+              <tr
+                key={i}
+                className="border-b border-gray-100 hover:bg-orange-50 transition"
+              >
+                <td className="p-3 font-semibold">{order.code}</td>
+                <td className="p-3">{order.sender}</td>
+                <td className="p-3">{order.receiver}</td>
+                <td className="p-3">{order.province}</td>
+                <td className="p-3">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs ${
+                      order.status === "Đã phân loại"
+                        ? "bg-orange-500 text-white"
+                        : "bg-orange-100 text-orange-600"
+                    }`}
+                  >
+                    {order.status}
+                  </span>
+                </td>
+                <td className="p-3 text-gray-700">{order.date}</td>
+                <td className="p-3 text-center">
+                  <button
+                    onClick={() => {
+                      setSelectedOrder(order);
+                      setOpenDetail(true);
+                    }}
+                    className="border border-orange-200 text-orange-700 hover:bg-orange-50 text-sm transition px-3 py-1 rounded-lg items-center gap-1 inline-flex cursor-pointer"
+                  >
+                    <Visibility fontSize="small" /> Chi tiết
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {openDetail && (
         <OrderDetailModal open={openDetail} onClose={() => setOpenDetail(false)} order={selectedOrder}/>
