@@ -11,6 +11,7 @@ _ERROR_MESSAGES = {
             "validation_error": "Validation failed.",
         },
         "email_already_exists": "Email already exists.",
+        "cannot_delete_superuser": "Can't delete superuser.",
     },
     "vi": {
         "common": {
@@ -21,6 +22,7 @@ _ERROR_MESSAGES = {
             "validation_error": "Kiểm tra dữ liệu thất bại.",
         },
         "email_already_exists": "Email đã tồn tại.",
+        "cannot_delete_superuser": "Không thể xóa superuser.",
     },
 }
 
