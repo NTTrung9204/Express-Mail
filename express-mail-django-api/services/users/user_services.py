@@ -1,3 +1,5 @@
+from django.contrib.auth.hashers import make_password
+
 from apps.users.models import User
 
 
@@ -13,11 +15,9 @@ class UserService:
         """
 
         password = user_validated_data.pop("password", None)
-        user = User(**user_validated_data)
-        user.set_password(password)
-        user.save()
-
-        return user
+        return User.objects.create(
+            **user_validated_data, password=make_password(password)
+        )
 
     @staticmethod
     def update(user, user_validated_data):
