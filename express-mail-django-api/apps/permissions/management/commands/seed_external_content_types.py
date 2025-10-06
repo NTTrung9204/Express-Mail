@@ -26,11 +26,5 @@ class Command(BaseCommand):
                 self.stdout.write(
                     self.style.SUCCESS(f"Created ContentType: {app_label}.{model}")
                 )
-            else:
-                self.stdout.write(
-                    self.style.NOTICE(
-                        f"ContentType already exists: {app_label}.{model}"
-                    )
-                )
 
         self.stdout.write(self.style.SUCCESS("Successfully seeded all ContentTypes!"))

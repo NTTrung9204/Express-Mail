@@ -1,7 +1,10 @@
+from django.contrib.auth.hashers import make_password
 from django.core.management import BaseCommand
 import os
 from apps.users.models import User
 from django.db import transaction
+
+from shared.constants import Roles
 
 
 class Command(BaseCommand):
@@ -20,11 +23,14 @@ class Command(BaseCommand):
         username = os.environ.get("SUPER_ADMIN_USERNAME")
         password = os.environ.get("SUPER_ADMIN_PASSWORD")
 
-        super_admin, _ = User.all_objects.get_or_create(username=username)
-
-        super_admin.is_superuser = True
-        super_admin.email = "super_admin@example.com"
-        super_admin.set_password(password)
-        super_admin.save()
+        User.all_objects.get_or_create(
+            username=username,
+            defaults={
+                "is_superuser": True,
+                "email": "super_admin@example.com",
+                "password": make_password(password),
+                "role": Roles.SUPER_ADMIN,
+            },
+        )
 
         self.stdout.write(self.style.SUCCESS("Successfully seed super admin account!!"))
