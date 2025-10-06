@@ -27,7 +27,7 @@ class User(AbstractUser, BaseModel):
     """
 
     email = models.EmailField(unique=True)
-    role = models.CharField(choices=Roles.choices(), max_length=20)
+    role = models.CharField(choices=Roles.choices(), max_length=20, null=True)
     objects = SoftDeleteUserManager()
     all_objects = UserManager()
 

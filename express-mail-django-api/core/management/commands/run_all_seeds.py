@@ -19,8 +19,10 @@ class Command(BaseCommand):
             "seed_external_content_types",
             "seed_external_permissions",
             "seed_groups",
+            "seed_group_permissions",
             "seed_post_offices",
             "seed_users",
+            "seed_user_groups",
         ]
 
         for seed in seeds:
