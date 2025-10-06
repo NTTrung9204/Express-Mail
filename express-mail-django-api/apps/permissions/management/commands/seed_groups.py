@@ -21,9 +21,5 @@ class Command(BaseCommand):
             group, created = Group.objects.get_or_create(name=group_name)
             if created:
                 self.stdout.write(self.style.SUCCESS(f"Created Group: {group_name}"))
-            else:
-                self.stdout.write(
-                    self.style.NOTICE(f"Group already exists: {group_name}")
-                )
 
         self.stdout.write(self.style.SUCCESS("Successfully seeded all Groups!"))

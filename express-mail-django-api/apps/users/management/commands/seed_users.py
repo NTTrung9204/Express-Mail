@@ -1,7 +1,18 @@
+from django.contrib.auth.hashers import make_password
 from django.core.management.base import BaseCommand
 from apps.users.models import User
 from faker import Faker
 from django.db import transaction
+
+from shared.constants import Roles
+from apps.users.models import (
+    AdminProfile,
+    PostOfficeManagerProfile,
+    PostOfficeStaffProfile,
+    ShopProfile,
+    ShipperProfile,
+)
+from apps.post_offices.models import PostOffice
 
 
 class Command(BaseCommand):
@@ -27,13 +38,51 @@ class Command(BaseCommand):
             last_name = fake.last_name()
             password = "123456"
 
-            user, created = User.all_objects.get_or_create(username=username)
-            if created:
-                user.email = email
-                user.first_name = first_name
-                user.last_name = last_name
-                user.set_password(password)
-                user.save()
+            user, _ = User.all_objects.get_or_create(
+                username=username,
+                defaults={
+                    "email": email,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "role": Roles.random(not_values=[Roles.SUPER_ADMIN.value]),
+                    "password": make_password(password),
+                },
+            )
+
+            role = user.role
+
+            if role == Roles.ADMIN.value:
+                AdminProfile.objects.get_or_create(user=user)
+
+            elif role == Roles.POST_OFFICE_MANAGER.value:
+                po = PostOffice.objects.order_by("?").first()
+                PostOfficeManagerProfile.objects.get_or_create(
+                    user=user,
+                    defaults={
+                        "post_office": po,
+                    },
+                )
+
+            elif role == Roles.POST_OFFICE_STAFF.value:
+                po = PostOffice.objects.order_by("?").first()
+                PostOfficeStaffProfile.objects.get_or_create(
+                    user=user,
+                    defaults={
+                        "post_office": po,
+                    },
+                )
+
+            elif role == Roles.SHIPPER.value:
+                po = PostOffice.objects.order_by("?").first()
+                ShipperProfile.objects.get_or_create(
+                    user=user,
+                    defaults={
+                        "post_office": po,
+                    },
+                )
+
+            elif role == Roles.SHOP.value:
+                ShopProfile.objects.get_or_create(user=user)
 
         self.stdout.write(
             self.style.SUCCESS(f"Successfully seeded {num_users} normal users!!")

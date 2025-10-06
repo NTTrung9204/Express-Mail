@@ -27,18 +27,14 @@ class SwaggerBasicAuthentication(BaseAuthentication):
 
         try:
             try:
-                decoded_credentials = base64.b64decode(auth_credentials).decode(
-                    "utf-8"
-                )
+                decoded_credentials = base64.b64decode(auth_credentials).decode("utf-8")
             except UnicodeDecodeError:
                 decoded_credentials = base64.b64decode(auth_credentials).decode(
                     "latin-1"
                 )
             username, password = decoded_credentials.split(":", 1)
         except (TypeError, ValueError, UnicodeDecodeError, binascii.Error):
-            raise AuthenticationFailed(
-                ERROR_MESSAGES["common"]["invalid_basic_auth"]
-            )
+            raise AuthenticationFailed(ERROR_MESSAGES["common"]["invalid_basic_auth"])
 
         if self.authenticate_credentials(username, password):
             # Create a mock user object
@@ -52,9 +48,7 @@ class SwaggerBasicAuthentication(BaseAuthentication):
             )()
             return user, None
 
-        raise AuthenticationFailed(
-            ERROR_MESSAGES["common"]["invalid_basic_auth"]
-        )
+        raise AuthenticationFailed(ERROR_MESSAGES["common"]["invalid_basic_auth"])
 
     @staticmethod
     def authenticate_credentials(username, password):

@@ -1,7 +1,9 @@
 from django.contrib.auth.models import AbstractUser, UserManager
 from safedelete.managers import SafeDeleteManager
 from django.db import models
+from apps.post_offices.models import PostOffice
 
+from shared.constants import Roles
 from shared.models import BaseModel
 
 
@@ -25,6 +27,7 @@ class User(AbstractUser, BaseModel):
     """
 
     email = models.EmailField(unique=True)
+    role = models.CharField(choices=Roles.choices(), max_length=20)
     objects = SoftDeleteUserManager()
     all_objects = UserManager()
 
@@ -34,3 +37,113 @@ class User(AbstractUser, BaseModel):
         """
 
         db_table = "users"
+
+
+class AdminProfile(BaseModel):
+    """
+    Profile for users in the admin group.
+    """
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="admin_profile",
+    )
+
+    class Meta:
+        """
+        Meta class for AdminProfile model.
+        """
+
+        db_table = "admin_profiles"
+
+
+class PostOfficeManagerProfile(BaseModel):
+    """
+    Profile for users in the post_office_manager group.
+    """
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="post_office_manager_profile",
+    )
+    post_office = models.ForeignKey(
+        PostOffice,
+        on_delete=models.SET_NULL,
+        related_name="manager_profiles",
+        null=True,
+    )
+
+    class Meta:
+        """
+        Meta class for PostOfficeManagerProfile model.
+        """
+
+        db_table = "post_office_manager_profiles"
+
+
+class PostOfficeStaffProfile(BaseModel):
+    """
+    Profile for users in the post_office_staff group.
+    """
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="post_office_staff_profile",
+    )
+    post_office = models.ForeignKey(
+        PostOffice, on_delete=models.SET_NULL, related_name="staff_profiles", null=True
+    )
+
+    class Meta:
+        """
+        Meta class for PostOfficeStaffProfile model.
+        """
+
+        db_table = "post_office_staff_profiles"
+
+
+class ShopProfile(BaseModel):
+    """
+    Profile for users in the shop group.
+    """
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="shop_profile",
+    )
+
+    class Meta:
+        """
+        Meta class for ShopProfile model.
+        """
+
+        db_table = "shop_profiles"
+
+
+class ShipperProfile(BaseModel):
+    """
+    Profile for users in the shipper group.
+    """
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="shipper_profile",
+    )
+    post_office = models.ForeignKey(
+        PostOffice,
+        on_delete=models.SET_NULL,
+        related_name="shipper_profiles",
+        null=True,
+    )
+
+    class Meta:
+        """
+        Meta class for ShipperProfile model.
+        """
+
+        db_table = "shipper_profiles"
