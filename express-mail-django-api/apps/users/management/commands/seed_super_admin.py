@@ -29,7 +29,7 @@ class Command(BaseCommand):
                 "is_superuser": True,
                 "email": "super_admin@example.com",
                 "password": make_password(password),
-                "role": Roles.SUPER_ADMIN,
+                "role": Roles.SUPER_ADMIN.value,
             },
         )
 
