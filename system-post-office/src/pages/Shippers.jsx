@@ -48,7 +48,7 @@ const Shippers = () => {
   };
 
   return (
-    <div className="">
+    <div className="bg-[#fff8f5] min-h-screen text-[#4b1d09]">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-[#4b1d09]">Quản lý Shipper</h1>
         <p className="text-base text-[#7a4a32] mt-1">

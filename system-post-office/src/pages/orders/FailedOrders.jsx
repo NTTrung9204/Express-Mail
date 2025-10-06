@@ -43,7 +43,7 @@ const FailedOrders = () => {
 
         <div className="overflow-hidden rounded-lg border border-orange-100">
           <table className="w-full text-sm">
-            <thead className="bg-orange-50 text-[#4b1d09]">
+            <thead className="bg-orange-100 text-[#4b1d09] font-semibold text-left">
               <tr>
                 <th className="text-left p-3">Mã đơn</th>
                 <th className="text-left p-3">Người gửi</th>
