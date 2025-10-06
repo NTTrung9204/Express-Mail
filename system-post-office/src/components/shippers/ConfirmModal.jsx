@@ -3,10 +3,9 @@ import React from "react";
 const ConfirmModal = ({ open, title, message, onCancel, onConfirm }) => {
   if (!open) return null;
 
-  // Ngăn click bên trong modal làm tắt modal
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
-      onCancel?.(); // chỉ gọi khi click đúng vùng đen
+      onCancel?.(); 
     }
   };
 
@@ -16,7 +15,6 @@ const ConfirmModal = ({ open, title, message, onCancel, onConfirm }) => {
       onClick={handleOverlayClick}
     >
       <div className="bg-white rounded-xl shadow-lg w-[90%] max-w-sm p-6 text-center relative animate-fadeIn">
-        {/* Nút X để đóng */}
         <button
           onClick={onCancel}
           className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer text-xl"
