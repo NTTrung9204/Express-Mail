@@ -6,10 +6,10 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 from apps.permissions.serializers import PermissionSerializer, GroupSerializer
 
 
-@extend_schema(tags=["Admin > Permissions"])
-class AdminPermissionViewSet(ReadOnlyModelViewSet):
+@extend_schema(tags=["Permissions"])
+class PermissionViewSet(ReadOnlyModelViewSet):
     """
-    API endpoint for Permission model, use in admin site.
+    API endpoint for Permission model.
     """
 
     queryset = Permission.objects.all()
@@ -18,10 +18,10 @@ class AdminPermissionViewSet(ReadOnlyModelViewSet):
     pagination_class = None
 
 
-@extend_schema(tags=["Admin > Groups"])
-class AdminGroupViewSet(ReadOnlyModelViewSet):
+@extend_schema(tags=["Groups"])
+class GroupViewSet(ReadOnlyModelViewSet):
     """
-    API endpoint for Group model, use in admin site.
+    API endpoint for Group model.
     """
 
     queryset = Group.objects.all()

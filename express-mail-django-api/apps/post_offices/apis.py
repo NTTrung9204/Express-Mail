@@ -7,10 +7,10 @@ from apps.post_offices.serializers import PostOfficeSerializer
 from shared.apis import BaseAPIViewSet
 
 
-@extend_schema(tags=["Admin > PostOffices"])
-class AdminPostOfficeViewSet(ModelViewSet, BaseAPIViewSet):
+@extend_schema(tags=["PostOffices"])
+class PostOfficeViewSet(ModelViewSet, BaseAPIViewSet):
     """
-    API endpoint for PostOffice model, use in admin site.
+    API endpoint for PostOffice model.
     """
 
     queryset = PostOffice.objects.all()

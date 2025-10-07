@@ -18,12 +18,15 @@ class Command(BaseCommand):
         Handle the command execution: Assign permissions to groups.
         """
 
-        for group_name, permission_codenames in GROUP_PERMISSIONS_MAP.items():
+        for group_name, permission_list in GROUP_PERMISSIONS_MAP.items():
             group = Group.objects.get(name=group_name)
             group.permissions.clear()
 
-            for codename in permission_codenames:
-                permission = Permission.objects.get(codename=codename)
+            for perm_str in permission_list:
+                app_label, codename = perm_str.split(".")
+                permission = Permission.objects.get(
+                    codename=codename, content_type__app_label=app_label
+                )
                 group.permissions.add(permission)
 
         self.stdout.write(

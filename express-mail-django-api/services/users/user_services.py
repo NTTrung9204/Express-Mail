@@ -36,3 +36,16 @@ class UserService:
         user.save()
 
         return user
+
+    @staticmethod
+    def detach_profile(user, related_profile_name):
+        """
+        Detach a profile out of user.
+        """
+
+        related_profile = getattr(user, related_profile_name, None)
+        if related_profile:
+            User.objects.filter(pk=user.pk).update(role=None)
+            related_profile.__class__.objects.filter(pk=related_profile.pk).update(
+                user=None
+            )

@@ -80,6 +80,12 @@ class AdminProfileSerializer(serializers.ModelSerializer):
     Serializer for AdminProfile model.
     """
 
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.exclude(is_superuser=True),
+        required=True,
+        allow_null=False,
+    )
+
     class Meta:
         """
         Meta class for AdminProfileSerializer.
@@ -93,6 +99,12 @@ class PostOfficeManagerProfileSerializer(serializers.ModelSerializer):
     """
     Serializer for PostOfficeManagerProfile model.
     """
+
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.exclude(is_superuser=True),
+        required=True,
+        allow_null=False,
+    )
 
     class Meta:
         """
@@ -108,6 +120,12 @@ class PostOfficeStaffProfileSerializer(serializers.ModelSerializer):
     Serializer for PostOfficeStaffProfile model.
     """
 
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.exclude(is_superuser=True),
+        required=True,
+        allow_null=False,
+    )
+
     class Meta:
         """
         Meta class for PostOfficeStaffProfileSerializer.
@@ -122,6 +140,12 @@ class ShopProfileSerializer(serializers.ModelSerializer):
     Serializer for ShopProfile model.
     """
 
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.exclude(is_superuser=True),
+        required=True,
+        allow_null=False,
+    )
+
     class Meta:
         """
         Meta class for ShopProfileSerializer.
@@ -135,6 +159,12 @@ class ShipperProfileSerializer(serializers.ModelSerializer):
     """
     Serializer for ShipperProfile model.
     """
+
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.exclude(is_superuser=True),
+        required=True,
+        allow_null=False,
+    )
 
     class Meta:
         """
