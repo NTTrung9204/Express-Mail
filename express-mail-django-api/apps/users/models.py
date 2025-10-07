@@ -45,9 +45,7 @@ class AdminProfile(BaseModel):
     """
 
     user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        related_name="admin_profile",
+        User, on_delete=models.CASCADE, related_name="admin_profile", null=True
     )
 
     class Meta:
@@ -67,6 +65,7 @@ class PostOfficeManagerProfile(BaseModel):
         User,
         on_delete=models.CASCADE,
         related_name="post_office_manager_profile",
+        null=True,
     )
     post_office = models.ForeignKey(
         PostOffice,
@@ -92,6 +91,7 @@ class PostOfficeStaffProfile(BaseModel):
         User,
         on_delete=models.CASCADE,
         related_name="post_office_staff_profile",
+        null=True,
     )
     post_office = models.ForeignKey(
         PostOffice, on_delete=models.SET_NULL, related_name="staff_profiles", null=True
@@ -111,9 +111,7 @@ class ShopProfile(BaseModel):
     """
 
     user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        related_name="shop_profile",
+        User, on_delete=models.CASCADE, related_name="shop_profile", null=True
     )
 
     class Meta:
@@ -130,9 +128,7 @@ class ShipperProfile(BaseModel):
     """
 
     user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        related_name="shipper_profile",
+        User, on_delete=models.CASCADE, related_name="shipper_profile", null=True
     )
     post_office = models.ForeignKey(
         PostOffice,

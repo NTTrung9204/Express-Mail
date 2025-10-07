@@ -38,7 +38,7 @@ class Command(BaseCommand):
             last_name = fake.last_name()
             password = "123456"
 
-            user, _ = User.all_objects.get_or_create(
+            user, created = User.all_objects.get_or_create(
                 username=username,
                 defaults={
                     "email": email,
@@ -49,40 +49,41 @@ class Command(BaseCommand):
                 },
             )
 
-            role = user.role
+            if created:
+                role = user.role
 
-            if role == Roles.ADMIN.value:
-                AdminProfile.objects.get_or_create(user=user)
+                if role == Roles.ADMIN.value:
+                    AdminProfile.objects.get_or_create(user=user)
 
-            elif role == Roles.POST_OFFICE_MANAGER.value:
-                po = PostOffice.objects.order_by("?").first()
-                PostOfficeManagerProfile.objects.get_or_create(
-                    user=user,
-                    defaults={
-                        "post_office": po,
-                    },
-                )
+                elif role == Roles.POST_OFFICE_MANAGER.value:
+                    po = PostOffice.objects.order_by("?").first()
+                    PostOfficeManagerProfile.objects.get_or_create(
+                        user=user,
+                        defaults={
+                            "post_office": po,
+                        },
+                    )
 
-            elif role == Roles.POST_OFFICE_STAFF.value:
-                po = PostOffice.objects.order_by("?").first()
-                PostOfficeStaffProfile.objects.get_or_create(
-                    user=user,
-                    defaults={
-                        "post_office": po,
-                    },
-                )
+                elif role == Roles.POST_OFFICE_STAFF.value:
+                    po = PostOffice.objects.order_by("?").first()
+                    PostOfficeStaffProfile.objects.get_or_create(
+                        user=user,
+                        defaults={
+                            "post_office": po,
+                        },
+                    )
 
-            elif role == Roles.SHIPPER.value:
-                po = PostOffice.objects.order_by("?").first()
-                ShipperProfile.objects.get_or_create(
-                    user=user,
-                    defaults={
-                        "post_office": po,
-                    },
-                )
+                elif role == Roles.SHIPPER.value:
+                    po = PostOffice.objects.order_by("?").first()
+                    ShipperProfile.objects.get_or_create(
+                        user=user,
+                        defaults={
+                            "post_office": po,
+                        },
+                    )
 
-            elif role == Roles.SHOP.value:
-                ShopProfile.objects.get_or_create(user=user)
+                elif role == Roles.SHOP.value:
+                    ShopProfile.objects.get_or_create(user=user)
 
         self.stdout.write(
             self.style.SUCCESS(f"Successfully seeded {num_users} normal users!!")
