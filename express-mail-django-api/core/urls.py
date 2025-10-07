@@ -21,7 +21,7 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
     SpectacularRedocView,
 )
-from core.routes import admin, system
+from core.routes import route
 from apps.jwt_auth.apis import (
     CustomTokenObtainPairView,
     LogoutView,
@@ -40,8 +40,7 @@ urlpatterns = [
         name="token_refresh",
     ),
     path("api/v1/auth/logout/", LogoutView.as_view(), name="logout"),
-    path("api/v1/system/", include(system)),
-    path("api/v1/admin/", include(admin)),
+    path("api/v1/", include(route)),
 ]
 
 if settings.DEBUG:
