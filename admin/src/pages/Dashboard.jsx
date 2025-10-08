@@ -4,8 +4,8 @@ import { People, Warehouse, TrendingUp, ShowChart } from "@mui/icons-material";
 
 const Dashboard = () => {
   return (
-    <div className="p-6 space-y-6">
-      <div className="bg-orange-50 p-6 rounded-xl">
+    <div className="p-6 space-y-6 bg-orange-50 min-h-screen">
+      <div className="bg-gradient-to-r from-orange-200 to-orange-100 rounded-xl p-4">
         <h1 className="text-2xl font-bold mb-2">
           Chào mừng đến với Admin Dashboard
         </h1>

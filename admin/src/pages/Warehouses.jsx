@@ -63,7 +63,13 @@ export default function Warehouses() {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 bg-orange-50 min-h-screen">
+      <div className="bg-gradient-to-r from-orange-200 to-orange-100 rounded-xl p-4">
+        <h1 className="text-2xl font-bold mb-2">
+          Chào mừng đến với Trang Quản lý Kho
+        </h1>
+        <p>Quản lý thông tin kho; thêm, sửa, xoá kho.</p>
+      </div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <input
           type="text"
