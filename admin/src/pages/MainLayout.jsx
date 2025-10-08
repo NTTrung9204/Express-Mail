@@ -1,10 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate, Outlet } from "react-router-dom";
-import Header from "../components/common/Header";
 import Sidebar from "../components/common/Sidebar";
+import React, { useEffect} from "react";
+import { useNavigate, Outlet } from "react-router-dom";
 
 const MainLayout = () => {
-  const [title, setTitle] = useState("Dashboard");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -16,15 +14,18 @@ const MainLayout = () => {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <Sidebar setTitle={setTitle} />
+      <Sidebar/>
+
+      <div className="flex-1 bg-orange-50 ml-64 h-screen flex flex-col">
+
       <div className="flex flex-col flex-1">
-        <Header title={title} />
         <main className="flex-1 overflow-x-hidden overflow-y-auto">
           <Outlet />
         </main>
       </div>
     </div>
+  </div>
   );
-};
+}
 
-export default MainLayout;
+export default MainLayout

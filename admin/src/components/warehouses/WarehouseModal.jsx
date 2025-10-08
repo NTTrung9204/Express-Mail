@@ -43,6 +43,23 @@ const WarehouseModal = ({
     }
   }, [open]);
 
+  useEffect(() => {
+  if (open && !isView) {
+    const apiKey = import.meta.env.VITE_GOOGLE_MAP_API_KEY;
+    if (!window.google) {
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      script.onload = () => initMap();
+      document.body.appendChild(script);
+    } else {
+      initMap();
+    }
+  }
+}, [open]);
+
+
   const fetchProvincesData = async () => {
     try {
       const data = await fetchProvinces();
@@ -94,7 +111,7 @@ const WarehouseModal = ({
         const lng = event.latLng.lng();
         setForm((prev) => ({ ...prev, latitude: lat.toFixed(6), longitude: lng.toFixed(6) }));
         markerRef.current.setPosition({ lat, lng });
-      });
+      }); 
 
       markerRef.current.addListener("dragend", () => {
         const lat = markerRef.current.getPosition().lat();
