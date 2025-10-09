@@ -6,11 +6,15 @@ from rest_framework.permissions import DjangoModelPermissions
 from rest_framework.viewsets import ModelViewSet
 
 from apps.users.models import User
-from apps.users.serializers import UserSerializer, AdminProfileSerializer
+from apps.users.serializers import (
+    UserSerializer,
+    AdminProfileSerializer,
+    PostOfficeManagerProfileSerializer,
+)
 from services.profiles.profile_services import ProfileService
 from services.users.user_services import UserService
 from shared.apis import BaseAPIViewSet
-from shared.constants import Roles
+from shared.constants import Roles, PROFILE_VIEWSET_ACTION_PERMISSIONS
 from shared.permissions import GenericMultiPermission
 
 
@@ -68,19 +72,14 @@ class ProfileViewSet(BaseAPIViewSet):
     API endpoint to interact with the Profile models.
     """
 
-    permission_classes = [DjangoModelPermissions]
-
     def get_permissions(self):
         """
         Custom permission for each profile action.
         """
 
-        if self.action == "update_create_admin_profile":
-            return [
-                GenericMultiPermission(
-                    ["users.change_adminprofile", "users.add_adminprofile"]
-                )
-            ]
+        perms = PROFILE_VIEWSET_ACTION_PERMISSIONS.get(self.action)
+        if perms:
+            return [GenericMultiPermission(perms)]
         return super().get_permissions()
 
     @transaction.atomic()
@@ -119,3 +118,48 @@ class ProfileViewSet(BaseAPIViewSet):
 
         admin_profile_instance = ProfileService.create_admin_profile(admin_profile_data)
         return self.response_created(self.get_serializer(admin_profile_instance).data)
+
+    @transaction.atomic()
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="post-office-manager-profile",
+        serializer_class=PostOfficeManagerProfileSerializer,
+    )
+    def update_create_post_office_manager_profile(self, request):
+        """
+        Update/create PostOfficeManagerProfile for user.
+        """
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        post_office_manager_profile_data = serializer.validated_data
+        user = post_office_manager_profile_data.get("user")
+        role = user.role
+
+        if role:
+            if role != Roles.POST_OFFICE_MANAGER.value:
+                # Change profile
+                current_profile_name = f"{role.lower()}_profile"
+                UserService.detach_profile(user, current_profile_name)
+            else:
+                # Update profile
+                post_office_manager_profile = user.post_office_manager_profile
+                post_office_manager_profile_instance = (
+                    ProfileService.update_post_office_manager_profile(
+                        post_office_manager_profile, post_office_manager_profile_data
+                    )
+                )
+                return self.response_ok(
+                    self.get_serializer(post_office_manager_profile_instance).data
+                )
+
+        post_office_manager_profile_instance = (
+            ProfileService.create_post_office_manager_profile(
+                post_office_manager_profile_data
+            )
+        )
+        return self.response_created(
+            self.get_serializer(post_office_manager_profile_instance).data
+        )
