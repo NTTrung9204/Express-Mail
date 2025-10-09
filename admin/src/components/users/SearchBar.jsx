@@ -6,7 +6,7 @@ const SearchBar = ({ value, onChange }) => (
     placeholder="Tìm kiếm người dùng..."
     value={value}
     onChange={(e) => onChange(e.target.value)}
-    className="w-full md:w-1/2 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
+    className="w-full sm:w-1/2 px-3 py-2 border border-orange-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
   />
 );
 
