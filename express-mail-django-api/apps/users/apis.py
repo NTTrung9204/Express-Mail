@@ -11,6 +11,7 @@ from apps.users.serializers import (
     AdminProfileSerializer,
     PostOfficeManagerProfileSerializer,
     PostOfficeStaffProfileSerializer,
+    ShopProfileSerializer,
 )
 from services.profiles.profile_services import ProfileService
 from services.users.user_services import UserService
@@ -209,3 +210,38 @@ class ProfileViewSet(BaseAPIViewSet):
         return self.response_created(
             self.get_serializer(post_office_staff_profile_instance).data
         )
+
+    @transaction.atomic()
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="shop-profile",
+        serializer_class=ShopProfileSerializer,
+    )
+    def update_create_shop_profile(self, request):
+        """
+        Update/create ShopProfile for user.
+        """
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        shop_profile_data = serializer.validated_data
+        user = shop_profile_data.get("user")
+        role = user.role
+
+        if role:
+            if role != Roles.SHOP.value:
+                # Change profile
+                current_profile_name = f"{role.lower()}_profile"
+                UserService.detach_profile(user, current_profile_name)
+            else:
+                # Update profile
+                shop_profile = user.shop_profile
+                shop_profile_instance = ProfileService.update_shop_profile(
+                    shop_profile, shop_profile_data
+                )
+                return self.response_ok(self.get_serializer(shop_profile_instance).data)
+
+        shop_profile_instance = ProfileService.create_shop_profile(shop_profile_data)
+        return self.response_created(self.get_serializer(shop_profile_instance).data)
