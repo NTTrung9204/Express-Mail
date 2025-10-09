@@ -9,6 +9,20 @@ class UserService:
     """
 
     @staticmethod
+    def get_base_user_infor(user):
+        """
+        Get basic user information, return a dictionary containing that data.
+        """
+
+        return {
+            "id": user.id,
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "role": user.role,
+        }
+
+    @staticmethod
     def create(user_validated_data):
         """
         Create a new User instance with validated data.

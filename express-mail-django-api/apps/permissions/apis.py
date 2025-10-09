@@ -1,9 +1,9 @@
 from django.contrib.auth.models import Permission, Group
 from drf_spectacular.utils import extend_schema
-from rest_framework.permissions import DjangoModelPermissions
 from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from apps.permissions.serializers import PermissionSerializer, GroupSerializer
+from shared.permissions import FullDjangoModelPermissions
 
 
 @extend_schema(tags=["Permissions"])
@@ -14,7 +14,7 @@ class PermissionViewSet(ReadOnlyModelViewSet):
 
     queryset = Permission.objects.all()
     serializer_class = PermissionSerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [FullDjangoModelPermissions]
     pagination_class = None
 
 
@@ -26,5 +26,5 @@ class GroupViewSet(ReadOnlyModelViewSet):
 
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [FullDjangoModelPermissions]
     pagination_class = None
