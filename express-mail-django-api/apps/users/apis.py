@@ -12,6 +12,7 @@ from apps.users.serializers import (
     PostOfficeManagerProfileSerializer,
     PostOfficeStaffProfileSerializer,
     ShopProfileSerializer,
+    ShipperProfileSerializer,
 )
 from services.profiles.profile_services import ProfileService
 from services.users.user_services import UserService
@@ -245,3 +246,42 @@ class ProfileViewSet(BaseAPIViewSet):
 
         shop_profile_instance = ProfileService.create_shop_profile(shop_profile_data)
         return self.response_created(self.get_serializer(shop_profile_instance).data)
+
+    @transaction.atomic()
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="shipper-profile",
+        serializer_class=ShipperProfileSerializer,
+    )
+    def update_create_shipper_profile(self, request):
+        """
+        Update/create ShipperProfile for user.
+        """
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        shipper_profile_data = serializer.validated_data
+        user = shipper_profile_data.get("user")
+        role = user.role
+
+        if role:
+            if role != Roles.SHIPPER.value:
+                # Change profile
+                current_profile_name = f"{role.lower()}_profile"
+                UserService.detach_profile(user, current_profile_name)
+            else:
+                # Update profile
+                shipper_profile = user.shipper_profile
+                shipper_profile_instance = ProfileService.update_shipper_profile(
+                    shipper_profile, shipper_profile_data
+                )
+                return self.response_ok(
+                    self.get_serializer(shipper_profile_instance).data
+                )
+
+        shipper_profile_instance = ProfileService.create_shipper_profile(
+            shipper_profile_data
+        )
+        return self.response_created(self.get_serializer(shipper_profile_instance).data)

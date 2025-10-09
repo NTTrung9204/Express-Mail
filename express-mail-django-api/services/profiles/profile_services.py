@@ -3,6 +3,7 @@ from apps.users.models import (
     PostOfficeManagerProfile,
     PostOfficeStaffProfile,
     ShopProfile,
+    ShipperProfile,
 )
 from shared.constants import Roles
 
@@ -71,6 +72,20 @@ class ProfileService:
             user.save()
 
         return shop_profile
+
+    @staticmethod
+    def create_shipper_profile(shipper_profile_data):
+        """
+        Create new ShipperProfile instance and return it.
+        """
+
+        shipper_profile = ShipperProfile.objects.create(**shipper_profile_data)
+        user = shipper_profile.user
+        if user:
+            user.role = Roles.SHIPPER.value
+            user.save()
+
+        return shipper_profile
 
     @staticmethod
     def update_admin_profile(admin_profile, admin_profile_data):
@@ -148,3 +163,21 @@ class ProfileService:
             user.save()
 
         return shop_profile
+
+    @staticmethod
+    def update_shipper_profile(shipper_profile, shipper_profile_data):
+        """
+        Update existing ShipperProfile instance and return it.
+        """
+
+        for attr, value in shipper_profile_data.items():
+            setattr(shipper_profile, attr, value)
+
+        shipper_profile.save()
+
+        user = shipper_profile.user
+        if user:
+            user.role = Roles.SHIPPER.value
+            user.save()
+
+        return shipper_profile
