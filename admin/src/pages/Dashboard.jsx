@@ -1,5 +1,5 @@
 import React from "react";
-import DashboardCard from "../components/DashboardCard";
+import DashboardCard from "../components/dashboard/DashboardCard";
 import { People, Warehouse, TrendingUp, ShowChart } from "@mui/icons-material";
 
 const Dashboard = () => {
