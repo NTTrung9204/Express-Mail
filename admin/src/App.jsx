@@ -3,23 +3,30 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
 import Warehouses from "./pages/Warehouses";
-import Sidebar from "./components/Sidebar";
-import Header from "./components/Header";
-
+import MainLayout from "./pages/MainLayout";
 
 function App() {
   return (
-      <div className="flex">
-        <Sidebar />
-        <div className="flex-1 bg-orange-50 min-h-screen">
-          <Header />
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/users" element={<Users />} />
-            <Route path="/warehouses" element={<Warehouses />} />
-          </Routes>
-        </div>
-      </div>
+      <Routes>
+        <Route path="/" element={
+            <MainLayout>
+              <Dashboard />
+            </MainLayout>
+          }
+        />
+        <Route path="/users" element={
+            <MainLayout>
+              <Users />
+            </MainLayout>
+          }
+        />
+        <Route path="/warehouses" element={
+            <MainLayout>
+              <Warehouses />
+            </MainLayout>
+          }
+        />
+      </Routes>
   );
 }
 
