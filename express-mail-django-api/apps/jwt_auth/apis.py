@@ -1,16 +1,17 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework.generics import GenericAPIView
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from apps.jwt_auth.serializers import (
-    CustomTokenObtainPairSerializer,
     LogoutSerializer,
 )
 from rest_framework.response import Response
 from rest_framework import status
 
 from services.jwt_auth.jwt_auth_services import JWTAuthService
+from services.users.user_services import UserService
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -18,7 +19,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     Custom login view.
     """
 
-    serializer_class = CustomTokenObtainPairSerializer
+    serializer_class = TokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
         """
@@ -37,6 +38,9 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         JWTAuthService.add_access_token_to_whitelist(
             validated_data["access"], serializer.user
         )
+
+        validated_data["user"] = UserService.get_base_user_infor(serializer.user)
+
         return Response(validated_data, status=status.HTTP_200_OK)
 
 

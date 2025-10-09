@@ -1,35 +1,10 @@
 from rest_framework_simplejwt.serializers import (
-    TokenObtainPairSerializer,
     TokenBlacklistSerializer,
 )
 from rest_framework import serializers
 from rest_framework_simplejwt.exceptions import TokenError
 from apps.jwt_auth.models import AccessTokenWhiteList
 from shared.messages import ERROR_MESSAGES
-
-
-class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    """
-    Custom serializer extending TokenObtainPairSerializer.
-    """
-
-    def to_representation(self, instance):
-        """
-        Add user information in response data.
-        """
-
-        data = super().to_representation(instance)
-
-        user = self.user
-        data["user"] = {
-            "id": user.id,
-            "username": user.username,
-            "first_name": user.first_name,
-            "last_name": user.last_name,
-            "role": user.role,
-        }
-
-        return data
 
 
 class LogoutSerializer(serializers.Serializer):
