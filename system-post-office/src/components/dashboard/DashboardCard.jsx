@@ -8,7 +8,7 @@ const DashboardCard = ({ title, value, icon, changeText, color = "text-green-600
         <h2 className="text-2xl font-bold">{value}</h2>
         <p className={`${color} text-sm mt-2`}>{changeText}</p>
       </div>
-      <div className="bg-orange-100 text-orange-500 p-4 rounded-2xl text-2xl">
+      <div className="bg-orange-100 text-orange-500 px-3 py-2 rounded-xl text-2xl">
         {icon}
       </div>
     </div>

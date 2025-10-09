@@ -49,7 +49,6 @@ const Shippers = () => {
 
   return (
     <div className="">
-      {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-[#4b1d09]">Quản lý Shipper</h1>
         <p className="text-base text-[#7a4a32] mt-1">
@@ -57,13 +56,11 @@ const Shippers = () => {
         </p>
       </div>
 
-      {/* Danh sách tài khoản Shipper */}
       <div className="bg-white shadow-md rounded-xl p-5 mb-6 border border-orange-100">
         <h2 className="text-lg font-semibold text-[#4b1d09] mb-4">
           Danh sách tài khoản Shipper
         </h2>
 
-        {/* Ô tìm kiếm */}
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -122,7 +119,6 @@ const Shippers = () => {
         </table>
       </div>
 
-      {/* Yêu cầu tạo tài khoản Shipper */}
       <div className="bg-white shadow-md rounded-xl p-5 border border-orange-100">
         <h2 className="text-lg font-semibold text-[#4b1d09] mb-4">
           Yêu cầu tạo tài khoản Shipper
@@ -160,7 +156,6 @@ const Shippers = () => {
         </div>
       </div>
 
-      {/* ✅ Modal tách riêng */}
       <ConfirmModal
         open={modalOpen}
         title="Xác nhận hành động"

@@ -20,7 +20,6 @@ const Dashboard = () => {
       <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
       <p className="text-gray-500 text-base mb-10">Tổng quan hoạt động bưu cục</p>
 
-      {/* Cards */}
       <div className="grid grid-cols-3 gap-8 mb-10">
         <DashboardCard
           title="Tổng đơn hàng"
@@ -56,9 +55,7 @@ const Dashboard = () => {
         />
       </div>
 
-      {/* Orders and performance */}
       <div className="grid grid-cols-2 gap-8">
-        {/* Recent Orders */}
         <div className="bg-white p-10 rounded-3xl shadow-md">
           <h2 className="font-bold text-xl mb-5">Đơn hàng gần đây</h2>
           <ul className="space-y-4">
@@ -76,7 +73,6 @@ const Dashboard = () => {
           </ul>
         </div>
 
-        {/* Performance */}
         <div className="bg-white p-10 rounded-3xl shadow-md">
           <h2 className="font-bold text-xl mb-5">Hiệu suất vận chuyển</h2>
           <div className="space-y-5">
