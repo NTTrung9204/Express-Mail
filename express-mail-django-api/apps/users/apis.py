@@ -10,6 +10,7 @@ from apps.users.serializers import (
     UserSerializer,
     AdminProfileSerializer,
     PostOfficeManagerProfileSerializer,
+    PostOfficeStaffProfileSerializer,
 )
 from services.profiles.profile_services import ProfileService
 from services.users.user_services import UserService
@@ -162,4 +163,49 @@ class ProfileViewSet(BaseAPIViewSet):
         )
         return self.response_created(
             self.get_serializer(post_office_manager_profile_instance).data
+        )
+
+    @transaction.atomic()
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="post-office-staff-profile",
+        serializer_class=PostOfficeStaffProfileSerializer,
+    )
+    def update_create_post_office_staff_profile(self, request):
+        """
+        Update/create PostOfficeStaffProfile for user.
+        """
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        post_office_staff_profile_data = serializer.validated_data
+        user = post_office_staff_profile_data.get("user")
+        role = user.role
+
+        if role:
+            if role != Roles.POST_OFFICE_STAFF.value:
+                # Change profile
+                current_profile_name = f"{role.lower()}_profile"
+                UserService.detach_profile(user, current_profile_name)
+            else:
+                # Update profile
+                post_office_staff_profile = user.post_office_staff_profile
+                post_office_staff_profile_instance = (
+                    ProfileService.update_post_office_staff_profile(
+                        post_office_staff_profile, post_office_staff_profile_data
+                    )
+                )
+                return self.response_ok(
+                    self.get_serializer(post_office_staff_profile_instance).data
+                )
+
+        post_office_staff_profile_instance = (
+            ProfileService.create_post_office_staff_profile(
+                post_office_staff_profile_data
+            )
+        )
+        return self.response_created(
+            self.get_serializer(post_office_staff_profile_instance).data
         )
