@@ -68,3 +68,14 @@ GROUP_PERMISSIONS_MAP = {
     Groups.SHOP.value: [],
     Groups.SHIPPER.value: [],
 }
+
+PROFILE_VIEWSET_ACTION_PERMISSIONS = {
+    "update_create_admin_profile": [
+        "users.change_adminprofile",
+        "users.add_adminprofile",
+    ],
+    "update_create_post_office_manager_profile": [
+        "users.add_postofficemanagerprofile",
+        "users.change_postofficemanagerprofile",
+    ],
+}
