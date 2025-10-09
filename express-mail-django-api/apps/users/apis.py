@@ -2,7 +2,6 @@ from django.db import transaction
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.permissions import DjangoModelPermissions
 from rest_framework.viewsets import ModelViewSet
 
 from apps.users.models import User
@@ -18,7 +17,7 @@ from services.profiles.profile_services import ProfileService
 from services.users.user_services import UserService
 from shared.apis import BaseAPIViewSet
 from shared.constants import Roles, PROFILE_VIEWSET_ACTION_PERMISSIONS
-from shared.permissions import GenericMultiPermission
+from shared.permissions import GenericMultiPermission, FullDjangoModelPermissions
 
 
 @extend_schema(tags=["Users"])
@@ -28,7 +27,7 @@ class UserViewSet(ModelViewSet, BaseAPIViewSet):
     """
 
     serializer_class = UserSerializer
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [FullDjangoModelPermissions]
     queryset = User.objects.all()
 
     def get_queryset(self):
