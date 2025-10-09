@@ -82,4 +82,8 @@ PROFILE_VIEWSET_ACTION_PERMISSIONS = {
         "users.add_postofficestaffprofile",
         "users.change_postofficestaffprofile",
     ],
+    "update_create_shop_profile": [
+        "users.add_shopprofile",
+        "users.change_shopprofile",
+    ],
 }
