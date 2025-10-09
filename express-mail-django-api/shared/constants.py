@@ -78,4 +78,8 @@ PROFILE_VIEWSET_ACTION_PERMISSIONS = {
         "users.add_postofficemanagerprofile",
         "users.change_postofficemanagerprofile",
     ],
+    "update_create_post_office_staff_profile": [
+        "users.add_postofficestaffprofile",
+        "users.change_postofficestaffprofile",
+    ],
 }
