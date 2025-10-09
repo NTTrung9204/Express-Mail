@@ -16,7 +16,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="flex bg-white rounded-2xl shadow-md p-8 w-[850px] max-w-[95%]">
-        {/* Hình ảnh bên trái */}
         <div className="w-1/2 flex items-center justify-center md:flex">
           <img
             src={warehouse_worker}
@@ -25,7 +24,6 @@ export default function LoginPage() {
           />
         </div>
 
-        {/* Form bên phải */}
         <div className="md:w-1/2 w-full flex flex-col justify-center px-6">
           <div className="flex items-center justify-center mb-6">
             <img
@@ -36,7 +34,6 @@ export default function LoginPage() {
           </div>
 
           <form className="space-y-5">
-            {/* Username */}
             <div>
               <label className="block text-gray-700 font-medium mb-1">
                 Mã nhân viên
@@ -48,7 +45,6 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Password */}
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="text-gray-700 font-medium">Mật khẩu</label>
@@ -73,7 +69,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Button */}
             <button
               type="button"
               onClick={handleLogin}
