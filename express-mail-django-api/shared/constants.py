@@ -86,4 +86,8 @@ PROFILE_VIEWSET_ACTION_PERMISSIONS = {
         "users.add_shopprofile",
         "users.change_shopprofile",
     ],
+    "update_create_shipper_profile": [
+        "users.add_shipperprofile",
+        "users.change_shipperprofile",
+    ],
 }
