@@ -4,9 +4,9 @@ import TopNavOrders from "../../components/orders/TopNavOrders";
 
 const Orders = () => {
   return (
-    <div className="p-6 bg-[#fff5ef] min-h-screen rounded-xl">
-      <h1 className="text-2xl font-bold text-[#4b1d09]">Quản lý Đơn hàng</h1>
-      <p className="text-sm text-gray-600 mb-6">
+    <div className="bg-[#fff8f5] min-h-screen text-[#4b1d09]">
+      <h1 className="text-3xl font-bold text-[#4b1d09]">Quản lý Đơn hàng</h1>
+      <p className="text-base text-gray-600 mb-6">
         Theo dõi và xử lý đơn hàng
       </p>
 
