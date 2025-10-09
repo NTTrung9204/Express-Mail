@@ -2,6 +2,7 @@ from apps.users.models import (
     AdminProfile,
     PostOfficeManagerProfile,
     PostOfficeStaffProfile,
+    ShopProfile,
 )
 from shared.constants import Roles
 
@@ -56,6 +57,20 @@ class ProfileService:
             user.save()
 
         return post_office_staff_profile
+
+    @staticmethod
+    def create_shop_profile(shop_profile_data):
+        """
+        Create new ShopProfile instance and return it.
+        """
+
+        shop_profile = ShopProfile.objects.create(**shop_profile_data)
+        user = shop_profile.user
+        if user:
+            user.role = Roles.SHOP.value
+            user.save()
+
+        return shop_profile
 
     @staticmethod
     def update_admin_profile(admin_profile, admin_profile_data):
@@ -115,3 +130,21 @@ class ProfileService:
             user.save()
 
         return post_office_staff_profile
+
+    @staticmethod
+    def update_shop_profile(shop_profile, shop_profile_data):
+        """
+        Update existing ShopProfile instance and return it.
+        """
+
+        for attr, value in shop_profile_data.items():
+            setattr(shop_profile, attr, value)
+
+        shop_profile.save()
+
+        user = shop_profile.user
+        if user:
+            user.role = Roles.SHOP.value
+            user.save()
+
+        return shop_profile
