@@ -22,4 +22,5 @@ class AppColors {
   static const Color green_22C35D = Color(0xFF22C35D);
   static const Color orange_FA832E = Color(0xFFFA832E);
   static const Color orange_FBA060 = Color(0xFFFBA060);
+  static const Color white_20 = Color(0x33FFFFFF);
 }
