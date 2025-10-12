@@ -69,4 +69,14 @@ class AppStrings {
   static const order_money = "Tiền đơn hàng";
   static const shipping_money = "Tiền vận chuyển";
   static const total_income = "Tổng thu nhập";
+  static const edit = "Sửa";
+  static const delivery_order = "đơn giao";
+  static const personal_information = "Thông tin cá nhân";
+  static const vehicle_information = "Thông tin xe";
+  static const full_name = "Họ và tên";
+  static const model = "Mẫu mã";
+  static const year = "Năm";
+  static const color = "Màu";
+  static const license_plate_number = "Biển số xe";
+  static const update_vehicle_information = "Cập nhật thông tin xe";
 }
