@@ -1,0 +1,31 @@
+name: Deploy Django API
+
+on:
+  push:
+    paths:
+      - 'express-mail-django-api/**'
+    branches:
+      - develop
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: SSH and deploy Django API
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_DJANGO_HOST }}
+          username: ${{ secrets.EC2_DJANGO_USER }}
+          key: ${{ secrets.EC2_DJANGO_API }}
+          script: |
+            cd /home/ec2-user/Express-Mail/express-mail-django-api
+            git pull origin develop
+            docker-compose up --build -d
+            docker exec express_mail_api python manage.py migrate

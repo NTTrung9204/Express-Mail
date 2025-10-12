@@ -1,0 +1,5 @@
+export enum OrderPostOfficeStatus {
+  PICKUP_REQUESTED = 'PICKUP_REQUESTED',
+  CLASSIFIED = 'CLASSIFIED',
+  IN_WAREHOUSE = 'IN_WAREHOUSE',
+}
