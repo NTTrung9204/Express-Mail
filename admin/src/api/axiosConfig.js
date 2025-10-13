@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const baseAPI = axios.create({
+export const baseAPI = axios.create({
   baseURL: import.meta.env.VITE_DJANGO_API_URL + '/api/v1',
   headers: {
     'Accept': 'application/json',
