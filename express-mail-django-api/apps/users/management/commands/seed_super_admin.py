@@ -1,10 +1,10 @@
 from django.contrib.auth.hashers import make_password
 from django.core.management import BaseCommand
 import os
+
+from apps.permissions.constants import Roles
 from apps.users.models import User
 from django.db import transaction
-
-from shared.constants import Roles
 
 
 class Command(BaseCommand):

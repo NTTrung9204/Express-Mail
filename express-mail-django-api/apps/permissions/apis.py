@@ -12,7 +12,7 @@ class PermissionViewSet(ReadOnlyModelViewSet):
     API endpoint for Permission model.
     """
 
-    queryset = Permission.objects.all()
+    queryset = Permission.objects.select_related("content_type").all()
     serializer_class = PermissionSerializer
     permission_classes = [FullDjangoModelPermissions]
     pagination_class = None
@@ -24,7 +24,7 @@ class GroupViewSet(ReadOnlyModelViewSet):
     API endpoint for Group model.
     """
 
-    queryset = Group.objects.all()
+    queryset = Group.objects.prefetch_related("permissions")
     serializer_class = GroupSerializer
     permission_classes = [FullDjangoModelPermissions]
     pagination_class = None

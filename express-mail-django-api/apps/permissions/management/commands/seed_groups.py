@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group
 from django.db import transaction
 
-from shared.constants import Groups
+from apps.permissions.constants import Groups
 
 
 class Command(BaseCommand):

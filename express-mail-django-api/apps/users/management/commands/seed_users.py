@@ -1,10 +1,11 @@
 from django.contrib.auth.hashers import make_password
 from django.core.management.base import BaseCommand
+
+from apps.permissions.constants import Roles
 from apps.users.models import User
 from faker import Faker
 from django.db import transaction
 
-from shared.constants import Roles
 from apps.users.models import (
     AdminProfile,
     PostOfficeManagerProfile,
