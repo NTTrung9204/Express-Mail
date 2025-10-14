@@ -24,10 +24,12 @@ class GroupSerializer(serializers.ModelSerializer):
     Serializer class for the Group model.
     """
 
+    permissions = PermissionSerializer(many=True, read_only=True)
+
     class Meta:
         """ "
         Meta class for GroupSerializer.
         """
 
         model = Group
-        fields = ["id", "name"]
+        fields = ["id", "name", "permissions"]

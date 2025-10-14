@@ -2,8 +2,8 @@ from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
+from apps.permissions.constants import ROLE_GROUP_MAP
 from apps.users.models import User
-from shared.constants import ROLE_GROUP_MAP
 
 
 class Command(BaseCommand):

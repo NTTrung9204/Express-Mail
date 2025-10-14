@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
+from apps.permissions.constants import Groups
 from apps.users.models import (
     User,
     AdminProfile,
@@ -9,7 +10,7 @@ from apps.users.models import (
     ShipperProfile,
     PostOfficeStaffProfile,
 )
-from shared.constants import Roles
+from services.groups.group_services import GroupService
 from shared.messages import ERROR_MESSAGES
 
 
@@ -28,35 +29,6 @@ class UserSerializer(serializers.ModelSerializer):
         ]
     )
 
-    def to_representation(self, instance):
-        """
-        Add user profile to serializer data.
-        """
-
-        data = super().to_representation(instance)
-
-        if instance.role and instance.role != Roles.SUPER_ADMIN.value:
-            role_profile_map = {
-                Roles.ADMIN.value: ("admin_profile", AdminProfileSerializer),
-                Roles.POST_OFFICE_MANAGER.value: (
-                    "post_office_manager_profile",
-                    PostOfficeManagerProfileSerializer,
-                ),
-                Roles.POST_OFFICE_STAFF.value: (
-                    "post_office_staff_profile",
-                    PostOfficeStaffProfileSerializer,
-                ),
-                Roles.SHOP.value: ("shop_profile", ShopProfileSerializer),
-                Roles.SHIPPER.value: ("shipper_profile", ShipperProfileSerializer),
-            }
-
-            profile_config = role_profile_map.get(instance.role)
-            related_name, serializer_class = profile_config
-            profile_instance = getattr(instance, related_name)
-            data["profile"] = serializer_class(profile_instance).data
-
-        return data
-
     class Meta:
         """
         Meta class for UserSerializer.
@@ -71,19 +43,40 @@ class UserSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "role",
+            "exclude_permissions",
         ]
-        read_only_fields = ["role"]
+        read_only_fields = ["role", "exclude_permissions"]
 
 
-class AdminProfileSerializer(serializers.ModelSerializer):
+class BaseProfileSerializer(serializers.ModelSerializer):
     """
-    Serializer for AdminProfile model.
+    Serializer for the BaseProfile model.
     """
 
     user = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.exclude(is_superuser=True),
         required=True,
         allow_null=False,
+    )
+
+    class Meta:
+        """
+        Meta class for BaseProfileSerializer.
+        """
+
+        abstract = True
+
+
+class AdminProfileSerializer(BaseProfileSerializer):
+    """
+    Serializer for AdminProfile model.
+    """
+
+    exclude_permissions = serializers.PrimaryKeyRelatedField(
+        queryset=GroupService.get_permissions_of_group(Groups.ADMIN.value),
+        many=True,
+        allow_empty=True,
+        write_only=True,
     )
 
     class Meta:
@@ -92,18 +85,21 @@ class AdminProfileSerializer(serializers.ModelSerializer):
         """
 
         model = AdminProfile
-        fields = ["id", "user"]
+        fields = ["id", "user", "exclude_permissions"]
 
 
-class PostOfficeManagerProfileSerializer(serializers.ModelSerializer):
+class PostOfficeManagerProfileSerializer(BaseProfileSerializer):
     """
     Serializer for PostOfficeManagerProfile model.
     """
 
-    user = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.exclude(is_superuser=True),
-        required=True,
-        allow_null=False,
+    exclude_permissions = serializers.PrimaryKeyRelatedField(
+        queryset=GroupService.get_permissions_of_group(
+            Groups.POST_OFFICE_MANAGER.value
+        ),
+        many=True,
+        allow_empty=True,
+        write_only=True,
     )
 
     class Meta:
@@ -112,18 +108,19 @@ class PostOfficeManagerProfileSerializer(serializers.ModelSerializer):
         """
 
         model = PostOfficeManagerProfile
-        fields = ["id", "user", "post_office"]
+        fields = ["id", "user", "post_office", "exclude_permissions"]
 
 
-class PostOfficeStaffProfileSerializer(serializers.ModelSerializer):
+class PostOfficeStaffProfileSerializer(BaseProfileSerializer):
     """
     Serializer for PostOfficeStaffProfile model.
     """
 
-    user = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.exclude(is_superuser=True),
-        required=True,
-        allow_null=False,
+    exclude_permissions = serializers.PrimaryKeyRelatedField(
+        queryset=GroupService.get_permissions_of_group(Groups.POST_OFFICE_STAFF.value),
+        many=True,
+        allow_empty=True,
+        write_only=True,
     )
 
     class Meta:
@@ -132,18 +129,19 @@ class PostOfficeStaffProfileSerializer(serializers.ModelSerializer):
         """
 
         model = PostOfficeStaffProfile
-        fields = ["id", "user", "post_office"]
+        fields = ["id", "user", "post_office", "exclude_permissions"]
 
 
-class ShopProfileSerializer(serializers.ModelSerializer):
+class ShopProfileSerializer(BaseProfileSerializer):
     """
     Serializer for ShopProfile model.
     """
 
-    user = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.exclude(is_superuser=True),
-        required=True,
-        allow_null=False,
+    exclude_permissions = serializers.PrimaryKeyRelatedField(
+        queryset=GroupService.get_permissions_of_group(Groups.SHOP.value),
+        many=True,
+        allow_empty=True,
+        write_only=True,
     )
 
     class Meta:
@@ -152,18 +150,19 @@ class ShopProfileSerializer(serializers.ModelSerializer):
         """
 
         model = ShopProfile
-        fields = ["id", "user"]
+        fields = ["id", "user", "exclude_permissions"]
 
 
-class ShipperProfileSerializer(serializers.ModelSerializer):
+class ShipperProfileSerializer(BaseProfileSerializer):
     """
     Serializer for ShipperProfile model.
     """
 
-    user = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.exclude(is_superuser=True),
-        required=True,
-        allow_null=False,
+    exclude_permissions = serializers.PrimaryKeyRelatedField(
+        queryset=GroupService.get_permissions_of_group(Groups.SHIPPER.value),
+        many=True,
+        allow_empty=True,
+        write_only=True,
     )
 
     class Meta:
@@ -172,4 +171,4 @@ class ShipperProfileSerializer(serializers.ModelSerializer):
         """
 
         model = ShipperProfile
-        fields = ["id", "user", "post_office"]
+        fields = ["id", "user", "post_office", "exclude_permissions"]

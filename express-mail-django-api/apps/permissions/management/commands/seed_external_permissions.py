@@ -3,7 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import Permission
 from django.db import transaction
 
-from shared.constants import ExternalModels
+from apps.permissions.constants import ExternalModels
 
 
 class Command(BaseCommand):

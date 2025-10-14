@@ -1,3 +1,5 @@
+from apps.permissions.constants import Roles
+from apps.users.constants import PROFILE_SERIALIZER_MAP
 from apps.users.models import (
     AdminProfile,
     PostOfficeManagerProfile,
@@ -5,7 +7,6 @@ from apps.users.models import (
     ShopProfile,
     ShipperProfile,
 )
-from shared.constants import Roles
 
 
 class ProfileService:
@@ -181,3 +182,25 @@ class ProfileService:
             user.save()
 
         return shipper_profile
+
+    @staticmethod
+    def get_profile(user):
+        """
+        Get profile for a given user.
+        """
+
+        role = user.role
+        if role and role != Roles.SUPER_ADMIN.value:
+            return getattr(user, f"{role}_profile", None)
+        return None
+
+    @staticmethod
+    def serialize_profile(profile):
+        """
+        Get data(dict) from given profile.
+        """
+
+        for model_class, serializer_class in PROFILE_SERIALIZER_MAP.items():
+            if isinstance(profile, model_class):
+                return serializer_class(instance=profile).data
+        return None
