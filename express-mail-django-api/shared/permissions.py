@@ -1,3 +1,4 @@
+from django.contrib.auth.backends import ModelBackend
 from rest_framework.permissions import BasePermission, DjangoModelPermissions
 
 
@@ -35,10 +36,23 @@ class GenericMultiPermission(BasePermission):
         Check if user has all required permissions.
         """
 
-        if not request.user or not request.user.is_authenticated:
-            return False
+        user = request.user
+        return bool(user and user.is_authenticated and user.has_perms(self.perm_list))
 
-        for perm in self.perm_list:
-            if not request.user.has_perm(perm):
-                return False
-        return True
+
+class ExcludePermissionModelBackend(ModelBackend):
+    """
+    Custom ModelBackend class for exclude permission case.
+    """
+
+    def get_all_permissions(self, user_obj, obj=None):
+        """
+        Remove exclude permissions out of original all permissions.
+        """
+
+        perms = super().get_all_permissions(user_obj, obj)
+        excluded = {
+            f"{perm.content_type.app_label}.{perm.codename}"
+            for perm in user_obj.exclude_permissions.all()
+        }
+        return perms - excluded

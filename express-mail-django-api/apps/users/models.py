@@ -1,10 +1,12 @@
 from django.contrib.auth.models import AbstractUser, UserManager
 from safedelete.managers import SafeDeleteManager
 from django.db import models
+
+from apps.permissions.constants import Roles
 from apps.post_offices.models import PostOffice
 
-from shared.constants import Roles
 from shared.models import BaseModel
+from django.contrib.auth.models import Permission
 
 
 class SoftDeleteUserManager(UserManager, SafeDeleteManager):
@@ -28,6 +30,9 @@ class User(AbstractUser, BaseModel):
 
     email = models.EmailField(unique=True)
     role = models.CharField(choices=Roles.choices(), max_length=20, null=True)
+    exclude_permissions = models.ManyToManyField(
+        Permission, db_table="user_exclude_permissions", related_name="exclude_users"
+    )
     objects = SoftDeleteUserManager()
     all_objects = UserManager()
 
@@ -58,7 +63,7 @@ class AdminProfile(BaseModel):
 
 class PostOfficeManagerProfile(BaseModel):
     """
-    Profile for users in the post_office_manager group.
+    Profile for users  group.
     """
 
     user = models.OneToOneField(
