@@ -9,7 +9,14 @@ class PermissionService:
         Handle PUT exclude permissions of user.
         """
 
-        print(exclude_permissions, "wtf")
         user.exclude_permissions.clear()
         if exclude_permissions:
             user.exclude_permissions.add(*exclude_permissions)
+
+    @staticmethod
+    def get_permissions_of_group(group):
+        """
+        Get all permissions of a group.
+        """
+
+        return group.permissions.all()

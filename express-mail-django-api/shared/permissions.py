@@ -50,9 +50,13 @@ class ExcludePermissionModelBackend(ModelBackend):
         Remove exclude permissions out of original all permissions.
         """
 
-        perms = super().get_all_permissions(user_obj, obj)
-        excluded = {
-            f"{perm.content_type.app_label}.{perm.codename}"
-            for perm in user_obj.exclude_permissions.all()
+        all_perms = super().get_all_permissions(user_obj, obj)
+
+        excluded_perms = {
+            f"{app_label}.{codename}"
+            for app_label, codename in user_obj.exclude_permissions.values_list(
+                "content_type__app_label", "codename"
+            )
         }
-        return perms - excluded
+
+        return all_perms - excluded_perms
