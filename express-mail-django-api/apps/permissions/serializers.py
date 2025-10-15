@@ -7,16 +7,14 @@ class PermissionSerializer(serializers.ModelSerializer):
     Serializer class for the Permission model.
     """
 
-    content_type = serializers.CharField(source="content_type.model", read_only=True)
-
     class Meta:
         """
         Meta class for PermissionSerializer.
         """
 
         model = Permission
-        fields = ["id", "name", "codename", "content_type"]
-        read_only_fields = ["id", "name", "codename", "content_type"]
+        fields = ["id", "name", "codename", "content_type_id"]
+        read_only_fields = ["id", "name", "codename", "content_type_id"]
 
 
 class GroupSerializer(serializers.ModelSerializer):
@@ -24,12 +22,10 @@ class GroupSerializer(serializers.ModelSerializer):
     Serializer class for the Group model.
     """
 
-    permissions = PermissionSerializer(many=True, read_only=True)
-
     class Meta:
         """ "
         Meta class for GroupSerializer.
         """
 
         model = Group
-        fields = ["id", "name", "permissions"]
+        fields = ["id", "name"]
