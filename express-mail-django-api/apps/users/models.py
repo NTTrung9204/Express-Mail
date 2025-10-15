@@ -63,7 +63,7 @@ class AdminProfile(BaseModel):
 
 class PostOfficeManagerProfile(BaseModel):
     """
-    Profile for users  group.
+    Profile for users in the post_office_manager group.
     """
 
     user = models.OneToOneField(
