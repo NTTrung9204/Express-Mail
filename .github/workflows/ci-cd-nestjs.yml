@@ -49,10 +49,12 @@ jobs:
           path: ./express-mail-nestjs-api/dist
 
   docker-deploy:
-    name: Build & Push Docker image (main & develop)
+    name: Build & Push Docker image (Push & PR)
     needs: ci
     runs-on: self-hosted
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    if: |
+      github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') ||
+      github.event_name == 'pull_request' && (github.base_ref == 'main' || github.base_ref == 'develop')
 
     steps:
       - name: Checkout repository
@@ -62,7 +64,14 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build NestJS Docker image
-        run: docker build -f Dockerfile.dev -t nttrung9204/express-mail-nestjs-api:latest ./express-mail-nestjs-api
+        working-directory: ./express-mail-nestjs-api
+        run: |
+          # Tag PR builds khác để không ghi đè production
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            docker build -f Dockerfile.dev -t nttrung9204/express-mail-nestjs-api:pr-${{ github.event.pull_request.number }} .
+          else
+            docker build -f Dockerfile.dev -t nttrung9204/express-mail-nestjs-api:latest .
+          fi
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -71,17 +80,21 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Push NestJS Docker image
-        run: docker push nttrung9204/express-mail-nestjs-api:latest
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            docker push nttrung9204/express-mail-nestjs-api:pr-${{ github.event.pull_request.number }}
+          else
+            docker push nttrung9204/express-mail-nestjs-api:latest
+          fi
 
-      - name: Pull NestJS Docker image
-        run: docker pull nttrung9204/express-mail-nestjs-api:latest
-
-      - name: Stop and remove old container
+      - name: Stop and remove old container (only for push to main/develop)
+        if: github.event_name == 'push'
         run: |
           docker stop express-mail-nestjs-api || true
           docker rm express-mail-nestjs-api || true
 
-      - name: Start new container
+      - name: Start new container (only for push to main/develop)
+        if: github.event_name == 'push'
         env:
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_PORT: ${{ secrets.DB_PORT }}
