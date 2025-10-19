@@ -53,6 +53,7 @@ jobs:
     needs: ci
     runs-on: self-hosted
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -70,6 +71,10 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+      - name: Convert repo owner to lowercase
+        id: repo_owner
+        run: echo "owner_lc=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
@@ -77,10 +82,12 @@ jobs:
           file: ./express-mail-nestjs-api/Dockerfile.dev
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/express-mail-nestjs-api:latest
-            ghcr.io/${{ github.repository_owner }}/express-mail-nestjs-api:${{ github.sha }}
+            ghcr.io/${{ env.owner_lc }}/express-mail-nestjs-api:latest
+            ghcr.io/${{ env.owner_lc }}/express-mail-nestjs-api:${{ github.sha }}
           platforms: linux/amd64,linux/arm64
 
       - name: Output image info
         run: |
-          echo "Image pushed to ghcr.io/${{ github.repository_owner }}/express-mail-nestjs-api:latest"
+          echo "Image pushed to:"
+          echo " - ghcr.io/${{ env.owner_lc }}/express-mail-nestjs-api:latest"
+          echo " - ghcr.io/${{ env.owner_lc }}/express-mail-nestjs-api:${{ github.sha }}"
