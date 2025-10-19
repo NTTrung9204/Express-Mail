@@ -1,12 +1,44 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ShippingController } from './shipping.controller';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Shipping } from './entities/shipping.entity';
+import { ShippingService } from './shipping.service';
+import { JwtService } from '@nestjs/jwt';
 
 describe('ShippingController', () => {
   let controller: ShippingController;
 
   beforeEach(async () => {
+    const mockJwtService = {
+      sign: jest.fn(),
+      verify: jest.fn(),
+    };
+    const mockShippingService = {
+      findAll: jest.fn(),
+      findOne: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      remove: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ShippingController],
+      providers: [
+        {
+          provide: ShippingService,
+          useValue: mockShippingService,
+        },
+        {
+          provide: JwtService,
+          useValue: mockJwtService,
+        },
+        JwtAuthGuard,
+        {
+          provide: getRepositoryToken(Shipping),
+          useValue: {},
+        },
+      ],
     }).compile();
 
     controller = module.get<ShippingController>(ShippingController);
