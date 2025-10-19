@@ -1,5 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { OrderController } from './order.controller';
+import { OrderService } from './order.service';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Order } from './entities/order.entity';
+import { OrderTransition } from './entities/order-transition.entity';
+import { ProductService } from '../product/product.service';
+import { Product } from '../product/entities/product.entity';
+import { OrderPostOffice } from './entities/post-office-order.entity';
+import { JwtService } from '@nestjs/jwt';
 
 describe('OrderController', () => {
   let controller: OrderController;
@@ -7,6 +15,15 @@ describe('OrderController', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [OrderController],
+      providers: [
+        OrderService,
+        ProductService,
+        JwtService,
+        { provide: getRepositoryToken(Order), useValue: {} },
+        { provide: getRepositoryToken(OrderTransition), useValue: {} },
+        { provide: getRepositoryToken(OrderPostOffice), useValue: {} },
+        { provide: getRepositoryToken(Product), useValue: {} },
+      ],
     }).compile();
 
     controller = module.get<OrderController>(OrderController);
