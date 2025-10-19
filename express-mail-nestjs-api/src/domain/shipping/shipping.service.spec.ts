@@ -1,18 +1,41 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ShippingService } from './shipping.service';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Shipping } from './entities/shipping.entity';
+import { Repository } from 'typeorm';
 
 describe('ShippingService', () => {
   let service: ShippingService;
+  let repository: Repository<Shipping>;
+
+  const mockRepository = {
+    create: jest.fn(),
+    save: jest.fn(),
+    find: jest.fn(),
+    findOne: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ShippingService],
+      providers: [
+        ShippingService,
+        {
+          provide: getRepositoryToken(Shipping),
+          useValue: mockRepository,
+        },
+      ],
     }).compile();
 
     service = module.get<ShippingService>(ShippingService);
+    repository = module.get<Repository<Shipping>>(getRepositoryToken(Shipping));
+
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+    expect(repository).toBeDefined();
   });
 });
