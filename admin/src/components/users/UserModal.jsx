@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
   const [form, setForm] = useState({
@@ -34,12 +36,12 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
       });
     }
     setErrors({});
-  }, [mode, user]);
+  }, [open ,mode, user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: "" })); // reset lỗi cho field đó
+    setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -52,12 +54,10 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
     if (!form.email) newErrors.email = "Vui lòng nhập email.";
     else if (!isValidEmail(form.email)) newErrors.email = "Email không hợp lệ.";
 
-    // ✅ Chỉ kiểm tra mật khẩu nếu đang thêm hoặc người dùng có nhập mật khẩu mới
     if (mode === "add" || form.password) {
       if (!form.password) newErrors.password = "Vui lòng nhập mật khẩu.";
       else if (form.password.length < 6)
         newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự.";
-
       if (form.password !== form.confirmPassword)
         newErrors.confirmPassword = "Mật khẩu xác nhận không khớp.";
     }
@@ -66,19 +66,39 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = async () => {
-    if (!validate()) return;
+const handleSave = async () => {
+  if (!validate()) return;
 
-    const dataToSend = { ...form };
-    delete dataToSend.confirmPassword;
+  const dataToSend = { ...form };
+  delete dataToSend.confirmPassword;
+  if (mode === "edit" && !form.password) delete dataToSend.password;
 
-    // ✅ Nếu đang sửa và mật khẩu trống → không gửi field này
-    if (mode === "edit" && !form.password) {
-      delete dataToSend.password;
-    }
+  const result = await onSave(dataToSend);
 
-    await onSave(dataToSend);
-  };
+if (!result?.success) {
+  if (result?.errors && typeof result.errors === "object") {
+    const fieldErrors = {};
+    const errorMessages = [];
+
+    Object.entries(result.errors).forEach(([field, messages]) => {
+      const firstMessage = Array.isArray(messages) ? messages[0] : messages;
+      fieldErrors[field] = firstMessage;
+      errorMessages.push(firstMessage);
+    });
+
+    setErrors(fieldErrors);
+    toast.error(errorMessages.join("; "));
+  } else {
+    toast.error(result?.message || "❌ Có lỗi xảy ra!");
+  }
+  return;
+}
+
+
+  toast.success(result.message || "Thành công!");
+  onClose();
+};
+
 
   if (!open) return null;
 
@@ -91,7 +111,6 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
         className="bg-white w-full max-w-2xl p-8 rounded-2xl shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex justify-between mb-6 border-b pb-3">
           <h2 className="text-2xl font-semibold text-orange-600">
             {mode === "add"
@@ -108,7 +127,7 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
           </button>
         </div>
 
-        {/* Họ và Tên */}
+        {/* --- Form fields --- */}
         <div className="grid grid-cols-2 gap-6 mb-6">
           <div>
             <label className="block mb-1 font-medium">Họ</label>
@@ -119,7 +138,9 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
               disabled={isView}
               placeholder="Nhập họ"
               className={`w-full p-2 border rounded-lg outline-none ${
-                errors.firstName ? "border-red-500" : "focus:border-orange-500"
+                errors.firstName
+                  ? "border-red-500"
+                  : "focus:border-orange-500"
               }`}
             />
             {errors.firstName && (
@@ -144,7 +165,6 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
           </div>
         </div>
 
-        {/* Username + Email */}
         <div className="grid grid-cols-2 gap-6 mb-6">
           <div>
             <label className="block mb-1 font-medium">Tên đăng nhập</label>
@@ -181,7 +201,6 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
           </div>
         </div>
 
-        {/* Mật khẩu & Xác nhận */}
         {!isView && (
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div>
@@ -229,7 +248,6 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
           </div>
         )}
 
-        {/* Buttons */}
         <div className="flex justify-end gap-4 mt-8">
           <button
             onClick={onClose}

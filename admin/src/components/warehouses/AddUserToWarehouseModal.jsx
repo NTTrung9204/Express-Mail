@@ -43,7 +43,6 @@ const AddUserToWarehouseModal = ({ open, onClose, warehouse, users = [], onSubmi
           </button>
         </div>
 
-        {/* Warehouse info */}
         <div className="mb-4">
           <p className="text-sm text-gray-600">Kho được chọn:</p>
           <div className="bg-white border border-orange-200 rounded p-3 mt-1">
@@ -52,7 +51,6 @@ const AddUserToWarehouseModal = ({ open, onClose, warehouse, users = [], onSubmi
           </div>
         </div>
 
-        {/* Input chọn người dùng */}
         <div className="mb-4 relative">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Chọn người dùng
@@ -71,7 +69,6 @@ const AddUserToWarehouseModal = ({ open, onClose, warehouse, users = [], onSubmi
             />
           </div>
 
-          {/* Gợi ý kết quả */}
           {searchTerm && !selectedUser && filteredUsers.length > 0 && (
             <ul className="absolute z-10 mt-1 w-full bg-white border border-orange-200 rounded shadow-lg max-h-40 overflow-y-auto">
               {filteredUsers.map((u) => (
@@ -90,7 +87,6 @@ const AddUserToWarehouseModal = ({ open, onClose, warehouse, users = [], onSubmi
           )}
         </div>
 
-        {/* Buttons */}
         <div className="flex justify-end gap-3 mt-6">
           <button
             onClick={onClose}
