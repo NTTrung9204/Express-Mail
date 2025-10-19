@@ -77,8 +77,8 @@ jobs:
           file: ./express-mail-nestjs-api/Dockerfile.dev
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/express-mail-nestjs-api:latest
-            ghcr.io/${{ github.repository_owner }}/express-mail-nestjs-api:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner,, }}/express-mail-nestjs-api:latest
+            ghcr.io/${{ github.repository_owner,, }}/express-mail-nestjs-api:${{ github.sha }}
           platforms: linux/amd64,linux/arm64
 
       - name: Output image info
