@@ -10,7 +10,7 @@ import {
   HttpStatus,
   HttpCode,
   Query,
-  UseGuards,
+  // UseGuards,
   Req,
 } from '@nestjs/common';
 import {
@@ -28,12 +28,12 @@ import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrderResponseDto } from './dto/order-response.dto';
 import { OrderQueryDto } from './dto/order-query.dto';
 import { ApiResponseDto } from 'src/common/dto/api-response.dto';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+// import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { AuthJwtRequest } from 'src/common/@type/jwt-payload.type';
 
 @ApiTags('Orders')
 @Controller('orders')
-@UseGuards(JwtAuthGuard)
+// @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}

@@ -96,3 +96,17 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## Note
+
+- create migration:generate
+
+```bash
+npx typeorm -d dist/src/config/database.config.js migration:generate src/database/migrations/addTableShipping
+```
+
+- Run migration
+
+```bash
+npx typeorm -d dist/src/config/database.config.js migration:run
+```
