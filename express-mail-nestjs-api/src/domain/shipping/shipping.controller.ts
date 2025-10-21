@@ -9,7 +9,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
-  UseGuards,
+  // UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -20,7 +20,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ApiResponseDto } from 'src/common/dto/api-response.dto';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+// import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { ShippingService } from './shipping.service';
 import {
   AssignShipperDto,
@@ -32,7 +32,7 @@ import { UpdateShippingStatusDto } from './dto/update-status.dto';
 
 @ApiTags('Shipping')
 @Controller('shipping')
-@UseGuards(JwtAuthGuard)
+// @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class ShippingController {
   constructor(private readonly shippingService: ShippingService) {}
