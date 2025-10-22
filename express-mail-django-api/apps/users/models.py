@@ -118,6 +118,8 @@ class ShopProfile(BaseModel):
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="shop_profile", null=True
     )
+    phone_number = models.CharField(max_length=10, unique=True)
+    address = models.TextField()
 
     class Meta:
         """
@@ -141,6 +143,12 @@ class ShipperProfile(BaseModel):
         related_name="shipper_profiles",
         null=True,
     )
+    phone_number = models.CharField(max_length=10, unique=True)
+    address = models.TextField()
+    motor_model = models.CharField(max_length=100)
+    motor_model_release_date = models.DateField()
+    avatar = models.ImageField()
+    card_id = models.ImageField()
 
     class Meta:
         """
