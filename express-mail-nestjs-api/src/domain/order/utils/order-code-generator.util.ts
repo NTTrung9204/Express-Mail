@@ -8,15 +8,16 @@ export class OrderCodeGenerator {
   static generate(): string {
     const timestamp = Date.now().toString();
     let code = '';
-    
+
     // Use timestamp digits to generate consistent codes
     for (let i = 0; i < 8; i++) {
-      const charIndex = parseInt(timestamp[i % timestamp.length]) + 
-                       parseInt(timestamp[(i + 1) % timestamp.length]) + 
-                       (i * 7);
+      const charIndex =
+        parseInt(timestamp[i % timestamp.length]) +
+        parseInt(timestamp[(i + 1) % timestamp.length]) +
+        i * 7;
       code += this.CHARACTERS[charIndex % this.CHARACTERS.length];
     }
-    
+
     return code;
   }
 
