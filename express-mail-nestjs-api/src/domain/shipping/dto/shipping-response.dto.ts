@@ -20,5 +20,3 @@ export class ShippingResponseDto {
   @ApiProperty()
   updatedAt: Date;
 }
-
-
