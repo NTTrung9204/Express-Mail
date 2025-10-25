@@ -5,10 +5,15 @@ on:
     branches:
       - main
       - develop
+    paths:
+      - 'express-mail-nestjs-api/**'
   pull_request:
     branches:
       - main
       - develop
+    paths:
+      - 'express-mail-nestjs-api/**'
+  workflow_dispatch: {}
 
 jobs:
   ci:
