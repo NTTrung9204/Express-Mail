@@ -31,7 +31,6 @@ import { ApiResponseDto } from 'src/common/dto/api-response.dto';
 // import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { AuthJwtRequest } from 'src/common/@type/jwt-payload.type';
 import { PaginatedResponseDto } from 'src/common/dto/paginated-response.dto';
-import { ShippingResponseDto } from '../shipping/dto';
 
 @ApiTags('Orders')
 @Controller('orders')
