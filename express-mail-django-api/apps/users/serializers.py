@@ -28,6 +28,14 @@ class UserSerializer(serializers.ModelSerializer):
             )
         ]
     )
+    username = serializers.CharField(
+        validators=[
+            UniqueValidator(
+                queryset=User.all_objects.all(),
+                message=ERROR_MESSAGES["username_already_exists"],
+            )
+        ]
+    )
 
     class Meta:
         """
@@ -150,7 +158,7 @@ class ShopProfileSerializer(BaseProfileSerializer):
         """
 
         model = ShopProfile
-        fields = ["id", "user", "exclude_permissions"]
+        fields = ["id", "user", "exclude_permissions", "address", "phone_number"]
 
 
 class ShipperProfileSerializer(BaseProfileSerializer):
@@ -171,4 +179,15 @@ class ShipperProfileSerializer(BaseProfileSerializer):
         """
 
         model = ShipperProfile
-        fields = ["id", "user", "post_office", "exclude_permissions"]
+        fields = [
+            "id",
+            "user",
+            "post_office",
+            "exclude_permissions",
+            "phone_number",
+            "address",
+            "motor_model",
+            "motor_model_release_year",
+            "avatar",
+            "card_id",
+        ]
