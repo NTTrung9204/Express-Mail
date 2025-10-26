@@ -79,4 +79,7 @@ class AppStrings {
   static const color = "Màu";
   static const license_plate_number = "Biển số xe";
   static const update_vehicle_information = "Cập nhật thông tin xe";
+  static const connection_error = "Lỗi kết nối";
+  static const wrong_information = "Sai thông tin";
+  static const login_failed = "Đăng nhập thất bại";
 }
