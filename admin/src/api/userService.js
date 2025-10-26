@@ -20,8 +20,20 @@ export const userService = {
   },
 
   updateUser: async (id, userData) => {
-    const response = await baseAPI.put(`/users/${id}/`, userData);
-    return response.data;
+    try {
+      const response = await baseAPI.put(`/users/${id}/`, userData);
+      return {
+        success: true,
+        data: response.data,
+        message: 'Cập nhật người dùng thành công!',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Có lỗi xảy ra',
+        errors: error.response?.data?.errors || {},
+      };
+    }
   },
 
   patchUser: async (id, userData) => {
