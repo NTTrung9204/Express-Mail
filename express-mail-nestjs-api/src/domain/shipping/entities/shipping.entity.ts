@@ -19,7 +19,7 @@ export class Shipping {
   @Column({ length: 100, name: 'shipper_id' })
   shipperId: string;
 
-  @ManyToOne(() => Order, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Order, (order) => order.shipping, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'order_id' })
   order: Order;
 

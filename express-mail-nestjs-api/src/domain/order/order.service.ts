@@ -122,6 +122,7 @@ export class OrderService {
       .leftJoinAndSelect('order.products', 'products')
       .leftJoinAndSelect('order.transitions', 'transitions')
       .leftJoinAndSelect('order.orderPostOffices', 'orderPostOffices')
+      .leftJoinAndSelect('order.shipping', 'shipping')
       .where('order.deleted_at IS NULL');
 
     if (query?.code) {
@@ -156,7 +157,7 @@ export class OrderService {
   async findOne(id: number): Promise<Order> {
     const order = await this.orderRepository.findOne({
       where: { id },
-      relations: ['products', 'transitions', 'orderPostOffices'],
+      relations: ['products', 'transitions', 'orderPostOffices', 'shipping'],
       withDeleted: false,
     });
 
@@ -170,7 +171,7 @@ export class OrderService {
   async findByCode(code: string): Promise<Order> {
     const order = await this.orderRepository.findOne({
       where: { code },
-      relations: ['products', 'transitions', 'orderPostOffices'],
+      relations: ['products', 'transitions', 'orderPostOffices', 'shipping'],
       withDeleted: false,
     });
 
@@ -184,7 +185,7 @@ export class OrderService {
   async findByShopId(shopId: string): Promise<Order[]> {
     return await this.orderRepository.find({
       where: { shopId },
-      relations: ['products', 'transitions', 'orderPostOffices'],
+      relations: ['products', 'transitions', 'orderPostOffices', 'shipping'],
       withDeleted: false,
     });
   }
@@ -192,7 +193,7 @@ export class OrderService {
   async findByOrderStatus(orderStatus: string): Promise<Order[]> {
     return await this.orderRepository.find({
       where: { order_status: orderStatus as any },
-      relations: ['products', 'transitions', 'orderPostOffices'],
+      relations: ['products', 'transitions', 'orderPostOffices', 'shipping'],
       withDeleted: false,
     });
   }

@@ -12,6 +12,7 @@ import { ShippingStatus } from '../enums/shipping-status.enum';
 import { OrderStatus } from '../enums/order-status.enum';
 import { Product } from 'src/domain/product/entities/product.entity';
 import { OrderTransition } from './order-transition.entity';
+import { Shipping } from 'src/domain/shipping/entities/shipping.entity';
 
 @Entity('orders')
 export class Order {
@@ -94,4 +95,7 @@ export class Order {
 
   @OneToMany(() => OrderTransition, (transition) => transition.order)
   transitions: OrderTransition[];
+
+  @OneToMany(() => Shipping, (shipping) => shipping.order)
+  shipping: Shipping[];
 }
