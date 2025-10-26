@@ -10,10 +10,10 @@ export const dataSourceOptions: DataSourceOptions & SeederOptions = {
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE,
-  entities: ['dist/src/**/*.entity.{js,ts}'],
-  migrations: ['dist/src/database/migrations/*.{js,ts}'],
-  seeds: ['dist/src/database/seeds/**/*.{js,ts}'],
-  factories: ['dist/src/database/factories/**/*.js'],
+  entities: ['dist/**/*.entity.{js,ts}'],
+  migrations: ['dist/database/migrations/*.{js,ts}'],
+  seeds: ['dist/database/seeds/**/*.{js,ts}'],
+  factories: ['dist/database/factories/**/*.{js,ts}'],
   synchronize: false,
 };
 

@@ -18,8 +18,11 @@ import {
   ApiParam,
   ApiResponse,
   ApiTags,
+  ApiQuery,
 } from '@nestjs/swagger';
+import { Query } from '@nestjs/common';
 import { ApiResponseDto } from 'src/common/dto/api-response.dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 // import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { ShippingService } from './shipping.service';
 import {
@@ -29,6 +32,8 @@ import {
   UpdateShippingDto,
 } from './dto';
 import { UpdateShippingStatusDto } from './dto/update-status.dto';
+import { PaginatedResponseDto } from 'src/common/dto/paginated-response.dto';
+import { Shipping } from './entities/shipping.entity';
 
 @ApiTags('Shipping')
 @Controller('shipping')
@@ -59,11 +64,15 @@ export class ShippingController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List shipping' })
+  @ApiOperation({ summary: 'List shipping (paginated)' })
+  @ApiQuery({ name: 'page', required: false, description: 'Page number' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page' })
   @ApiResponse({ status: 200, type: [ShippingResponseDto] })
-  async findAll(): Promise<ApiResponseDto<ShippingResponseDto[]>> {
-    const list = await this.shippingService.findAll();
-    return new ApiResponseDto(true, 'Shipping list', list as any);
+  async findAll(
+    @Query() pagination: PaginationDto,
+  ): Promise<ApiResponseDto<PaginatedResponseDto<Shipping>>> {
+    const list = await this.shippingService.findAll(pagination);
+    return new ApiResponseDto(true, 'Shipping list', list);
   }
 
   @Get(':id')
