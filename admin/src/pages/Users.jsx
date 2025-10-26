@@ -5,7 +5,7 @@ import RoleModal from "../components/users/RoleModal";
 import ConfirmDeleteModal from "../components/users/ConfirmDeleteModal";
 import { Add, Edit, Delete, Visibility } from "@mui/icons-material";
 import { getPageNumbers } from "../utils/pagination"; 
-import { roleOptions, useUserStore } from "../store/UserStore";
+import { roleOptions, useUserStore } from "../store/userStore";
 
 const Users = () => {
   const {
