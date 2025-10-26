@@ -187,7 +187,7 @@ class ShipperProfileSerializer(BaseProfileSerializer):
             "phone_number",
             "address",
             "motor_model",
-            "motor_model_release_year",
+            "license_plate_number",
             "avatar",
             "card_id",
         ]

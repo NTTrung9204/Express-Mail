@@ -146,7 +146,7 @@ class ShipperProfile(BaseModel):
     phone_number = models.CharField(max_length=10)
     address = models.TextField()
     motor_model = models.CharField(max_length=100)
-    motor_model_release_year = models.PositiveSmallIntegerField(null=True, blank=True)
+    license_plate_number = models.CharField(max_length=100)
     avatar = models.ImageField(upload_to="public/shipper_avatar/", null=True)
     card_id = models.CharField(max_length=12)
 
