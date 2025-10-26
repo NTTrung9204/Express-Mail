@@ -12,6 +12,7 @@ _ERROR_MESSAGES = {
         },
         "email_already_exists": "Email already exists.",
         "cannot_delete_superuser": "Can't delete superuser.",
+        "username_already_exists": "Username already exists.",
     },
     "vi": {
         "common": {
@@ -23,6 +24,7 @@ _ERROR_MESSAGES = {
         },
         "email_already_exists": "Email đã tồn tại.",
         "cannot_delete_superuser": "Không thể xóa superuser.",
+        "username_already_exists": "Username đã tồn tại.",
     },
 }
 

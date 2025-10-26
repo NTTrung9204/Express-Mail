@@ -19,8 +19,8 @@ class Command(BaseCommand):
         """
 
         fake = Faker("vi_VN")
-
         created_count = 0
+
         for i in range(1, 21):
             city = fake.city()
             ward = f"Phường {fake.random_int(min=1, max=20)}"
@@ -33,7 +33,8 @@ class Command(BaseCommand):
                 "province_city": city,
                 "ward_commune": ward,
                 "address": f"{addr}, {city}",
-                "coordinate": f"{lat},{lng}",
+                "latitude": lat,
+                "longitude": lng,
             }
 
             _, created = PostOffice.objects.get_or_create(name=name, defaults=defaults)

@@ -12,11 +12,12 @@ class PostOffice(BaseModel):
     province_city = models.CharField(max_length=100)
     ward_commune = models.CharField(max_length=100)
     address = models.TextField()
-    coordinate = models.TextField()
+    latitude = models.FloatField()
+    longitude = models.FloatField()
 
     class Meta:
         """
         Meta class for the PostOffice model.
         """
 
-        db_table = 'post_offices'
+        db_table = "post_offices"

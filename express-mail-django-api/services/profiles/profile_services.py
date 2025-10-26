@@ -80,7 +80,13 @@ class ProfileService:
         Create new ShipperProfile instance and return it.
         """
 
+        avatar_data = shipper_profile_data.pop("avatar", None)
+
         shipper_profile = ShipperProfile.objects.create(**shipper_profile_data)
+
+        if avatar_data:
+            shipper_profile.avatar.save(avatar_data.name, avatar_data, save=True)
+
         user = shipper_profile.user
         if user:
             user.role = Roles.SHIPPER.value
@@ -171,8 +177,15 @@ class ProfileService:
         Update existing ShipperProfile instance and return it.
         """
 
+        avatar_data = shipper_profile_data.pop("avatar", None)
+
         for attr, value in shipper_profile_data.items():
             setattr(shipper_profile, attr, value)
+
+        if avatar_data:
+            if shipper_profile.avatar:
+                shipper_profile.avatar.delete(save=False)
+            shipper_profile.avatar.save(avatar_data.name, avatar_data, save=False)
 
         shipper_profile.save()
 
