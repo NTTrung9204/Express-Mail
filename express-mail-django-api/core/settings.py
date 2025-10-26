@@ -51,9 +51,9 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
+    "storages",
     "corsheaders",
     "core",
-    "corsheaders",
     "shared",
     "apps.jwt_auth",
     "apps.post_offices",
@@ -262,6 +262,27 @@ SPECTACULAR_SETTINGS = {
     "SERVE_AUTHENTICATION": [
         "shared.swagger_authentication.SwaggerBasicAuthentication"
     ],
+    "COMPONENT_SPLIT_REQUEST": True,
 }
 
 AUTH_USER_MODEL = "users.User"
+
+# AWS S3 config
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
+AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME")
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_S3_CUSTOM_DOMAIN")
+AWS_LOCATION = os.getenv("AWS_LOCATION", "media")
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = None
+AWS_QUERYSTRING_AUTH = False
+
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}

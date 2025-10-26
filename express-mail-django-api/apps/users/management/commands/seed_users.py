@@ -84,7 +84,15 @@ class Command(BaseCommand):
                     )
 
                 elif role == Roles.SHOP.value:
-                    ShopProfile.objects.get_or_create(user=user)
+                    phone_number = f"0{fake.random_int(min=100000000, max=999999999)}"
+                    address = fake.address()
+                    ShopProfile.objects.get_or_create(
+                        user=user,
+                        defaults={
+                            "phone_number": phone_number,
+                            "address": address,
+                        },
+                    )
 
         self.stdout.write(
             self.style.SUCCESS(f"Successfully seeded {num_users} normal users!!")

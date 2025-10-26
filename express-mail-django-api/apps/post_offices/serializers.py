@@ -14,4 +14,12 @@ class PostOfficeSerializer(serializers.ModelSerializer):
         """
 
         model = PostOffice
-        fields = ["id", "name", "address", "ward_commune", "address", "province_city"]
+        fields = [
+            "id",
+            "name",
+            "address",
+            "ward_commune",
+            "province_city",
+            "latitude",
+            "longitude",
+        ]
