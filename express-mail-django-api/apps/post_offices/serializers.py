@@ -20,7 +20,7 @@ class PostOfficeSerializer(serializers.ModelSerializer):
             "address",
             "ward_commune",
             "province_city",
+            "district",
             "latitude",
             "longitude",
-            "district",
         ]
