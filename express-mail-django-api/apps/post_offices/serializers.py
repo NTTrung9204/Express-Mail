@@ -22,4 +22,5 @@ class PostOfficeSerializer(serializers.ModelSerializer):
             "province_city",
             "latitude",
             "longitude",
+            "district",
         ]
