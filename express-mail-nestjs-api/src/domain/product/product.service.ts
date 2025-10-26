@@ -8,6 +8,8 @@ import { Repository } from 'typeorm';
 import { Product } from './entities/product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { PaginatedResponseDto } from 'src/common/dto/paginated-response.dto';
 
 @Injectable()
 export class ProductService {
@@ -33,11 +35,20 @@ export class ProductService {
     }
   }
 
-  async findAll(): Promise<Product[]> {
-    return await this.productRepository.find({
+  async findAll(
+    pagination?: PaginationDto,
+  ): Promise<PaginatedResponseDto<Product>> {
+    const page = pagination?.page ?? 1;
+    const limit = pagination?.limit ?? 10;
+
+    const [items, total] = await this.productRepository.findAndCount({
       relations: ['order'],
       withDeleted: false,
+      skip: (page - 1) * limit,
+      take: limit,
     });
+
+    return new PaginatedResponseDto<Product>(items, total, page, limit);
   }
 
   async findOne(id: number): Promise<Product> {
