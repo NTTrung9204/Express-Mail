@@ -1,0 +1,36 @@
+[
+  { "id": 41, "name": "Thêm hồ sơ quản trị viên", "codename": "add_adminprofile", "contentTypeId": 11 },
+  { "id": 42, "name": "Chỉnh sửa hồ sơ quản trị viên", "codename": "change_adminprofile", "contentTypeId": 11 },
+  { "id": 43, "name": "Xóa hồ sơ quản trị viên", "codename": "delete_adminprofile", "contentTypeId": 11 },
+  { "id": 44, "name": "Xem hồ sơ quản trị viên", "codename": "view_adminprofile", "contentTypeId": 11 },
+
+  { "id": 45, "name": "Thêm hồ sơ trưởng bưu cục", "codename": "add_postofficemanagerprofile", "contentTypeId": 12 },
+  { "id": 46, "name": "Chỉnh sửa hồ sơ trưởng bưu cục", "codename": "change_postofficemanagerprofile", "contentTypeId": 12 },
+  { "id": 47, "name": "Xóa hồ sơ trưởng bưu cục", "codename": "delete_postofficemanagerprofile", "contentTypeId": 12 },
+  { "id": 48, "name": "Xem hồ sơ trưởng bưu cục", "codename": "view_postofficemanagerprofile", "contentTypeId": 12 },
+
+  { "id": 49, "name": "Thêm hồ sơ nhân viên bưu cục", "codename": "add_postofficestaffprofile", "contentTypeId": 13 },
+  { "id": 50, "name": "Chỉnh sửa hồ sơ nhân viên bưu cục", "codename": "change_postofficestaffprofile", "contentTypeId": 13 },
+  { "id": 51, "name": "Xóa hồ sơ nhân viên bưu cục", "codename": "delete_postofficestaffprofile", "contentTypeId": 13 },
+  { "id": 52, "name": "Xem hồ sơ nhân viên bưu cục", "codename": "view_postofficestaffprofile", "contentTypeId": 13 },
+
+  { "id": 53, "name": "Thêm hồ sơ shipper", "codename": "add_shipperprofile", "contentTypeId": 14 },
+  { "id": 54, "name": "Chỉnh sửa hồ sơ shipper", "codename": "change_shipperprofile", "contentTypeId": 14 },
+  { "id": 55, "name": "Xóa hồ sơ shipper", "codename": "delete_shipperprofile", "contentTypeId": 14 },
+  { "id": 56, "name": "Xem hồ sơ shipper", "codename": "view_shipperprofile", "contentTypeId": 14 },
+
+  { "id": 57, "name": "Thêm hồ sơ cửa hàng", "codename": "add_shopprofile", "contentTypeId": 15 },
+  { "id": 58, "name": "Chỉnh sửa hồ sơ cửa hàng", "codename": "change_shopprofile", "contentTypeId": 15 },
+  { "id": 59, "name": "Xóa hồ sơ cửa hàng", "codename": "delete_shopprofile", "contentTypeId": 15 },
+  { "id": 60, "name": "Xem hồ sơ cửa hàng", "codename": "view_shopprofile", "contentTypeId": 15 },
+
+  { "id": 61, "name": "Thêm đơn hàng", "codename": "add_order", "contentTypeId": 15 },
+  { "id": 62, "name": "Chỉnh sửa đơn hàng", "codename": "change_order", "contentTypeId": 15 },
+  { "id": 63, "name": "Xóa đơn hàng", "codename": "delete_order", "contentTypeId": 15 },
+  { "id": 64, "name": "Xem đơn hàng", "codename": "view_order", "contentTypeId": 15 },
+
+  { "id": 65, "name": "Thêm sản phẩm", "codename": "add_product", "contentTypeId": 15 },
+  { "id": 66, "name": "Chỉnh sửa sản phẩm", "codename": "change_product", "contentTypeId": 15 },
+  { "id": 67, "name": "Xóa sản phẩm", "codename": "delete_product", "contentTypeId": 15 },
+  { "id": 68, "name": "Xem sản phẩm", "codename": "view_product", "contentTypeId": 15 }
+]

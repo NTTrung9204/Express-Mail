@@ -3,36 +3,36 @@ import { useNavigate } from "react-router-dom";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { authService } from "../api/authService";
-import logoImg from '../assets/logo.png';
-import warehouse_worker from '../assets/ghn_img-login.jpg';
+import logoImg from "../assets/logo.png";
+import warehouse_worker from "../assets/ghn_img-login.jpg";
 import { toast } from "react-toastify";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    username: "",  
-    password: ""   
+    username: "",
+    password: "",
   });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); 
-    e.stopPropagation(); 
+    e.preventDefault();
+    e.stopPropagation();
     setError("");
     setIsLoading(true);
 
     if (!formData.username || !formData.password) {
-      setError("Please enter both username and password");
+      setError("Vui lòng nhập tài khoản và mật khẩu");
       setIsLoading(false);
       return;
     }
@@ -42,17 +42,21 @@ export default function LoginPage() {
         username: formData.username,
         password: formData.password,
       });
-      console.log("Login success:", res);
-      navigate("/admin/home");
+
+      const { user } = res;
+
       toast.success("Đăng nhập thành công");
+
+      if (user.role === "superadmin" || user.role === "admin") {
+        navigate("/admin/home");
+      }
     } catch (err) {
       console.error("Login failed:", err);
-      setError("Invalid credentials. Please try again.");
+      setError("Tên đăng nhập hoặc mật khẩu không chính xác");
     } finally {
       setIsLoading(false);
     }
   };
-
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -67,11 +71,7 @@ export default function LoginPage() {
 
         <div className="md:w-1/2 w-full flex flex-col justify-center px-6">
           <div className="flex items-center justify-center mb-6">
-            <img
-              src={logoImg}
-              alt="GHN Logo"
-              className="w-40"
-            />
+            <img src={logoImg} alt="GHN Logo" className="w-40" />
           </div>
 
           {error && (
@@ -100,7 +100,11 @@ export default function LoginPage() {
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="text-gray-700 font-medium">Mật khẩu</label>
-                <a href="#" className="text-sm text-orange-500 hover:underline" tabIndex={-1}>
+                <a
+                  href="#"
+                  className="text-sm text-orange-500 hover:underline"
+                  tabIndex={-1}
+                >
                   Quên mật khẩu?
                 </a>
               </div>
@@ -131,10 +135,10 @@ export default function LoginPage() {
               type="submit"
               disabled={isLoading}
               className={`w-full bg-orange-400 hover:bg-orange-500 text-white font-semibold rounded-lg py-2 transition cursor-pointer ${
-                isLoading ? 'opacity-70 cursor-not-allowed' : ''
+                isLoading ? "opacity-70 cursor-not-allowed" : ""
               }`}
             >
-              {isLoading ? 'Đang xử lý...' : 'Đăng nhập'}
+              {isLoading ? "Đang xử lý..." : "Đăng nhập"}
             </button>
           </form>
         </div>
