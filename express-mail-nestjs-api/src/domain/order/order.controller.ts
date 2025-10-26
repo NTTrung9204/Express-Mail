@@ -30,6 +30,8 @@ import { OrderQueryDto } from './dto/order-query.dto';
 import { ApiResponseDto } from 'src/common/dto/api-response.dto';
 // import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { AuthJwtRequest } from 'src/common/@type/jwt-payload.type';
+import { PaginatedResponseDto } from 'src/common/dto/paginated-response.dto';
+import { Order } from './entities/order.entity';
 
 @ApiTags('Orders')
 @Controller('orders')
@@ -88,15 +90,13 @@ export class OrderController {
     description: 'List of orders',
     type: [OrderResponseDto],
   })
+  @ApiQuery({ name: 'page', required: false, description: 'Page number' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page' })
   async findAll(
     @Query() query: OrderQueryDto,
-  ): Promise<ApiResponseDto<OrderResponseDto[]>> {
-    const orders = await this.orderService.findAll(query);
-    return new ApiResponseDto(
-      true,
-      'Orders retrieved successfully',
-      orders as OrderResponseDto[],
-    );
+  ): Promise<ApiResponseDto<PaginatedResponseDto<Order>>> {
+    const paginated = await this.orderService.findAll(query);
+    return new ApiResponseDto(true, 'Orders retrieved successfully', paginated);
   }
 
   @Get('code/:code')

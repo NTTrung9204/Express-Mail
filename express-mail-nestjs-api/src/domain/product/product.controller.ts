@@ -9,6 +9,7 @@ import {
   ParseIntPipe,
   HttpStatus,
   HttpCode,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -16,8 +17,10 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { ProductService } from './product.service';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductResponseDto } from './dto/product-response.dto';
@@ -51,18 +54,22 @@ export class ProductController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all products' })
+  @ApiOperation({ summary: 'Get all products (paginated)' })
+  @ApiQuery({ name: 'page', required: false, description: 'Page number' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page' })
   @ApiResponse({
     status: 200,
-    description: 'List of all products',
+    description: 'List of products',
     type: [ProductResponseDto],
   })
-  async findAll(): Promise<ApiResponseDto<ProductResponseDto[]>> {
-    const products = await this.productService.findAll();
+  async findAll(
+    @Query() pagination: PaginationDto,
+  ): Promise<ApiResponseDto<any>> {
+    const products = await this.productService.findAll(pagination);
     return new ApiResponseDto(
       true,
       'Products retrieved successfully',
-      products as ProductResponseDto[],
+      products,
     );
   }
 

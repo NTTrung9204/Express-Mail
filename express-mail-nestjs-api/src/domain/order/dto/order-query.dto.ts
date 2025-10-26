@@ -2,8 +2,9 @@ import { IsOptional, IsEnum, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { OrderStatus } from '../enums/order-status.enum';
 import { ShippingStatus } from '../enums/shipping-status.enum';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
-export class OrderQueryDto {
+export class OrderQueryDto extends PaginationDto {
   @ApiPropertyOptional({ description: 'Order code', example: 'ORD12345' })
   @IsOptional()
   @IsString()
