@@ -10,6 +10,7 @@ import { AssignShipperDto, CreateShippingDto, UpdateShippingDto } from './dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { PaginatedResponseDto } from 'src/common/dto/paginated-response.dto';
 import { UpdateShippingStatusDto } from './dto/update-status.dto';
+import { GetShipperOrdersDto } from './dto/get-shipper-orders.dto';
 
 @Injectable()
 export class ShippingService {
@@ -95,6 +96,43 @@ export class ShippingService {
       console.error(error);
       throw new BadRequestException('Failed to delete shipping');
     }
+  }
+
+  async getShipperOrders(
+    shipperId: string,
+    query: GetShipperOrdersDto,
+  ): Promise<PaginatedResponseDto<Shipping>> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+
+    const queryBuilder = this.shippingRepository
+      .createQueryBuilder('shipping')
+      .leftJoinAndSelect('shipping.order', 'order')
+      .where('shipping.shipperId = :shipperId', { shipperId });
+
+    if (query.status) {
+      queryBuilder.andWhere('shipping.status = :status', {
+        status: query.status,
+      });
+    }
+
+    if (query.from) {
+      queryBuilder.andWhere('shipping.createdAt >= :from', {
+        from: query.from,
+      });
+    }
+
+    if (query.to) {
+      queryBuilder.andWhere('shipping.createdAt <= :to', { to: query.to });
+    }
+
+    const [items, total] = await queryBuilder
+      .orderBy('shipping.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return new PaginatedResponseDto<Shipping>(items, total, page, limit);
   }
 
   async assignShipper(id: number, dto: AssignShipperDto): Promise<Shipping> {
