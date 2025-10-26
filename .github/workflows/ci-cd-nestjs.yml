@@ -46,13 +46,6 @@ jobs:
         run: npm run build --if-present
         working-directory: ./express-mail-nestjs-api
 
-      - name: Upload build artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: nestjs-build
-          path: ./express-mail-nestjs-api/dist
-
   docker-deploy:
     name: Build, Push & Deploy with Docker Compose
     needs: ci
@@ -87,11 +80,15 @@ jobs:
           if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
             IMAGE_TAG=pr-${{ github.event.pull_request.number }}
             COMPOSE_PROJECT_NAME=pr${{ github.event.pull_request.number }}
+            export IMAGE_TAG
             export APP_PORT=$((APP_PORT + 1000))
           else
             IMAGE_TAG=latest
             COMPOSE_PROJECT_NAME=prod
+            export IMAGE_TAG
           fi
+
+          echo "Building Docker image with tag: $IMAGE_TAG"
 
           docker-compose -f docker-compose.yml build --build-arg IMAGE_TAG=$IMAGE_TAG
           docker-compose -f docker-compose.yml push

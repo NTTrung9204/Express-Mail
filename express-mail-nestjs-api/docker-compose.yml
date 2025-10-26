@@ -16,8 +16,11 @@ services:
 
   nestjs:
     build:
-      context: ./
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: ${DOCKERFILE:-Dockerfile}
+      args:
+        IMAGE_TAG: ${IMAGE_TAG:-latest}
+    image: nttrung9204/express-mail-nestjs-api:${IMAGE_TAG:-latest}
     container_name: nestjs_app
     ports:
       - "${APP_PORT}:${APP_PORT}"
