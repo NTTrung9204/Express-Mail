@@ -17,7 +17,7 @@ services:
   nestjs:
     build:
       context: .
-      dockerfile: ${DOCKERFILE:-Dockerfile}
+      dockerfile: Dockerfile
       args:
         IMAGE_TAG: ${IMAGE_TAG:-latest}
     image: nttrung9204/express-mail-nestjs-api:${IMAGE_TAG:-latest}
@@ -35,9 +35,6 @@ services:
       SWAGGER_USER: ${SWAGGER_USER}
       SWAGGER_PASSWORD: ${SWAGGER_PASSWORD}
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
-    volumes:
-      - ./src:/app/src
-      - /app/node_modules
     depends_on:
       - mysql
     networks:

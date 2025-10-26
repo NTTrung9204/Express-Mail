@@ -206,6 +206,47 @@ export class OrderService {
     });
   }
 
+  /**
+   * Find orders assigned to a given shipperId with optional shipping status and date range, paginated
+   */
+  async findByShipperId(
+    shipperId: string,
+    query?: any,
+  ): Promise<PaginatedResponseDto<Order>> {
+    const page = query?.page ?? 1;
+    const limit = query?.limit ?? 10;
+
+    const qb = this.orderRepository
+      .createQueryBuilder('order')
+      .innerJoinAndSelect('order.shipping', 'shipping')
+      .leftJoinAndSelect('order.products', 'products')
+      .leftJoinAndSelect('order.transitions', 'transitions')
+      .leftJoinAndSelect('order.orderPostOffices', 'orderPostOffices')
+      .where('order.deleted_at IS NULL')
+      .andWhere('shipping.deleted_at IS NULL')
+      .andWhere('shipping.shipper_id = :shipperId', { shipperId });
+
+    if (query?.shipping_status) {
+      qb.andWhere('shipping.status = :status', {
+        status: query.shipping_status,
+      });
+    }
+
+    if (query?.from) {
+      qb.andWhere('shipping.created_at >= :from', { from: query.from });
+    }
+
+    if (query?.to) {
+      qb.andWhere('shipping.created_at <= :to', { to: query.to });
+    }
+
+    qb.skip((page - 1) * limit).take(limit);
+
+    const [items, total] = await qb.getManyAndCount();
+
+    return new PaginatedResponseDto<Order>(items, total, page, limit);
+  }
+
   async update(id: number, updateOrderDto: UpdateOrderDto): Promise<Order> {
     const order = await this.findOne(id);
 

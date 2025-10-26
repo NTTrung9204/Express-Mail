@@ -1,17 +1,11 @@
-FROM node:18 AS builder
+FROM node:18
 
 WORKDIR /app
+
 COPY package*.json ./
-RUN npm ci
+
+RUN npm install
 
 COPY . .
-RUN npm run build
 
-FROM node:18 AS prod
-
-WORKDIR /app
-COPY package*.json ./
-RUN npm install --production
-COPY --from=builder /app/dist ./dist
-
-CMD ["npm", "run", "start:prod"]
+CMD ["npm", "run", "start:dev"]

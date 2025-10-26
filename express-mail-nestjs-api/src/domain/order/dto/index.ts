@@ -6,3 +6,4 @@ export {
   OrderPostOfficeResponseDto,
 } from './order-response.dto';
 export { OrderQueryDto } from './order-query.dto';
+export { ShipperOrderQueryDto } from './shipper-order-query.dto';

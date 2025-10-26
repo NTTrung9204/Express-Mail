@@ -71,31 +71,23 @@ jobs:
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_DATABASE: ${{ secrets.DB_DATABASE }}
-          APP_PORT: ${{ secrets.APP_PORT }}
-          APP_ENV: ${{ secrets.APP_ENV }}
+          APP_PORT: 3000
+          APP_ENV: development
           SWAGGER_USER: ${{ secrets.SWAGGER_USER }}
           SWAGGER_PASSWORD: ${{ secrets.SWAGGER_PASSWORD }}
           JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
         run: |
-          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
-            IMAGE_TAG=pr-${{ github.event.pull_request.number }}
-            COMPOSE_PROJECT_NAME=pr${{ github.event.pull_request.number }}
-            export IMAGE_TAG
-            export APP_PORT=$((APP_PORT + 1000))
-          else
-            IMAGE_TAG=latest
-            COMPOSE_PROJECT_NAME=prod
-            export IMAGE_TAG
-          fi
+          IMAGE_TAG=latest
+          COMPOSE_PROJECT_NAME=nestjs-dev
+          export IMAGE_TAG
+          export APP_PORT=3000
 
-          echo "Building Docker image with tag: $IMAGE_TAG"
+          echo "Building Docker image (dev mode) on port 3000..."
 
-          docker-compose -f docker-compose.yml build --build-arg IMAGE_TAG=$IMAGE_TAG
-          docker-compose -f docker-compose.yml push
-          docker-compose -f docker-compose.yml pull
-
+          docker-compose -f docker-compose.yml build --no-cache --build-arg IMAGE_TAG=$IMAGE_TAG
           docker-compose -f docker-compose.yml down || true
           docker-compose -f docker-compose.yml up -d
 
       - name: Clean up unused images
         run: docker image prune -af
+
