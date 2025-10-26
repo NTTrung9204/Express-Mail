@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { userService } from "../api/userService";
 
+// Các lựa chọn vai trò
 export const roleOptions = [
   { value: "staff", label: "Nhân viên kho" },
   { value: "shipper", label: "Shipper" },
@@ -9,21 +10,29 @@ export const roleOptions = [
   { value: "superadmin", label: "Quản trị viên" },
 ];
 
+// Custom hook quản lý users
 export const useUserStore = (initialPage = 1, pageSize = 10) => {
+  // State cơ bản
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(initialPage);
   const [totalCount, setTotalCount] = useState(0);
-  
+
+  // Modal & thao tác
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState("add");
   const [selected, setSelected] = useState(null);
+
   const [openRoleModal, setOpenRoleModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
 
+  // ======================
+  // Fetch danh sách users
+  // ======================
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -37,17 +46,21 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
     }
   };
 
+  // Load lại khi page hoặc pageSize thay đổi
   useEffect(() => {
     fetchUsers();
   }, [page, pageSize]);
 
+  // ======================
+  // Modal thêm/sửa user
+  // ======================
   const handleOpen = (m, user = null) => {
     setMode(m);
     setSelected(user);
     setOpen(true);
   };
 
-const handleSave = async (data) => {
+  const handleSave = async (data) => {
     try {
       if (mode === "add") {
         const newUser = await userService.createUser(data);
@@ -62,6 +75,7 @@ const handleSave = async (data) => {
       }
     } catch (error) {
       console.error("Lỗi khi lưu user:", error);
+
       const errorResponse = error.response?.data || {
         message: "Không thể lưu người dùng. Vui lòng thử lại!",
         errors: null,
@@ -70,26 +84,33 @@ const handleSave = async (data) => {
       if (errorResponse.errors) {
         const fieldErrors = {};
         const errorMessages = [];
+
         Object.entries(errorResponse.errors).forEach(([field, messages]) => {
           const errorMessage = Array.isArray(messages) ? messages[0] : messages;
           fieldErrors[field] = errorMessage;
           errorMessages.push(errorMessage);
         });
+
         return {
           success: false,
-          message: errorResponse.message || "Không thể lưu người dùng. Vui lòng thử lại!",
-          errors: fieldErrors, // Trả về { username: "Tên đăng nhập đã được sử dụng", email: "Email đã tồn tại" }
+          message:
+            errorResponse.message || "Không thể lưu người dùng. Vui lòng thử lại!",
+          errors: fieldErrors, // { username: "Tên đăng nhập đã được sử dụng", email: "Email đã tồn tại" }
         };
       }
 
       return {
         success: false,
-        message: errorResponse.message || "Không thể lưu người dùng. Vui lòng thử lại!",
+        message:
+          errorResponse.message || "Không thể lưu người dùng. Vui lòng thử lại!",
         errors: null,
       };
     }
   };
 
+  // ======================
+  // Quản lý vai trò user
+  // ======================
   const handleRoleChange = (user, newRole) => {
     setSelectedUser({ ...user, newRole });
     setOpenRoleModal(true);
@@ -97,12 +118,11 @@ const handleSave = async (data) => {
 
   const handleConfirmRole = async () => {
     if (!selectedUser) return;
+
     try {
-      await userService.updateUser(selectedUser.id, {
-        role: selectedUser.newRole,
-      });
-      setUsers(prev =>
-        prev.map(u =>
+      await userService.updateUser(selectedUser.id, { role: selectedUser.newRole });
+      setUsers((prev) =>
+        prev.map((u) =>
           u.id === selectedUser.id ? { ...u, role: selectedUser.newRole } : u
         )
       );
@@ -116,6 +136,9 @@ const handleSave = async (data) => {
     }
   };
 
+  // ======================
+  // Xóa user
+  // ======================
   const handleDelete = (user) => {
     setUserToDelete(user);
     setOpenDeleteModal(true);
@@ -123,9 +146,10 @@ const handleSave = async (data) => {
 
   const confirmDelete = async () => {
     if (!userToDelete) return;
+
     try {
       await userService.deleteUser(userToDelete.id);
-      setUsers(prev => prev.filter(u => u.id !== userToDelete.id));
+      setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
       return { success: true, message: "Xóa người dùng thành công!" };
     } catch (error) {
       console.error("Lỗi khi xoá user:", error);
@@ -136,6 +160,9 @@ const handleSave = async (data) => {
     }
   };
 
+  // ======================
+  // Lọc user theo email search
+  // ======================
   const filteredUsers = users.filter((u) =>
     u.email?.toLowerCase().includes(search.toLowerCase())
   );
@@ -154,7 +181,6 @@ const handleSave = async (data) => {
     selectedUser,
     openDeleteModal,
     userToDelete,
-
     setSearch,
     setPage,
     setOpen,
