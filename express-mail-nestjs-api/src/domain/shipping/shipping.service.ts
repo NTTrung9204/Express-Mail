@@ -7,6 +7,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Shipping } from './entities/shipping.entity';
 import { AssignShipperDto, CreateShippingDto, UpdateShippingDto } from './dto';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { PaginatedResponseDto } from 'src/common/dto/paginated-response.dto';
 import { UpdateShippingStatusDto } from './dto/update-status.dto';
 
 @Injectable()
@@ -30,11 +32,20 @@ export class ShippingService {
     }
   }
 
-  async findAll(): Promise<Shipping[]> {
-    return await this.shippingRepository.find({
+  async findAll(
+    pagination?: PaginationDto,
+  ): Promise<PaginatedResponseDto<Shipping>> {
+    const page = pagination?.page ?? 1;
+    const limit = pagination?.limit ?? 10;
+
+    const [items, total] = await this.shippingRepository.findAndCount({
       relations: ['order'],
       withDeleted: false,
+      skip: (page - 1) * limit,
+      take: limit,
     });
+
+    return new PaginatedResponseDto<Shipping>(items, total, page, limit);
   }
 
   async findOne(id: number): Promise<Shipping> {

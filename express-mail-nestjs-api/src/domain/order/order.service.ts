@@ -13,6 +13,7 @@ import { OrderPostOffice } from './entities/post-office-order.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrderQueryDto } from './dto/order-query.dto';
+import { PaginatedResponseDto } from 'src/common/dto/paginated-response.dto';
 import { OrderCodeGenerator } from './utils/order-code-generator.util';
 import { OrderTransitionStatus } from './enums/order-transition-status.enum';
 import { OrderPostOfficeStatus } from './enums/order-post-office-status.enum';
@@ -112,7 +113,10 @@ export class OrderService {
     }
   }
 
-  async findAll(query?: OrderQueryDto): Promise<Order[]> {
+  async findAll(query?: OrderQueryDto): Promise<PaginatedResponseDto<Order>> {
+    const page = query?.page ?? 1;
+    const limit = query?.limit ?? 10;
+
     const queryBuilder = this.orderRepository
       .createQueryBuilder('order')
       .leftJoinAndSelect('order.products', 'products')
@@ -142,7 +146,11 @@ export class OrderService {
       });
     }
 
-    return await queryBuilder.getMany();
+    queryBuilder.skip((page - 1) * limit).take(limit);
+
+    const [items, total] = await queryBuilder.getManyAndCount();
+
+    return new PaginatedResponseDto<Order>(items, total, page, limit);
   }
 
   async findOne(id: number): Promise<Order> {
