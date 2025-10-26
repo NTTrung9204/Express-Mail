@@ -7,6 +7,7 @@ from rest_framework.viewsets import ModelViewSet
 from apps.permissions.constants import Roles
 from apps.users.constants import PROFILE_VIEWSET_ACTION_PERMISSIONS
 from apps.users.models import User
+from apps.users.permissions import ProfileObjectPermission
 from apps.users.serializers import (
     UserSerializer,
     AdminProfileSerializer,
@@ -77,7 +78,12 @@ class UserViewSet(ModelViewSet, BaseAPIViewSet):
             )
         },
     )
-    @action(detail=True, methods=["get"], url_path="profile")
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="profile",
+        permission_classes=[ProfileObjectPermission],
+    )
     def profile(self, request, pk=None):
         """
         Get profile of a user.
