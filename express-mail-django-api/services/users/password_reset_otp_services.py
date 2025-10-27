@@ -34,8 +34,9 @@ class PasswordResetOTPService:
                 html_message=html_message,
                 recipient_list=[email],
             )
-        except Exception:
-            pass
+        except Exception as e:
+            print("loiii")
+            print(str(e))
 
     @staticmethod
     def create_password_reset_otp(user, otp):
