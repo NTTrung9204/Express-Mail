@@ -92,6 +92,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "core.wsgi.application"
 
+APP_NAME = env("APP_NAME", default="Express Mail")
 
 # SMTP
 # https://docs.djangoproject.com/en/5.0/topics/email/
@@ -102,7 +103,7 @@ EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "") != "false"
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", None)
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", None)
 EMAIL_SENDER = os.getenv("EMAIL_SENDER", EMAIL_HOST_USER)
-NAME_SENDER = os.getenv("NAME_SENDER", "OfficeDock")
+NAME_SENDER = os.getenv("NAME_SENDER", "Express Mail")
 
 if not EMAIL_HOST:
     # Only use in local environment if EMAIL_HOST is not set
@@ -273,7 +274,6 @@ AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_S3_CUSTOM_DOMAIN")
-AWS_LOCATION = os.getenv("AWS_LOCATION", "media")
 AWS_S3_FILE_OVERWRITE = False
 AWS_DEFAULT_ACL = None
 AWS_QUERYSTRING_AUTH = False
@@ -281,8 +281,18 @@ AWS_QUERYSTRING_AUTH = False
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {"location": "media"},
     },
     "staticfiles": {
-        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {"location": "static"},
     },
 }
+
+STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/static/"
+MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
+
+STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STATICFILES_FINDERS = ["django.contrib.staticfiles.finders.FileSystemFinder"]

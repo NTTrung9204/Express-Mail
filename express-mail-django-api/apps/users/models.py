@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractUser, UserManager
 from safedelete.managers import SafeDeleteManager
+from django.utils import timezone
 from django.db import models
+import hashlib
 
 from apps.permissions.constants import Roles
 from apps.post_offices.models import PostOffice
@@ -42,6 +44,44 @@ class User(AbstractUser, BaseModel):
         """
 
         db_table = "users"
+
+
+class PasswordResetOTP(BaseModel):
+    """
+    Password reset otp model.
+    """
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    otp_hash = models.CharField(max_length=128)
+    is_used = models.BooleanField(default=False)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        """
+        Meta class for the PasswordResetOTP model.
+        """
+
+        db_table = "password_reset_otp"
+
+    def check_otp(self, otp):
+        """
+        Check if otp is valid.
+        """
+
+        otp_check = hashlib.sha256(otp.encode()).hexdigest()
+        return (
+            otp_check == self.otp_hash
+            and not self.is_used
+            and timezone.now() < self.expires_at
+        )
+
+    def mark_used(self):
+        """
+        Mark otp as used.
+        """
+
+        self.is_used = True
+        self.save()
 
 
 class AdminProfile(BaseModel):
