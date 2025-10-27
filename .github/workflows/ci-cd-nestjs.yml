@@ -71,18 +71,22 @@ jobs:
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_DATABASE: ${{ secrets.DB_DATABASE }}
-          APP_PORT: 3000
+          APP_PORT: ${{ secrets.APP_PORT }}
           APP_ENV: development
           SWAGGER_USER: ${{ secrets.SWAGGER_USER }}
           SWAGGER_PASSWORD: ${{ secrets.SWAGGER_PASSWORD }}
           JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
+          DJANGO_BACKEND_URL: ${{ secrets.DJANGO_BACKEND_URL }}
+          DJANGO_USERNAME: ${{ secrets.DJANGO_USERNAME }}
+          DJANGO_PASSWORD: ${{ secrets.DJANGO_PASSWORD }}
+          REDIS_PORT: ${{ secrets.REDIS_PORT }}
         run: |
           IMAGE_TAG=latest
           COMPOSE_PROJECT_NAME=nestjs-dev
           export IMAGE_TAG
-          export APP_PORT=3000
+          export APP_PORT=${{ secrets.APP_PORT }}
 
-          echo "Building Docker image (dev mode) on port 3000..."
+          echo "Building Docker image (dev mode) on port $APP_PORT..."
 
           docker-compose -f docker-compose.yml build --no-cache --build-arg IMAGE_TAG=$IMAGE_TAG
           docker-compose -f docker-compose.yml down || true
