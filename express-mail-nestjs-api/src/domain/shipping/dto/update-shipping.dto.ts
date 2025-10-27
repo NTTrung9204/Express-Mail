@@ -14,10 +14,11 @@ export class UpdateShippingDto {
   @IsEnum(ShippingStatus)
   status?: ShippingStatus;
 
-  @ApiPropertyOptional({ description: 'Assigned shipper id', example: 'SHIPPER_001' })
+  @ApiPropertyOptional({
+    description: 'Assigned shipper id',
+    example: 'SHIPPER_001',
+  })
   @IsOptional()
   @IsString()
   shipperId?: string;
 }
-
-

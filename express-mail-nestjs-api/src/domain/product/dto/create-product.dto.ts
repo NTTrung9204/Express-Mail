@@ -1,4 +1,12 @@
-import { IsString, IsInt, IsNumber, IsOptional, IsNotEmpty, Min, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsNotEmpty,
+  Min,
+  MaxLength,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateProductDto {
@@ -18,7 +26,10 @@ export class CreateProductDto {
   @Min(0.1)
   weight: number;
 
-  @ApiPropertyOptional({ description: 'Product image URL', example: 'https://example.com/image.jpg' })
+  @ApiPropertyOptional({
+    description: 'Product image URL',
+    example: 'https://example.com/image.jpg',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(100)

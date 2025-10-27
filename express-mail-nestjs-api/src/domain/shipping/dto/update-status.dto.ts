@@ -7,5 +7,3 @@ export class UpdateShippingStatusDto {
   @IsEnum(ShippingStatus)
   status: ShippingStatus;
 }
-
-
