@@ -63,3 +63,27 @@ class UserService:
             related_profile.__class__.objects.filter(pk=related_profile.pk).update(
                 user=None
             )
+
+    @staticmethod
+    def get_user_by_email(email):
+        """
+        Get user by email.
+        """
+
+        if email is None:
+            return None
+
+        try:
+            user = User.objects.get(email=email)
+            return user
+        except User.DoesNotExist:
+            return None
+
+    @staticmethod
+    def update_password(user, new_password):
+        """
+        Update user password.
+        """
+
+        user.set_password(new_password)
+        user.save()

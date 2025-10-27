@@ -3,6 +3,7 @@ from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.viewsets import ModelViewSet
+from rest_framework import status
 
 from apps.permissions.constants import Roles
 from apps.users.constants import PROFILE_VIEWSET_ACTION_PERMISSIONS
@@ -15,12 +16,17 @@ from apps.users.serializers import (
     PostOfficeStaffProfileSerializer,
     ShopProfileSerializer,
     ShipperProfileSerializer,
+    ResetPasswordRequestSerializer,
+    VerifyResetPasswordOTPSerializer,
+    ResetPasswordConfirmSerializer,
 )
 from services.permissions.permission_services import PermissionService
 from services.profiles.profile_services import ProfileService
+from services.users.password_reset_otp_services import PasswordResetOTPService
 from services.users.user_services import UserService
 from shared.apis import BaseAPIViewSet
 from shared.permissions import GenericMultiPermission, FullDjangoModelPermissions
+from utils.generators import Generator
 
 
 @extend_schema(tags=["Users"])
@@ -73,7 +79,7 @@ class UserViewSet(ModelViewSet, BaseAPIViewSet):
     @extend_schema(
         description="Get profile of a user (response structure depends on user role)",
         responses={
-            200: OpenApiResponse(
+            status.HTTP_200_OK: OpenApiResponse(
                 description="Dynamic profile data (varies by user role)"
             )
         },
@@ -94,6 +100,117 @@ class UserViewSet(ModelViewSet, BaseAPIViewSet):
         data = ProfileService.serialize_profile(profile)
 
         return self.response_ok(data)
+
+
+@extend_schema(tags=["Reset Password"])
+class ResetPasswordViewSet(BaseAPIViewSet):
+    """
+    Reset password API endpoint.
+    """
+
+    @extend_schema(
+        request=ResetPasswordRequestSerializer,
+        responses={status.HTTP_200_OK: OpenApiResponse()},
+    )
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="request",
+        serializer_class=ResetPasswordRequestSerializer,
+        permission_classes=[],
+    )
+    def request_reset_password(self, request):
+        """
+        Reset password request endpoint.
+        """
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        reset_password_request_data = serializer.validated_data
+        email = reset_password_request_data.pop("email", None)
+
+        user = UserService.get_user_by_email(email)
+        if user:
+            otp = Generator.generate_otp()
+            PasswordResetOTPService.create_password_reset_otp(user, otp)
+            PasswordResetOTPService.send_reset_password_otp(user.email, otp)
+
+        return self.response_ok()
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="verify",
+        serializer_class=VerifyResetPasswordOTPSerializer,
+        permission_classes=[],
+    )
+    def verify_reset_password_otp(self, request):
+        """
+        Verify reset password otp endpoint.
+        """
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        verify_data = serializer.validated_data
+
+        email = verify_data.pop("email", None)
+        otp = verify_data.pop("otp", None)
+
+        user = UserService.get_user_by_email(email)
+        if user:
+            latest_password_reset_otp = (
+                PasswordResetOTPService.get_latest_available_password_reset_otp(user)
+            )
+            if latest_password_reset_otp and latest_password_reset_otp.check_otp(otp):
+                return self.response_ok()
+            else:
+                return self.response_error(
+                    "invalid_reset_password_otp",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+        return self.response_error(
+            "invalid_email", status_code=status.HTTP_400_BAD_REQUEST
+        )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="confirm",
+        serializer_class=ResetPasswordConfirmSerializer,
+        permission_classes=[],
+    )
+    def confirm_reset_password(self, request):
+        """
+        Confirm reset password endpoint.
+        """
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        confirm_data = serializer.validated_data
+
+        email = confirm_data.pop("email", None)
+        otp = confirm_data.pop("otp", None)
+        new_password = confirm_data.pop("new_password", None)
+
+        user = UserService.get_user_by_email(email)
+        if user:
+            latest_password_reset_otp = (
+                PasswordResetOTPService.get_latest_available_password_reset_otp(user)
+            )
+            if latest_password_reset_otp and latest_password_reset_otp.check_otp(otp):
+                UserService.update_password(user, new_password)
+                latest_password_reset_otp.mark_used()
+                return self.response_ok()
+            else:
+                return self.response_error(
+                    "invalid_reset_password_otp",
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+
+        return self.response_error(
+            "invalid_email", status_code=status.HTTP_400_BAD_REQUEST
+        )
 
 
 @extend_schema(tags=["Profiles"])

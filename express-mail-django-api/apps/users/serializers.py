@@ -191,3 +191,30 @@ class ShipperProfileSerializer(BaseProfileSerializer):
             "avatar",
             "card_id",
         ]
+
+
+class ResetPasswordRequestSerializer(serializers.Serializer):
+    """
+    Serializer for reset password request.
+    """
+
+    email = serializers.EmailField()
+
+
+class VerifyResetPasswordOTPSerializer(serializers.Serializer):
+    """
+    Serializer reset password OTP verification.
+    """
+
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
+
+
+class ResetPasswordConfirmSerializer(serializers.Serializer):
+    """
+    Serializer reset password confirmation.
+    """
+
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
+    new_password = serializers.CharField(min_length=6)

@@ -43,3 +43,5 @@ PROFILE_SERIALIZER_MAP = {
     ShopProfile: ShopProfileSerializer,
     ShipperProfile: ShipperProfileSerializer,
 }
+
+PASSWORD_RESET_OTP_LIFETIME_MINUTES = 5
