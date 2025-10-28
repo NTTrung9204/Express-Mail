@@ -1,26 +1,27 @@
 import 'dart:convert';
-import 'package:express_mail/data/model/User.dart';
-import 'package:express_mail/resources/strings.dart';
+import 'package:express_mail/constants/Constants.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:express_mail/resources/strings.dart';
+import 'package:express_mail/data/model/User.dart';
+import 'package:express_mail/data/model/LoginResponse.dart';
 
 class LoginViewModel extends ChangeNotifier {
   bool _isLoading = false;
+  String? _errorMessage;
+  LoginResponse? _loginResponse;
 
   bool get isLoading => _isLoading;
 
-  User? _user;
-
-  User? get user => _user;
-
-  String? _errorMessage;
-
   String? get errorMessage => _errorMessage;
 
-  set errorMessage(String? value) {
-    _errorMessage = value;
-    notifyListeners();
-  }
+  LoginResponse? get loginResponse => _loginResponse;
+
+  User? get user => _loginResponse?.user;
+
+  String? get accessToken => _loginResponse?.access;
+
+  String? get refreshToken => _loginResponse?.refresh;
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -33,26 +34,32 @@ class LoginViewModel extends ChangeNotifier {
 
     try {
       final response = await http.post(
-        Uri.parse('https://express-mail-pbl6.work.gd/api/v1/auth/login/'),
+        Uri.parse(Constants.loginUrl),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'username': username, 'password': password}),
+        body: jsonEncode({
+          'username': username.trim(),
+          'password': password.trim(),
+        }),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        _user = User.fromJson(data['user']);
-        _setLoading(false);
+        _loginResponse = LoginResponse.fromJson(data);
         return true;
       } else {
-        final error = jsonDecode(response.body);
-        _errorMessage = error['message'] ?? AppStrings.wrong_information;
-        _setLoading(false);
+        try {
+          final errorData = jsonDecode(response.body);
+          _errorMessage = errorData['message'] ?? AppStrings.wrong_information;
+        } catch (_) {
+          _errorMessage = AppStrings.wrong_information;
+        }
         return false;
       }
     } catch (e) {
       _errorMessage = '${AppStrings.connection_error}: $e';
-      _setLoading(false);
       return false;
+    } finally {
+      _setLoading(false);
     }
   }
 }
