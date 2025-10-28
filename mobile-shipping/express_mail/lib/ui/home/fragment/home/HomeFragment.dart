@@ -1,6 +1,7 @@
+import 'package:express_mail/data/model/LoginResponse.dart';
 import 'package:express_mail/data/model/Order.dart';
-import 'package:express_mail/data/enum/OrderStatus.dart';
 import 'package:express_mail/data/enum/ShippingStatus.dart';
+import 'package:express_mail/ui/home/fragment/home/HomeFragmentViewModel.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -10,19 +11,26 @@ import 'package:express_mail/resources/colors.dart';
 import 'package:lottie/lottie.dart';
 
 class HomeFragment extends StatefulWidget {
-  const HomeFragment({super.key});
+  final LoginResponse loginResponse;
+
+  const HomeFragment({super.key, required this.loginResponse});
 
   @override
   State<HomeFragment> createState() => _HomeFragmentState();
 }
 
 class _HomeFragmentState extends State<HomeFragment> {
+  late final HomeFragmentViewModel viewModel;
+
   // Header ValueNotifiers
-  final ValueNotifier<String> name = ValueNotifier<String>("Alex");
-  final ValueNotifier<String> textEarned = ValueNotifier<String>("127.000 đ");
-  final ValueNotifier<String> textDelivered = ValueNotifier<String>("8");
-  final ValueNotifier<String> textOnline = ValueNotifier<String>("6.5h");
-  final ValueNotifier<String> textEvaluate = ValueNotifier<String>("4.5");
+  late final ValueNotifier<String> name = ValueNotifier<String>(
+    widget.loginResponse.user.fullName,
+  );
+
+  // final ValueNotifier<String> textEarned = ValueNotifier<String>("127.000 đ");
+  // final ValueNotifier<String> textDelivered = ValueNotifier<String>("8");
+  // final ValueNotifier<String> textOnline = ValueNotifier<String>("6.5h");
+  // final ValueNotifier<String> textEvaluate = ValueNotifier<String>("4.5");
   final ValueNotifier<bool> loading = ValueNotifier<bool>(true);
 
   // Orders list
@@ -31,61 +39,32 @@ class _HomeFragmentState extends State<HomeFragment> {
   @override
   void initState() {
     super.initState();
+    viewModel = HomeFragmentViewModel();
+    fetchOrders();
+  }
 
-    // Giả lập dữ liệu thay đổi sau 2 giây
-    Future.delayed(const Duration(seconds: 2), () {
-      orders.value = [
-        Order(
-          id: 1,
-          code: "ORD123",
-          shopId: 10,
-          receiverPhone: "0987654321",
-          receiverProvinceCity: "Hà Nội",
-          receiverWardCommune: "Cầu Giấy",
-          receiverAddress: "123 Xuân Thủy",
-          receiverCoordinate: "21.028511,105.804817",
-          length: 10,
-          width: 20,
-          height: 15,
-          weight: 1.5,
-          cod: 200000,
-          shippingCost: 30000,
-          shippingCostPayPer: 30000,
-          shippingStatus: ShippingStatus.SHIPPING,
-          orderStatus: OrderStatus.PENDING,
-        ),
-        Order(
-          id: 2,
-          code: "ORD124",
-          shopId: 11,
-          receiverPhone: "0912345678",
-          receiverProvinceCity: "Hồ Chí Minh",
-          receiverWardCommune: "Quận 1",
-          receiverAddress: "45 Lê Lợi",
-          receiverCoordinate: "10.776889,106.700806",
-          length: 8,
-          width: 18,
-          height: 12,
-          weight: 2.0,
-          cod: 150000,
-          shippingCost: 25000,
-          shippingCostPayPer: 25000,
-          shippingStatus: ShippingStatus.PICKUP_REQUESTED,
-          orderStatus: OrderStatus.PENDING,
-        ),
-      ];
-      loading.value = false;
-    });
+  void fetchOrders() async {
+    loading.value = true;
+
+    final result = await viewModel.getListOrder(widget.loginResponse);
+
+    if (result != null) {
+      orders.value = result.map((detailOrder) => detailOrder.order).toList();
+    } else {
+      debugPrint("Error: ${viewModel.errorMessage}");
+    }
+
+    loading.value = false;
   }
 
   @override
   void dispose() {
     // Dispose all ValueNotifiers
     name.dispose();
-    textEarned.dispose();
-    textDelivered.dispose();
-    textOnline.dispose();
-    textEvaluate.dispose();
+    // textEarned.dispose();
+    // textDelivered.dispose();
+    // textOnline.dispose();
+    // textEvaluate.dispose();
     orders.dispose();
     super.dispose();
   }
@@ -131,38 +110,24 @@ class _HomeFragmentState extends State<HomeFragment> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: buildColumn(
-                              "assets/images/ic_earning.svg",
-                              textEarned,
-                              AppStrings.earned,
-                            ),
-                          ),
-                          Expanded(
-                            child: buildColumn(
-                              "assets/images/ic_delivered.svg",
-                              textDelivered,
-                              AppStrings.delivered,
-                            ),
-                          ),
-                          Expanded(
-                            child: buildColumn(
-                              "assets/images/ic_online.svg",
-                              textOnline,
-                              AppStrings.online,
-                            ),
-                          ),
-                          Expanded(
-                            child: buildColumn(
-                              "assets/images/ic_evaluate.svg",
-                              textEvaluate,
-                              AppStrings.evaluate,
-                            ),
-                          ),
-                        ],
-                      ),
+                      // Row(
+                      //   children: [
+                      //     Expanded(
+                      //       child: buildColumn(
+                      //         "assets/images/ic_earning.svg",
+                      //         textEarned,
+                      //         AppStrings.earned,
+                      //       ),
+                      //     ),
+                      //     Expanded(
+                      //       child: buildColumn(
+                      //         "assets/images/ic_delivered.svg",
+                      //         textDelivered,
+                      //         AppStrings.delivered,
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
                     ],
                   ),
                 );
