@@ -15,6 +15,7 @@ _ERROR_MESSAGES = {
         "username_already_exists": "Username already exists.",
         "invalid_reset_password_otp": "Invalid reset password OTP.",
         "invalid_email": "Invalid email.",
+        "active_shipping_rate_not_set": "There is currently no active shipping rate.",
     },
     "vi": {
         "common": {
@@ -29,6 +30,7 @@ _ERROR_MESSAGES = {
         "username_already_exists": "Username đã tồn tại.",
         "invalid_reset_password_otp": "Mã OTP sai hoặc đã hết hạn.",
         "invalid_email": "Email không tồn tại.",
+        "active_shipping_rate_not_set": "Mức phí vận chuyển chưa được thiết lập.",
     },
 }
 

@@ -22,19 +22,21 @@ class Command(BaseCommand):
         created_count = 0
 
         for i in range(1, 21):
-            city = fake.city()
-            ward = f"Phường {fake.random_int(min=1, max=20)}"
-            addr = fake.street_address()
-            lat = round(float(fake.latitude()), 6)
-            lng = round(float(fake.longitude()), 6)
+            name = f"Bưu cục {i} - {fake.city()}"
+            district = fake.random_int(min=1, max=10)
+            province_city = fake.random_int(min=1, max=63)
+            ward_commune = fake.random_int(min=1, max=15)
+            address = fake.street_address()
+            latitude = round(float(fake.latitude()), 6)
+            longitude = round(float(fake.longitude()), 6)
 
-            name = f"Bưu cục {i} - {city}"
             defaults = {
-                "province_city": city,
-                "ward_commune": ward,
-                "address": f"{addr}, {city}",
-                "latitude": lat,
-                "longitude": lng,
+                "district": district,
+                "province_city": province_city,
+                "ward_commune": ward_commune,
+                "address": address,
+                "latitude": latitude,
+                "longitude": longitude,
             }
 
             _, created = PostOffice.objects.get_or_create(name=name, defaults=defaults)
