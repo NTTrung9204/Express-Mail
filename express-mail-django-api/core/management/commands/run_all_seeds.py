@@ -23,6 +23,7 @@ class Command(BaseCommand):
             "seed_post_offices",
             "seed_users",
             "seed_user_groups",
+            "seed_shipping_rates",
         ]
 
         for seed in seeds:

@@ -76,10 +76,23 @@ class Command(BaseCommand):
 
                 elif role == Roles.SHIPPER.value:
                     po = PostOffice.objects.order_by("?").first()
+                    phone_number = f"0{fake.random_int(min=100000000, max=999999999)}"
+                    address = fake.address()
+                    motor_model = (
+                        fake.word().capitalize() + " " + fake.lexify(text="???").upper()
+                    )
+                    license_plate_number = f"{fake.random_int(min=10, max=99)}A-{fake.random_int(min=10000, max=99999)}"
+                    card_id = str(fake.random_int(min=100000000000, max=999999999999))
+
                     ShipperProfile.objects.get_or_create(
                         user=user,
                         defaults={
                             "post_office": po,
+                            "phone_number": phone_number,
+                            "address": address,
+                            "motor_model": motor_model,
+                            "license_plate_number": license_plate_number,
+                            "card_id": card_id,
                         },
                     )
 

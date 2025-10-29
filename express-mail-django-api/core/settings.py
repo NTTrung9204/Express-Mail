@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "apps.post_offices",
     "apps.users",
     "apps.permissions",
+    "apps.shipping",
 ]
 
 MIDDLEWARE = [
