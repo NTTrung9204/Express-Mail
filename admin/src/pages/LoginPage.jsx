@@ -1,21 +1,20 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import { authService } from "../api/authService";
-import logoImg from "../assets/logo.png";
-import warehouse_worker from "../assets/ghn_img-login.jpg";
 import { toast } from "react-toastify";
+import { authService } from "../api/authService";
+import { Visibility, VisibilityOff } from '@mui/icons-material';
+import bgImg from "../assets/ghn.png";
+import logoImg from "../assets/logo.png";
 
-export default function LoginPage() {
+
+const LoginPage = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     username: "",
     password: "",
   });
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -25,18 +24,16 @@ export default function LoginPage() {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setError("");
-    setIsLoading(true);
 
     if (!formData.username || !formData.password) {
-      setError("Vui lòng nhập tài khoản và mật khẩu");
-      setIsLoading(false);
+      toast.error("Vui lòng nhập tên đăng nhập và mật khẩu");
       return;
     }
 
+    setIsLoading(true);
     try {
       const res = await authService.login({
         username: formData.username,
@@ -44,62 +41,81 @@ export default function LoginPage() {
       });
 
       const { user } = res;
-
       toast.success("Đăng nhập thành công");
 
       if (user.role === "superadmin" || user.role === "admin") {
         navigate("/admin/home");
+      } else if (user.role === "post_office_manager") {
+        navigate("/post-office/home");
+      } else {
+        navigate("/home");
       }
     } catch (err) {
       console.error("Login failed:", err);
-      setError("Tên đăng nhập hoặc mật khẩu không chính xác");
+      toast.error("Tên đăng nhập hoặc mật khẩu không chính xác");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="flex bg-white rounded-2xl shadow-md p-8 w-[850px] max-w-[95%]">
-        <div className="w-1/2 flex items-center justify-center md:flex">
+    <div className="min-h-screen flex bg-white">
+      <div className="hidden md:flex md:w-1/2 bg-blue-50 justify-center items-center p-6">
+        <div className="relative w-full h-full flex flex-col justify-end rounded-2xl overflow-hidden">
           <img
-            src={warehouse_worker}
-            alt="Warehouse Worker"
-            className="w-[320px] object-contain"
+            src={bgImg}
+            alt="GHN Delivery"
+            className="absolute inset-0 w-full h-full object-cover"
           />
-        </div>
-
-        <div className="md:w-1/2 w-full flex flex-col justify-center px-6">
-          <div className="flex items-center justify-center mb-6">
-            <img src={logoImg} alt="GHN Logo" className="w-40" />
+          <div className="relative bg-gradient-to-t from-blue-900/60 to-transparent p-8 text-white">
+            <img src={logoImg} alt="GHN Logo" className="w-40 mb-4" />
+            <p className="text-lg font-medium mb-1">
+              THIẾT KẾ CHO GIẢI PHÁP GIAO NHẬN HÀNG TỐI ƯU HƠN
+            </p>
+            <p className="text-sm opacity-90">
+              Nhanh hơn, rẻ hơn và thông minh hơn
+            </p>
           </div>
+        </div>
+      </div>
 
-          {error && (
-            <div className="mb-4 p-2 bg-red-100 text-red-600 rounded text-sm text-center">
-              {error}
-            </div>
-          )}
+      <div className="flex flex-1 items-center justify-center p-8">
+        <div className="w-full max-w-sm">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+            Chào mừng bạn đến với
+          </h1>
+          <h2 className="text-2xl font-bold text-orange-600 mb-8">
+            Giao Hàng Nhanh
+          </h2>
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
+          <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label className="block text-gray-700 font-medium mb-1">
-                Tài khoản
+              <label
+                htmlFor="username"
+                className="block text-sm mb-2 text-gray-700"
+              >
+                Tên người dùng
               </label>
               <input
-                type="text"
+                id="username"
                 name="username"
+                type="text"
+                placeholder="Nhập tên đăng nhập"
                 value={formData.username}
                 onChange={handleInputChange}
-                placeholder="Nhập tên đăng nhập"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-orange-500"
+                className="w-full border border-gray-300 rounded-md px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
                 required
-                tabIndex={1}
               />
             </div>
 
             <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="text-gray-700 font-medium">Mật khẩu</label>
+              <div className="flex justify-between items-center mb-2">
+                <label
+                  htmlFor="password"
+                  className="block text-sm text-gray-700"
+                >
+                  Mật khẩu
+                </label>
                 <a
                   href="#"
                   className="text-sm text-orange-500 hover:underline"
@@ -108,25 +124,24 @@ export default function LoginPage() {
                   Quên mật khẩu?
                 </a>
               </div>
-
               <div className="relative">
                 <input
-                  type={showPassword ? "text" : "password"}
+                  id="password"
                   name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Nhập mật khẩu"
                   value={formData.password}
                   onChange={handleInputChange}
-                  placeholder="Nhập mật khẩu"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-orange-500 pr-10"
+                  className="w-full border border-gray-300 rounded-md px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500"
                   required
-                  tabIndex={2}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-2.5 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-3 text-gray-500 hover:text-gray-700"
                   tabIndex={-1}
                 >
-                  {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
                 </button>
               </div>
             </div>
@@ -134,15 +149,23 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full bg-orange-400 hover:bg-orange-500 text-white font-semibold rounded-lg py-2 transition cursor-pointer ${
-                isLoading ? "opacity-70 cursor-not-allowed" : ""
+              className={`w-full font-medium py-3 rounded-md transition ${
+                isLoading
+                  ? "bg-orange-400/70 cursor-not-allowed text-white"
+                  : "bg-orange-500 text-white hover:bg-orange-600"
               }`}
             >
               {isLoading ? "Đang xử lý..." : "Đăng nhập"}
             </button>
           </form>
+
+          <p className="text-center text-xs text-gray-400 mt-4">
+            © 2025 Bản quyền thuộc về Giao Hàng Nhanh
+          </p>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default LoginPage;

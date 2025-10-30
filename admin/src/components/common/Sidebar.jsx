@@ -16,10 +16,10 @@ const Sidebar = ({ setTitle }) => {
   const handleLogout = async () => {
     try {
       await authService.logout();
-      navigate("/admin/login");
+      navigate("/login");
     } catch (error) {
       console.error("Logout failed:", error);
-      navigate("/admin/login");
+      navigate("/login");
     }
   };
 

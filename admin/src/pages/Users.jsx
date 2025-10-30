@@ -1,10 +1,9 @@
 import React from "react";
 import SearchBar from "../components/users/SearchBar";
 import UserModal from "../components/users/UserModal";
-import RoleModal from "../components/users/RoleModal";
 import ConfirmDeleteModal from "../components/users/ConfirmDeleteModal";
 import { Add, Edit, Delete, Visibility } from "@mui/icons-material";
-import { getPageNumbers } from "../utils/pagination"; 
+import { getPageNumbers } from "../utils/pagination";
 import { roleOptions, useUserStore } from "../store/userStore";
 
 const Users = () => {
@@ -30,13 +29,17 @@ const Users = () => {
     setOpenRoleModal,
     handleOpen,
     handleSave,
-    handleRoleChange,
     handleConfirmRole,
     handleDelete,
     confirmDelete,
   } = useUserStore();
 
   const totalPages = Math.ceil(totalCount / pageSize);
+
+  const getRoleLabel = (roleValue) => {
+    const found = roleOptions.find((r) => r.value === roleValue);
+    return found ? found.label : "Không có vai trò";
+  };
 
   return (
     <div className="p-6 space-y-6 bg-orange-50 min-h-screen">
@@ -87,18 +90,8 @@ const Users = () => {
                     >
                       <td className="pl-6 pr-3 py-3">{user.username}</td>
                       <td className="px-3 py-3">{user.email}</td>
-                      <td className="px-3 py-3">
-                        <select
-                          value={user.role}
-                          onChange={(e) => handleRoleChange(user, e.target.value)}
-                          className="w-full max-w-[160px] border border-orange-200 bg-orange-50 rounded-lg px-2 py-1.5 text-sm text-gray-700 hover:bg-orange-100 focus:ring-2 focus:ring-orange-400 focus:border-orange-400 outline-none transition cursor-pointer text-center"
-                        >
-                          {roleOptions.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
+                      <td className="px-3 py-3 text-orange-700 font-medium">
+                        {getRoleLabel(user.role)}
                       </td>
                       <td className="pl-3 pr-6 py-3 space-x-2">
                         <button
@@ -143,7 +136,7 @@ const Users = () => {
                   className={`px-3 py-1.5 rounded-lg border ${
                     page === 1
                       ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      : "bg-white hover:bg-orange-100 text-orange-600 border-orange-300 cursor-pointer cursor-pointer"
+                      : "bg-white hover:bg-orange-100 text-orange-600 border-orange-300 cursor-pointer"
                   }`}
                 >
                   «
@@ -151,7 +144,10 @@ const Users = () => {
 
                 {getPageNumbers(page, totalPages).map((num, index) =>
                   num === "..." ? (
-                    <span key={index} className="px-3 py-1 text-gray-500 select-none">
+                    <span
+                      key={index}
+                      className="px-3 py-1 text-gray-500 select-none"
+                    >
                       ...
                     </span>
                   ) : (
