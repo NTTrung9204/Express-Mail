@@ -16,6 +16,7 @@ from shared.permissions import FullDjangoModelPermissions
 from rest_framework import status
 
 
+@extend_schema(tags=["Shipping Rate"])
 class ShippingRateViewSet(
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
