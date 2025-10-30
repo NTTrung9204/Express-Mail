@@ -41,7 +41,7 @@ export default function PermissionModal({
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [selectedPostOffice, setSelectedPostOffice] = useState(user?.postOffice || "");
   const [userProfile, setUserProfile] = useState({});
-  const [errors, setErrors] = useState({}); // ✅ Lưu lỗi hiển thị trực tiếp
+  const [errors, setErrors] = useState({}); 
 
   const {
     groups,
@@ -221,7 +221,7 @@ export default function PermissionModal({
         <div className="sticky top-0 bg-white z-10 border-b p-6 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-orange-600 flex items-center gap-2">
             <LockOutlined className="text-orange-500" />
-            Phân quyền người dùng {isView ? "(Xem)" : ""}
+            Hồ sơ người dùng {isView ? "(Xem)" : ""}
           </h2>
           <button
             onClick={onClose}

@@ -95,7 +95,7 @@ export const useWarehouseStore = (initialPage = 1, limit = 20) => {
 
       if (modalMode === "add") {
         await postOfficeService.createPostOffice(payload);
-      } else if (editingWarehouse) {
+      } else if (editingWarehouse)  {
         await postOfficeService.updatePostOffice(editingWarehouse.id, payload);
       }
 

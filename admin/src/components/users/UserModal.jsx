@@ -279,7 +279,7 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
                     : "bg-orange-500 text-white hover:bg-orange-600"
                 }`}
               >
-                {isView ? "Xem quyền người dùng" : "Chỉnh sửa quyền người dùng"}
+                {isView ? "Xem hồ sơ" : "Chỉnh sửa hồ sơ"}
               </button>
             </div>
           )}
