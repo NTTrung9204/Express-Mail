@@ -19,6 +19,8 @@ from apps.users.serializers import (
     ResetPasswordRequestSerializer,
     VerifyResetPasswordOTPSerializer,
     ResetPasswordConfirmSerializer,
+    GetNameListRequestSerializer,
+    GetNameListResponseSerializer,
 )
 from services.permissions.permission_services import PermissionService
 from services.profiles.profile_services import ProfileService
@@ -98,6 +100,30 @@ class UserViewSet(ModelViewSet, BaseAPIViewSet):
         user = self.get_object()
         profile = ProfileService.get_profile(user)
         data = ProfileService.serialize_profile(profile)
+
+        return self.response_ok(data)
+
+    @extend_schema(
+        request=GetNameListRequestSerializer,
+        responses={status.HTTP_200_OK: GetNameListResponseSerializer(many=True)},
+    )
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="name_list",
+        permission_classes=[],
+        pagination_class=None,
+    )
+    def get_name_list_by_ids(self, request):
+        """
+        Get name list by list of user ids.
+        """
+
+        request_serializer = GetNameListRequestSerializer(data=request.data)
+        request_serializer.is_valid(raise_exception=True)
+
+        users = request_serializer.validated_data["users"]
+        data = GetNameListResponseSerializer(instance=users, many=True).data
 
         return self.response_ok(data)
 

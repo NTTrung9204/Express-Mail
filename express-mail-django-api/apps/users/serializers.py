@@ -218,3 +218,28 @@ class ResetPasswordConfirmSerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp = serializers.CharField(max_length=6)
     new_password = serializers.CharField(min_length=6)
+
+
+class GetNameListRequestSerializer(serializers.Serializer):
+    """
+    Serializer for get name list by list of user ids request.
+    """
+
+    users = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.exclude(is_superuser=True), many=True
+    )
+
+
+class GetNameListResponseSerializer(serializers.ModelSerializer):
+    """
+    Serializer for get name list by list of user ids response.
+    """
+
+    class Meta:
+        """
+        Meta class for GetNameListResponseSerializer.
+        """
+
+        model = User
+        fields = ["id", "first_name", "last_name"]
+        read_only_fields = ["id", "first_name", "last_name"]
