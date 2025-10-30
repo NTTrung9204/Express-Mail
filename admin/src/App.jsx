@@ -13,7 +13,7 @@ function App() {
       <ToastContainer/>
       <Routes>
         <Route path="/" element={<Navigate to="/admin/login" replace />} />
-        <Route path="/admin/login" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage />} />
         
         <Route path="/admin" element={<MainLayout />}>
           <Route path="home" element={<Dashboard />} />
@@ -21,7 +21,7 @@ function App() {
           <Route path="warehouses" element={<Warehouses />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/admin/login" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </div>
   );

@@ -1,161 +1,213 @@
 import React, { useEffect, useState } from "react";
-import { Checkbox, Collapse } from "@mui/material";
-import { ExpandMore, ExpandLess, LockOutlined } from "@mui/icons-material";
+import { Checkbox, MenuItem, Select, FormControl, InputLabel } from "@mui/material";
+import { Tooltip } from "@mui/material";
+import { LockOutlined } from "@mui/icons-material";
 import { toast } from "react-toastify";
 import { usePermissionStore } from "../../store/userPermissionStore";
 
 const contentTypeNames = {
-  1: "Quản trị viên (Admin)",
+  1: "Admin",
   2: "Trưởng bưu cục",
   3: "Nhân viên bưu cục",
   4: "Cửa hàng",
   5: "Shipper",
 };
 
+const roleToGroupMap = {
+  admin: 1,
+  post_office_manager: 2,
+  post_office_staff: 3,
+  shop: 4,
+  shipper: 5,
+};
+
+const groupToRoleMap = {
+  1: "admin",
+  2: "post_office_manager",
+  3: "post_office_staff",
+  4: "shop",
+  5: "shipper",
+};
+
 export default function PermissionModal({
   open,
   onClose,
-  userPermissions,
-  setUserPermissions,
+  excludePermissions,
+  setExcludePermissions,
   isView,
+  user,
 }) {
-  const [openGroups, setOpenGroups] = useState({});
-  const [isPermissionsLoading, setIsPermissionsLoading] = useState(false); // State loading mới
-  
-  const { groups, groupPermissions, fetchGroups, fetchGroupPermissions, loading, error } =
-    usePermissionStore();
+  const [isPermissionsLoading, setIsPermissionsLoading] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [selectedPostOffice, setSelectedPostOffice] = useState(user?.postOffice || "");
+  const [userProfile, setUserProfile] = useState({});
+  const [errors, setErrors] = useState({}); // ✅ Lưu lỗi hiển thị trực tiếp
 
-  // EFFECT 1: Lấy danh sách nhóm (chỉ chạy khi modal mở và chưa có nhóm)
-  useEffect(() => {
-    if (!open || loading) return;
+  const {
+    groups,
+    groupPermissions,
+    postOffices,
+    fetchGroups,
+    fetchGroupPermissions,
+    fetchPostOffices,
+    fetchUserProfile,
+    updateUserPermissions,
+    loading,
+  } = usePermissionStore();
 
-    const loadGroups = async () => {
-      // Chỉ gọi fetchGroups nếu chưa có dữ liệu nhóm
-      if (groups.length === 0) {
-        try {
-          await fetchGroups();
-        } catch (err) {
-          // Xử lý lỗi nếu không tải được nhóm
-          toast.error("Không thể tải dữ liệu nhóm: " + err.message);
-        }
-      }
-    };
+  const isSaving = loading;
 
-    loadGroups();
-    // Phụ thuộc vào 'groups.length' để kích hoạt tải nhóm lần đầu
-  }, [open, groups.length, fetchGroups, loading]);
-
-  // EFFECT 2: Lấy chi tiết quyền của từng nhóm (chạy sau khi có groups)
-  useEffect(() => {
-    // Không chạy nếu modal đóng, chưa có groups hoặc đang loading group
-    if (!open || groups.length === 0 || loading) return; 
-
-    const loadPermissions = async () => {
-      // Lọc ra các nhóm chưa có quyền (hoặc quyền rỗng)
-      const groupsToFetch = groups.filter(
-        (group) => !groupPermissions[group.id]?.length
-      );
-
-      if (groupsToFetch.length === 0) {
-        setIsPermissionsLoading(false); // Đảm bảo loading tắt nếu không cần fetch
-        return; 
-      } 
-
-      setIsPermissionsLoading(true); // Bắt đầu loading chi tiết quyền
-
-      try {
-        // Tạo các promise để fetch quyền cho các nhóm còn thiếu
-        const fetchPromises = groupsToFetch.map((group) =>
-          fetchGroupPermissions(group.id)
-        );
-
-        // Chờ tất cả các promise hoàn thành
-        await Promise.all(fetchPromises);
-      } catch (err) {
-        // Xử lý lỗi nếu không tải được quyền
-        toast.error("Không thể tải chi tiết quyền: " + err.message);
-      } finally {
-        setIsPermissionsLoading(false); // Kết thúc loading chi tiết quyền
-      }
-    };
-
-    loadPermissions();
-  }, [open, groups, groupPermissions, fetchGroupPermissions, loading]); // Thêm 'loading' để đợi groups fetch xong
-
-  // Cập nhật trạng thái mở nhóm dựa trên quyền người dùng
-  useEffect(() => {
-    if (userPermissions?.length > 0) {
-      const groupState = {};
-      Object.entries(groupPermissions).forEach(([groupId, perms]) => {
-        // Chỉ mở nhóm nếu nhóm đó có quyền được chọn bởi người dùng
-        if (perms.some((p) => userPermissions.includes(p.id))) {
-          groupState[groupId] = true;
-        }
-      });
-      setOpenGroups(groupState);
-    } else {
-      setOpenGroups({});
-    }
-    // Lưu ý: Nếu groups.length = 0, groupPermissions sẽ rỗng, không gây lỗi.
-  }, [groupPermissions, userPermissions]);
-
-  const toggleGroup = (id) => {
-    setOpenGroups((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+  const hasPermission = (permId) => !excludePermissions.includes(permId);
 
   const handleTogglePermission = (permId) => {
-    if (isView) return; // Không cho phép thay đổi nếu ở chế độ xem
-    
-    if (userPermissions.includes(permId)) {
-      setUserPermissions(userPermissions.filter((id) => id !== permId));
+    if (isView) return;
+    if (hasPermission(permId)) {
+      setExcludePermissions([...excludePermissions, permId]);
     } else {
-      setUserPermissions([...userPermissions, permId]);
+      setExcludePermissions(excludePermissions.filter((id) => id !== permId));
     }
   };
 
-  // ... (handleToggleAll không đổi)
+  const validateFields = () => {
+    const currentRole = groupToRoleMap[selectedGroup];
+    const newErrors = {};
 
-  const handleToggleAll = (groupId) => {
-    if (isView) return; // Không cho phép thay đổi nếu ở chế độ xem
-
-    const group = filteredGroupPermissions[groupId] || []; // Sử dụng quyền đã được lọc
-    const allSelected = group.every((p) => userPermissions.includes(p.id));
-
-    if (allSelected) {
-      setUserPermissions(
-        userPermissions.filter((id) => !group.some((p) => p.id === id))
-      );
-    } else {
-      const newPermissions = group
-        .filter((p) => !userPermissions.includes(p.id))
-        .map((p) => p.id);
-      setUserPermissions([...userPermissions, ...newPermissions]);
+    if (
+      ["post_office_manager", "post_office_staff", "shipper"].includes(currentRole) &&
+      !selectedPostOffice
+    ) {
+      newErrors.postOffice = "Vui lòng chọn bưu cục.";
     }
+
+    if (currentRole === "shop") {
+      if (!userProfile.address?.trim()) {
+        newErrors.address = "Vui lòng nhập địa chỉ.";
+      }
+      if (!userProfile.phoneNumber?.trim()) {
+        newErrors.phoneNumber = "Vui lòng nhập số điện thoại.";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSavePermissions = async () => {
+    if (isView || isSaving || !user?.id || !selectedGroup) return;
+
+    if (!validateFields()) {
+      toast.error("Vui lòng kiểm tra lại thông tin nhập!");
+      return;
+    }
+
+    try {
+      const updatedUser = {
+        ...user,
+        postOffice: selectedPostOffice,
+        ...userProfile,
+      };
+      await updateUserPermissions(updatedUser, excludePermissions, selectedGroup);
+      toast.success("Cập nhật quyền thành công!");
+      onClose();
+    } catch (err) {
+      toast.error("Lỗi lưu quyền: " + (err.message || "Không xác định"));
+    }
+  };
+
+  const loadGroupPermissions = async (gId) => {
+    if (!groupPermissions[gId]) {
+      setIsPermissionsLoading(true);
+      try {
+        await fetchGroupPermissions(gId);
+      } catch (err) {
+        toast.error("Không thể tải quyền: " + err.message);
+      } finally {
+        setIsPermissionsLoading(false);
+      }
+    }
+  };
+
+  const loadPostOfficesIfNeeded = async () => {
+    if (postOffices.length > 0) return;
+    try {
+      await fetchPostOffices();
+    } catch {
+      toast.error("Không thể tải danh sách bưu cục.");
+    }
+  };
+
+  useEffect(() => {
+    if (!open) return;
+
+    const init = async () => {
+      setErrors({});
+      if (!groups.length) await fetchGroups();
+
+      let currentRole = null;
+      if (user?.role) {
+        const gId = roleToGroupMap[user.role];
+        setSelectedGroup(gId);
+        await loadGroupPermissions(gId);
+        currentRole = user.role;
+      }
+
+      if (["post_office_manager", "post_office_staff", "shipper", "shop"].includes(currentRole)) {
+        const profile = await fetchUserProfile(user.id);
+        if (profile?.postOffice) setSelectedPostOffice(profile.postOffice);
+        if (currentRole === "shop") {
+          setUserProfile({
+            address: profile.address || "",
+            phoneNumber: profile.phoneNumber || "",
+          });
+        }
+      }
+
+      if (["post_office_manager", "post_office_staff", "shipper"].includes(currentRole)) {
+        await loadPostOfficesIfNeeded();
+      }
+    };
+
+    init();
+  }, [open]);
+
+  const handleRoleChange = async (e) => {
+    const gId = e.target.value;
+    setSelectedGroup(gId);
+    setErrors({});
+    await loadGroupPermissions(gId);
+
+    const role = groupToRoleMap[gId];
+    if (["post_office_manager", "post_office_staff", "shipper"].includes(role)) {
+      await loadPostOfficesIfNeeded();
+      const profile = await fetchUserProfile(user.id);
+      if (profile?.postOffice) setSelectedPostOffice(profile.postOffice);
+    }
+
+    if (role === "shop") {
+      const profile = await fetchUserProfile(user.id);
+      setUserProfile({
+        address: profile.address || "",
+        phoneNumber: profile.phoneNumber || "",
+      });
+    }
+  };
+
+  const handleSelectAll = (permissions) => {
+    const allSelected = permissions.every((p) => hasPermission(p.id));
+    let newExclude;
+    if (allSelected) {
+      newExclude = [...new Set([...excludePermissions, ...permissions.map((p) => p.id)])];
+    } else {
+      const groupPermIds = new Set(permissions.map((p) => p.id));
+      newExclude = excludePermissions.filter((id) => !groupPermIds.has(id));
+    }
+    setExcludePermissions(newExclude);
   };
 
   if (!open) return null;
 
-  // Lọc quyền theo contentTypeId thuộc [1, 2, 3, 4, 5]
-  const validContentTypeIds = Object.keys(contentTypeNames).map(Number);
-  const filteredGroupPermissions = {};
-  Object.entries(groupPermissions).forEach(([groupId, perms]) => {
-    filteredGroupPermissions[groupId] = perms.filter((perm) =>
-      validContentTypeIds.includes(perm.contentTypeId)
-    );
-  });
-  
-  // Sắp xếp nhóm dựa trên thứ tự keys của contentTypeNames (1, 2, 3, 4, 5)
-  const sortedGroups = groups.slice().sort((a, b) => {
-    const aIndex = validContentTypeIds.indexOf(a.id);
-    const bIndex = validContentTypeIds.indexOf(b.id);
-    
-    // Đảm bảo các nhóm không có trong contentTypeNames vẫn được hiển thị ở cuối
-    if (aIndex === -1 && bIndex === -1) return 0;
-    if (aIndex === -1) return 1; // B đặt trước A
-    if (bIndex === -1) return -1; // A đặt trước B
-    
-    return aIndex - bIndex;
-  });
+  const permissions = selectedGroup ? groupPermissions[selectedGroup] || [] : [];
+  const currentRole = selectedGroup ? groupToRoleMap[selectedGroup] : null;
 
   return (
     <div
@@ -163,7 +215,7 @@ export default function PermissionModal({
       onClick={onClose}
     >
       <div
-        className="bg-white w-full max-w-3xl max-h-[85vh] overflow-y-auto shadow-2xl"
+        className="bg-white w-full max-w-3xl max-h-[85vh] overflow-y-auto shadow-2xl rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 bg-white z-10 border-b p-6 flex justify-between items-center">
@@ -174,110 +226,168 @@ export default function PermissionModal({
           <button
             onClick={onClose}
             className="text-3xl leading-none hover:text-orange-600"
-            disabled={loading || isPermissionsLoading} // Disable khi đang tải
+            disabled={isPermissionsLoading || isSaving}
           >
             ×
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
-          {loading && groups.length === 0 ? (
-            // Chỉ hiển thị "Đang tải nhóm" nếu chưa có nhóm nào được tải
-            <div className="text-center text-orange-500">Đang tải nhóm...</div>
-          ) : isPermissionsLoading ? ( 
-             // Hiển thị "Đang tải quyền" khi đang fetch chi tiết quyền
-             <div className="text-center text-orange-500">Đang tải chi tiết quyền...</div>
-          ) : error ? (
-            <div className="text-red-500 text-center">{error}</div>
-          ) : sortedGroups.length === 0 ? (
-            <div className="text-center text-gray-500">Không có nhóm quyền nào</div>
-          ) : (
-            sortedGroups.map((group) => {
-              const groupName =
-                contentTypeNames[group.id] || `Nhóm ${group.name}`;
-              const permissions = filteredGroupPermissions[group.id] || [];
-              
-              // Chỉ hiển thị nhóm nếu có quyền hợp lệ
-              if (permissions.length === 0) return null;
-                
-              const allChecked = permissions.every((p) =>
-                userPermissions.includes(p.id)
-              );
-              const partiallyChecked =
-                permissions.some((p) => userPermissions.includes(p.id)) &&
-                !allChecked;
-              const hasUserPermissionInGroup = permissions.some((p) =>
-                userPermissions.includes(p.id)
-              );
+        <div className="p-6 space-y-6 mb-4">
+          <div className="space-y-4">
+            <FormControl fullWidth sx={{ mb:2 }}>
+              <InputLabel id="role-select-label">Chọn vai trò</InputLabel>
+              <Select
+                labelId="role-select-label"
+                value={selectedGroup || ""}
+                label="Chọn vai trò"
+                onChange={handleRoleChange}
+                disabled={isView || isSaving}
+              >
+                <MenuItem value="">Chọn vai trò</MenuItem>
+                {Object.entries(contentTypeNames).map(([id, name]) => (
+                  <MenuItem key={id} value={Number(id)}>
+                    {name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
+            {selectedGroup &&
+              ["post_office_manager", "post_office_staff", "shipper"].includes(currentRole) && (
+                <div>
+                  <FormControl fullWidth error={!!errors.postOffice}>
+                    <InputLabel id="postoffice-select-label">Chọn bưu cục</InputLabel>
+                    <Select
+                      labelId="postoffice-select-label"
+                      value={selectedPostOffice}
+                      onChange={(e) => setSelectedPostOffice(e.target.value)}
+                      disabled={isView}
+                      className={errors.postOffice ? "border border-red-500" : ""}
+                    >
+                      <MenuItem value="">Chọn bưu cục</MenuItem>
+                      {postOffices.map((po) => (
+                        <MenuItem key={po.id} value={po.id}>
+                          {po.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  {errors.postOffice && (
+                    <p className="text-red-500 text-sm mt-1">{errors.postOffice}</p>
+                  )}
+                </div>
+              )}
 
-              return (
-                <div
-                  key={group.id}
-                  className={`border rounded-xl overflow-hidden shadow-sm transition-colors ${
-                    hasUserPermissionInGroup
-                      ? "border-orange-500"
-                      : "border-gray-200"
-                  } bg-white`}
-                >
-                  <div
-                    onClick={() => toggleGroup(group.id)}
-                    className="flex justify-between items-center px-4 py-2 bg-gray-100 cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2">
-                      {!isView && (
+            {currentRole === "shop" && (
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div>
+                  <input
+                    type="text"
+                    className={`border rounded-md p-2 text-sm w-full focus:ring-2 focus:ring-orange-300 ${
+                      errors.address ? "border-red-500" : "border-gray-300"
+                    }`}
+                    placeholder="Địa chỉ"
+                    value={userProfile.address || ""}
+                    onChange={(e) =>
+                      setUserProfile((prev) => ({ ...prev, address: e.target.value }))
+                    }
+                    disabled={isView}
+                  />
+                  {errors.address && (
+                    <p className="text-red-500 text-sm mt-1">{errors.address}</p>
+                  )}
+                </div>
+
+                <div>
+                  <input
+                    type="text"
+                    className={`border rounded-md p-2 text-sm w-full focus:ring-2 focus:ring-orange-300 ${
+                      errors.phoneNumber ? "border-red-500" : "border-gray-300"
+                    }`}
+                    placeholder="Số điện thoại"
+                    value={userProfile.phoneNumber || ""}
+                    onChange={(e) =>
+                      setUserProfile((prev) => ({ ...prev, phoneNumber: e.target.value }))
+                    }
+                    disabled={isView}
+                  />
+                  {errors.phoneNumber && (
+                    <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Permissions */}
+          {selectedGroup && (
+            <>
+              {isPermissionsLoading ? (
+                <div className="text-center text-orange-500">
+                  Đang tải quyền cho {contentTypeNames[selectedGroup]}...
+                </div>
+              ) : permissions.length === 0 ? (
+                <div className="text-center text-gray-500 italic">
+                  Không có quyền nào trong nhóm này.
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Checkbox
+                      color="warning"
+                      checked={permissions.every((p) => hasPermission(p.id))}
+                      onChange={() => handleSelectAll(permissions)}
+                      disabled={isView}
+                    />
+                    <span className="font-medium">Chọn tất cả</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-y-2">
+                    {permissions.map((perm) => (
+                      <label
+                        key={perm.id}
+                        className={`flex items-center gap-2 select-none rounded-md px-2 py-1 ${
+                          !isView ? "cursor-pointer hover:bg-gray-50" : "opacity-70"
+                        }`}
+                      >
                         <Checkbox
                           color="warning"
-                          checked={allChecked}
-                          indeterminate={partiallyChecked}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            handleToggleAll(group.id);
-                          }}
+                          disabled={isView}
+                          checked={hasPermission(perm.id)}
+                          onChange={() => handleTogglePermission(perm.id)}
                         />
-                      )}
-                      <span className="font-medium">{groupName}</span>
-                    </div>
-                    {openGroups[group.id] ? <ExpandLess /> : <ExpandMore />}
+                        {perm.name}
+                      </label>
+                    ))}
                   </div>
-
-                  <Collapse in={openGroups[group.id]} timeout="auto">
-                    <div className="px-6 py-3 grid grid-cols-2 gap-y-2">
-                      {permissions.map((perm) => (
-                        <label
-                          key={perm.id}
-                          className={`flex items-center gap-2 select-none rounded-md px-2 py-1 ${!isView ? "cursor-pointer hover:bg-gray-50" : "cursor-default opacity-80"}`}
-                          // Click label cũng toggle (nếu không phải chế độ xem)
-                          onClick={!isView ? () => handleTogglePermission(perm.id) : undefined}
-                        >
-                          <Checkbox
-                            color="warning"
-                            disabled={isView}
-                            checked={userPermissions.includes(perm.id)}
-                            // Nếu đã dùng onClick trên label thì không cần onChange ở đây nữa
-                            // Nhưng để an toàn khi click chính Checkbox:
-                            onChange={!isView ? () => handleTogglePermission(perm.id) : undefined} 
-                          />
-                          {perm.name}
-                        </label>
-                      ))}
-                    </div>
-                  </Collapse>
-                </div>
-              );
-            })
+                </>
+              )}
+            </>
           )}
         </div>
 
-        <div className="flex justify-end p-6 border-t bg-white sticky bottom-0">
+      <div className="flex justify-end p-6 border-t bg-white sticky bottom-0 gap-3">
+        <button
+          onClick={onClose}
+          className="px-5 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+          disabled={isSaving}
+        >
+          Đóng
+        </button>
+        {!isView && (
           <button
-            onClick={onClose}
-            className="px-5 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
-            disabled={loading || isPermissionsLoading} // Disable khi đang tải
+            onClick={handleSavePermissions}
+            className="px-5 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-400 cursor-not-allowed"
+            disabled={
+              isSaving ||
+              isPermissionsLoading ||
+              !selectedGroup ||
+              currentRole === "shipper"  
+            }
           >
-            Đóng
+            {isSaving ? "Đang lưu..." : "Lưu Thay Đổi"}
           </button>
-        </div>
+        )}
+      </div>
       </div>
     </div>
   );

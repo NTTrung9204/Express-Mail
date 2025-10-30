@@ -81,4 +81,10 @@ export const permissionService = {
     const response = await baseAPI.post("/profiles/shop-profile/", data);
     return response.data;
   },
+
+  getUserProfile: async (userId) => {
+    const response = await baseAPI.get(`/users/${userId}/profile/`);
+    return response.data;
+  },
+
 };

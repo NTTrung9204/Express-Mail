@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import permissionsData from "../../data/permissions.json";
 import PermissionModal from "./PermissionModal";
+
+const ROLE_GROUP_MAP = {
+  admin: 1, 
+  post_office_manager: 2, 
+  post_office_staff: 3, 
+  shop: 4, 
+  shipper: 5, 
+};
 
 const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
   const [form, setForm] = useState({
@@ -14,23 +21,26 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
     lastName: "",
   });
 
-  const [userPermissions, setUserPermissions] = useState([42, 61]);
+  const [excludePermissions, setExcludePermissions] = useState([]);
   const [errors, setErrors] = useState({});
   const [showPermissionModal, setShowPermissionModal] = useState(false);
 
   const isView = mode === "view";
 
   useEffect(() => {
+    const safeUser = user || {}; 
+
     if (mode === "edit" || mode === "view") {
       setForm({
-        username: user.username || "",
+        username: safeUser.username || "",
         password: "",
         confirmPassword: "",
-        email: user.email || "",
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
+        email: safeUser.email || "",
+        firstName: safeUser.firstName || "",
+        lastName: safeUser.lastName || "",
       });
-      setUserPermissions(user.permissions || [42, 61]);
+      setExcludePermissions(safeUser.excludePermissions || []); 
+      console.log("DEBUG(UserModal): User Role:", safeUser.role, "Exclude Permissions:", safeUser.excludePermissions || []); // DEBUG
     } else if (mode === "add") {
       setForm({
         username: "",
@@ -40,7 +50,7 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
         firstName: "",
         lastName: "",
       });
-      setUserPermissions([42, 61]);
+      setExcludePermissions([]); 
     }
     setErrors({});
   }, [open, mode, user]);
@@ -76,9 +86,11 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
   const handleSave = async () => {
     if (!validate()) return;
 
-    const dataToSend = { ...form, permissions: userPermissions };
+    const dataToSend = { ...form, excludePermissions: excludePermissions };
     delete dataToSend.confirmPassword;
     if (mode === "edit" && !form.password) delete dataToSend.password;
+    
+    console.log("DEBUG(UserModal): Dữ liệu gửi đi:", dataToSend); 
 
     const result = await onSave(dataToSend);
 
@@ -104,6 +116,9 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
     toast.success(result.message || "Thành công!");
     onClose();
   };
+
+  const userGroupId = ROLE_GROUP_MAP[user?.role] || 1;
+  console.log("DEBUG(UserModal): Target Group ID:", userGroupId); 
 
   if (!open) return null;
 
@@ -134,7 +149,6 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
             </button>
           </div>
 
-          {/* Form */}
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block mb-1 font-medium">Họ</label>
@@ -255,30 +269,21 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
             </div>
           )}
 
-          {/* Nút Xem / Chỉnh sửa quyền */}
-          {mode === "view" && (
+          {mode !== "add" && (
             <div className="flex justify-start mt-6">
               <button
                 onClick={() => setShowPermissionModal(true)}
-                className="px-5 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200"
+                className={`px-5 py-2 rounded-lg ${
+                  isView
+                    ? "bg-orange-100 text-orange-700 hover:bg-orange-200"
+                    : "bg-orange-500 text-white hover:bg-orange-600"
+                }`}
               >
-                Xem quyền người dùng
+                {isView ? "Xem quyền người dùng" : "Chỉnh sửa quyền người dùng"}
               </button>
             </div>
           )}
 
-          {mode === "edit" && (
-            <div className="flex justify-start mt-6">
-              <button
-                onClick={() => setShowPermissionModal(true)}
-                className="px-5 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
-              >
-                Chỉnh sửa quyền người dùng
-              </button>
-            </div>
-          )}
-
-          {/* Footer buttons */}
           <div className="flex justify-end gap-4 mt-8">
             <button
               onClick={onClose}
@@ -298,15 +303,15 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
         </div>
       </div>
 
-      {/* Modal phân quyền */}
       {showPermissionModal && (
         <PermissionModal
           open={showPermissionModal}
           onClose={() => setShowPermissionModal(false)}
-          permissions={permissionsData}
-          userPermissions={userPermissions}
-          setUserPermissions={setUserPermissions}
+          excludePermissions={excludePermissions}
+          setExcludePermissions={setExcludePermissions}
+          targetGroupId={userGroupId}
           isView={isView}
+          user={user}
         />
       )}
     </>

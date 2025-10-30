@@ -1,14 +1,13 @@
 import React from "react";
-import { Add, Edit, Delete, People } from "@mui/icons-material";
+import { Add, Edit, Delete, Visibility } from "@mui/icons-material"; 
 import { useWarehouseStore } from "../store/warehouseStore";
 import { getPageNumbers } from "../utils/pagination";
 import WarehouseModal from "../components/warehouses/WarehouseModal";
-import AddUserToWarehouseModal from "../components/warehouses/AddUserToWarehouseModal";
 import ConfirmDeleteModal from "../components/warehouses/ConfirmDeleteModal";
 
 export default function Warehouses() {
   const {
-    warehouses,
+    warehouses, 
     total,
     page,
     limit,
@@ -17,19 +16,15 @@ export default function Warehouses() {
     modalMode,
     openWarehouseModal,
     editingWarehouse,
-    openUserModal,
-    selectedWarehouse,
     openDeleteModal,
     warehouseToDelete,
     setPage,
     setSearch,
     setOpenWarehouseModal,
-    setOpenUserModal,
     setOpenDeleteModal,
-    handleAddUser,
-    handleSubmitUser,
     openAddWarehouse,
     openEditWarehouse,
+    openViewWarehouse, 
     handleSubmitWarehouse,
     handleDeleteWarehouse,
     confirmDeleteWarehouse,
@@ -66,11 +61,10 @@ export default function Warehouses() {
         <table className="min-w-full text-sm text-gray-700 table-fixed border-separate border-spacing-0">
           <thead className="bg-orange-200 text-gray-800 uppercase text-xs">
             <tr>
-              <th className="py-3 text-center w-1/5">Tên kho</th>
-              <th className="py-3 text-center w-1/5">Địa chỉ</th>
-              <th className="py-3 text-center w-1/5">Phường / Xã</th>
-              <th className="py-3 text-center w-1/5">Tỉnh / Thành phố</th>
-              <th className="py-3 text-center w-1/5">Hành động</th>
+              <th className="py-3 text-center w-1/6">Tên kho</th>
+              <th className="py-3 text-center w-1/6">Địa chỉ</th>
+              <th className="py-3 text-center w-1/6">Tỉnh / Thành phố</th>
+              <th className="py-3 text-center w-1/6">Hành động</th>
             </tr>
           </thead>
           <tbody>
@@ -85,15 +79,14 @@ export default function Warehouses() {
                 <tr key={w.id} className="hover:bg-orange-50 border-b border-orange-100">
                   <td className="text-center py-3">{w.name}</td>
                   <td className="text-center py-3">{w.address}</td>
-                  <td className="text-center py-3">{w.wardCommune || "-"}</td>
-                  <td className="text-center py-3">{w.provinceCity || "-"}</td>
+                  <td className="text-center py-3">{w.displayProvince || w.provinceCity || "-"}</td>
                   <td className="text-center space-x-2 py-3">
                     <button
-                      onClick={() => handleAddUser(w)}
+                      onClick={() => openViewWarehouse(w)} 
                       className="text-blue-500 hover:text-blue-600 cursor-pointer"
-                      title="Thêm người dùng"
+                      title="Xem chi tiết"
                     >
-                      <People fontSize="small" />
+                      <Visibility fontSize="small" />
                     </button>
                     <button
                       onClick={() => openEditWarehouse(w)}
@@ -174,13 +167,6 @@ export default function Warehouses() {
           </button>
         </div>
       )}
-
-       <AddUserToWarehouseModal
-        open={openUserModal}
-        onClose={() => setOpenUserModal(false)}
-        warehouse={selectedWarehouse}
-        onSubmit={handleSubmitUser}
-      />
 
       <WarehouseModal
         open={openWarehouseModal}
