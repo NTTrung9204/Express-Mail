@@ -29,7 +29,7 @@ class ShippingRateViewSet(
 
     serializer_class = ShippingRateSerializer
     permission_classes = [FullDjangoModelPermissions]
-    queryset = ShippingRate.objects.all()
+    queryset = ShippingRate.objects.order_by("-is_active", "-created_at")
 
     @action(detail=False, methods=["get"], url_path="active", permission_classes=[])
     def get_current_active_shipping_rate(self, request):
