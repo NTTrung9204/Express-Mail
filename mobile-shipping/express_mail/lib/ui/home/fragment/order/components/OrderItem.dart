@@ -9,6 +9,7 @@ import 'package:express_mail/ui/detailorder/DetailOrderActivity.dart';
 
 class OrderItem extends StatelessWidget {
   final DetailOrder detailOrder;
+
   const OrderItem({super.key, required this.detailOrder});
 
   @override
@@ -44,28 +45,26 @@ class OrderItem extends StatelessWidget {
                 ),
               ),
               Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: detailOrder.status.color,
                   borderRadius: BorderRadius.circular(9999),
                 ),
                 child: Text(
                   detailOrder.status.name,
-                  style: const TextStyle(
-                      fontSize: 12, color: AppColors.white),
+                  style: const TextStyle(fontSize: 12, color: AppColors.white),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 10),
 
-          // Địa chỉ & điện thoại
+          // Address & phone number
           _buildAddressInfo(),
 
           const SizedBox(height: 6),
 
-          // Tổng tiền
+          // Total amount
           Align(
             alignment: Alignment.centerRight,
             child: Text(
@@ -114,8 +113,8 @@ class OrderItem extends StatelessWidget {
               Expanded(
                 child: TextButton(
                   style: TextButton.styleFrom(
-                    backgroundColor: (detailOrder.order.shippingStatus ==
-                        ShippingStatus.SHIPPING)
+                    backgroundColor:
+                        (detailOrder.status == ShippingStatus.SHIPPING)
                         ? AppColors.green_22C35D
                         : AppColors.orange_FA832E,
                     shape: RoundedRectangleBorder(
@@ -125,8 +124,7 @@ class OrderItem extends StatelessWidget {
                   ),
                   onPressed: () {},
                   child: Text(
-                    (detailOrder.order.shippingStatus ==
-                        ShippingStatus.SHIPPING)
+                    (detailOrder.status == ShippingStatus.SHIPPING)
                         ? AppStrings.finish
                         : AppStrings.application_received,
                     style: const TextStyle(
@@ -145,14 +143,14 @@ class OrderItem extends StatelessWidget {
   }
 
   Widget _buildAddressInfo() {
-    final isShipping =
-        detailOrder.order.shippingStatus == ShippingStatus.SHIPPING;
+    final isShipping = detailOrder.status == ShippingStatus.SHIPPING;
     final title = isShipping ? AppStrings.delivery : AppStrings.get_goods;
     final address = isShipping
         ? "${detailOrder.order.receiverAddress}, ${detailOrder.order.receiverWardCommune}, ${detailOrder.order.receiverProvinceCity}"
         : detailOrder.shopOwner.address;
-    final phone =
-    isShipping ? detailOrder.order.receiverPhone : detailOrder.shopOwner.phoneNumber;
+    final phone = isShipping
+        ? detailOrder.order.receiverPhone
+        : detailOrder.shopOwner.phoneNumber;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,8 +159,10 @@ class OrderItem extends StatelessWidget {
           children: [
             SvgPicture.asset(
               "assets/images/ic_address.svg",
-              colorFilter:
-              const ColorFilter.mode(AppColors.gray_7B899D, BlendMode.srcIn),
+              colorFilter: const ColorFilter.mode(
+                AppColors.gray_7B899D,
+                BlendMode.srcIn,
+              ),
               width: 13,
               height: 13,
             ),
@@ -183,8 +183,10 @@ class OrderItem extends StatelessWidget {
           children: [
             SvgPicture.asset(
               "assets/images/ic_phone.svg",
-              colorFilter:
-              const ColorFilter.mode(AppColors.gray_7B899D, BlendMode.srcIn),
+              colorFilter: const ColorFilter.mode(
+                AppColors.gray_7B899D,
+                BlendMode.srcIn,
+              ),
               width: 13,
               height: 13,
             ),
