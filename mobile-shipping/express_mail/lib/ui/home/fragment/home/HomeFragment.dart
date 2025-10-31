@@ -179,10 +179,13 @@ class _HomeFragmentState extends State<HomeFragment> {
                             if (isLoading) {
                               return Center(
                                 key: const ValueKey("loading"),
-                                child: Lottie.asset(
-                                  "assets/animation/ani_loading_order.json",
-                                  fit: BoxFit.contain,
-                                  repeat: true,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(40.0),
+                                  child: Lottie.asset(
+                                    "assets/animation/ani_loading_order.json",
+                                    fit: BoxFit.contain,
+                                    repeat: true,
+                                  ),
                                 ),
                               );
                             } else {

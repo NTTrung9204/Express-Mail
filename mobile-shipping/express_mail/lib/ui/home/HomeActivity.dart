@@ -1,3 +1,4 @@
+import 'package:express_mail/data/model/LoginResponse.dart';
 import 'package:flutter/material.dart';
 import 'package:express_mail/ui/home/fragment/earning/EarningFragment.dart';
 import 'package:express_mail/ui/home/fragment/home/HomeFragment.dart';
@@ -10,19 +11,23 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../resources/colors.dart';
 
 class HomeActivity extends StatelessWidget {
-  const HomeActivity({super.key});
+  final LoginResponse loginResponse;
+
+  const HomeActivity({super.key, required this.loginResponse});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const HomeScreen(),
+      home: HomeScreen(loginResponse: loginResponse),
     );
   }
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final LoginResponse loginResponse;
+
+  const HomeScreen({super.key, required this.loginResponse});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -31,9 +36,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _fragments = const [
-    HomeFragment(),
-    OrderFragment(),
+  late final List<Widget> _fragments = [
+    HomeFragment(loginResponse: widget.loginResponse),
+    OrderFragment(loginResponse: widget.loginResponse),
     MapFragment(),
     EarningFragment(),
     ProfileFragment(),
@@ -57,10 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           border: Border(
-            top: BorderSide(
-              color: AppColors.gray_7B899D,
-              width: 1,
-            ),
+            top: BorderSide(color: AppColors.gray_7B899D, width: 1),
           ),
         ),
         child: BottomNavigationBar(
