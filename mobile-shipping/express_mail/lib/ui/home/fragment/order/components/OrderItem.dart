@@ -47,20 +47,20 @@ class OrderItem extends StatelessWidget {
                 padding:
                 const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: detailOrder.order.shippingStatus.color,
+                  color: detailOrder.status.color,
                   borderRadius: BorderRadius.circular(9999),
                 ),
                 child: Text(
-                  detailOrder.order.shippingStatus.name,
-                  style:
-                  const TextStyle(fontSize: 12, color: AppColors.white),
+                  detailOrder.status.name,
+                  style: const TextStyle(
+                      fontSize: 12, color: AppColors.white),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 10),
 
-          // Địa chỉ
+          // Địa chỉ & điện thoại
           _buildAddressInfo(),
 
           const SizedBox(height: 6),
@@ -114,8 +114,8 @@ class OrderItem extends StatelessWidget {
               Expanded(
                 child: TextButton(
                   style: TextButton.styleFrom(
-                    backgroundColor:
-                    (detailOrder.order.shippingStatus == ShippingStatus.SHIPPING)
+                    backgroundColor: (detailOrder.order.shippingStatus ==
+                        ShippingStatus.SHIPPING)
                         ? AppColors.green_22C35D
                         : AppColors.orange_FA832E,
                     shape: RoundedRectangleBorder(
@@ -125,7 +125,8 @@ class OrderItem extends StatelessWidget {
                   ),
                   onPressed: () {},
                   child: Text(
-                    (detailOrder.order.shippingStatus == ShippingStatus.SHIPPING)
+                    (detailOrder.order.shippingStatus ==
+                        ShippingStatus.SHIPPING)
                         ? AppStrings.finish
                         : AppStrings.application_received,
                     style: const TextStyle(
@@ -149,50 +150,54 @@ class OrderItem extends StatelessWidget {
     final title = isShipping ? AppStrings.delivery : AppStrings.get_goods;
     final address = isShipping
         ? "${detailOrder.order.receiverAddress}, ${detailOrder.order.receiverWardCommune}, ${detailOrder.order.receiverProvinceCity}"
-        : "${detailOrder.shopOwner.address}, ${detailOrder.shopOwner.wardCommune}, ${detailOrder.shopOwner.provinceCity}";
+        : detailOrder.shopOwner.address;
     final phone =
-    isShipping ? detailOrder.order.receiverPhone : detailOrder.shopOwner.phone;
+    isShipping ? detailOrder.order.receiverPhone : detailOrder.shopOwner.phoneNumber;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(children: [
-          SvgPicture.asset(
-            "assets/images/ic_address.svg",
-            colorFilter:
-            const ColorFilter.mode(AppColors.gray_7B899D, BlendMode.srcIn),
-            width: 13,
-            height: 13,
-          ),
-          const SizedBox(width: 5),
-          Expanded(
-            child: Text(
-              "$title: $address",
+        Row(
+          children: [
+            SvgPicture.asset(
+              "assets/images/ic_address.svg",
+              colorFilter:
+              const ColorFilter.mode(AppColors.gray_7B899D, BlendMode.srcIn),
+              width: 13,
+              height: 13,
+            ),
+            const SizedBox(width: 5),
+            Expanded(
+              child: Text(
+                "$title: $address",
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.gray_7B899D,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            SvgPicture.asset(
+              "assets/images/ic_phone.svg",
+              colorFilter:
+              const ColorFilter.mode(AppColors.gray_7B899D, BlendMode.srcIn),
+              width: 13,
+              height: 13,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              "${AppStrings.phone_number}: $phone",
               style: const TextStyle(
                 fontSize: 13,
                 color: AppColors.gray_7B899D,
               ),
             ),
-          ),
-        ]),
-        const SizedBox(height: 4),
-        Row(children: [
-          SvgPicture.asset(
-            "assets/images/ic_phone.svg",
-            colorFilter:
-            const ColorFilter.mode(AppColors.gray_7B899D, BlendMode.srcIn),
-            width: 13,
-            height: 13,
-          ),
-          const SizedBox(width: 5),
-          Text(
-            "${AppStrings.phone_number}: $phone",
-            style: const TextStyle(
-              fontSize: 13,
-              color: AppColors.gray_7B899D,
-            ),
-          ),
-        ]),
+          ],
+        ),
       ],
     );
   }
