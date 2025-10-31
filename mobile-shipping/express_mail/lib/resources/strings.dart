@@ -83,4 +83,5 @@ class AppStrings {
   static const wrong_information = "Sai thông tin";
   static const login_failed = "Đăng nhập thất bại";
   static const no_order_data = "Không có dữ liệu đơn hàng";
+  static const all = "Tất cả";
 }

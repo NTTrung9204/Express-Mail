@@ -7,11 +7,7 @@ class OrderList extends StatelessWidget {
   final List<DetailOrder> orders;
   final bool isLoading;
 
-  const OrderList({
-    super.key,
-    required this.orders,
-    required this.isLoading,
-  });
+  const OrderList({super.key, required this.orders, required this.isLoading});
 
   @override
   Widget build(BuildContext context) {
@@ -23,10 +19,13 @@ class OrderList extends StatelessWidget {
   Widget _buildLoading() {
     return Center(
       key: const ValueKey("loading"),
-      child: Lottie.asset(
-        "assets/animation/ani_loading_order.json",
-        fit: BoxFit.contain,
-        repeat: true,
+      child: Padding(
+        padding: const EdgeInsets.all(80.0),
+        child: Lottie.asset(
+          "assets/animation/ani_loading_order.json",
+          fit: BoxFit.contain,
+          repeat: true,
+        ),
       ),
     );
   }
@@ -34,10 +33,13 @@ class OrderList extends StatelessWidget {
   Widget _buildEmpty() {
     return Center(
       key: const ValueKey("empty"),
-      child: Lottie.asset(
-        "assets/animation/ani_empty.json",
-        fit: BoxFit.contain,
-        repeat: true,
+      child: Padding(
+        padding: const EdgeInsets.all(80.0),
+        child: Lottie.asset(
+          "assets/animation/ani_empty.json",
+          fit: BoxFit.contain,
+          repeat: true,
+        ),
       ),
     );
   }
@@ -45,7 +47,7 @@ class OrderList extends StatelessWidget {
   Widget _buildList(List<DetailOrder> orders) {
     return ListView.builder(
       key: const ValueKey("done"),
-      padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
+      padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 0.0),
       itemCount: orders.length,
       itemBuilder: (context, index) {
         return OrderItem(detailOrder: orders[index]);

@@ -50,27 +50,6 @@ class _OrderFragmentState extends State<OrderFragment>
     super.dispose();
   }
 
-  void _fetchPageForCurrentTab({int? page}) {
-    switch (_tabController.index) {
-      case 0:
-        currentPageAll = page ?? currentPageAll;
-        viewModel.fetchAllOrders(widget.loginResponse, page: currentPageAll);
-        break;
-      case 1:
-        currentPagePickup = page ?? currentPagePickup;
-        viewModel.fetchPickupRequestOrders(widget.loginResponse, page: currentPagePickup);
-        break;
-      case 2:
-        currentPageShipping = page ?? currentPageShipping;
-        viewModel.fetchShippingOrders(widget.loginResponse, page: currentPageShipping);
-        break;
-      case 3:
-        currentPageReturning = page ?? currentPageReturning;
-        viewModel.fetchReturningOrders(widget.loginResponse, page: currentPageReturning);
-        break;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -142,16 +121,22 @@ class _OrderFragmentState extends State<OrderFragment>
           ),
           child: TabBar(
             controller: _tabController,
-            isScrollable: false,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
             indicatorColor: AppColors.blue_127AE2,
             labelColor: AppColors.blue_344256,
             unselectedLabelColor: AppColors.gray_7B899D,
             indicatorSize: TabBarIndicatorSize.tab,
+            labelPadding: EdgeInsets.zero,
             tabs: [
               _buildTab("${AppStrings.all} (${viewModel.allCount})"),
-              _buildTab("${AppStrings.pickup_requested} (${viewModel.pickupRequestCount})"),
+              _buildTab(
+                "${AppStrings.pickup_requested} (${viewModel.pickupRequestCount})",
+              ),
               _buildTab("${AppStrings.shipping} (${viewModel.shippingCount})"),
-              _buildTab("${AppStrings.returning} (${viewModel.returningCount})"),
+              _buildTab(
+                "${AppStrings.returning} (${viewModel.returningCount})",
+              ),
             ],
           ),
         );
@@ -161,24 +146,18 @@ class _OrderFragmentState extends State<OrderFragment>
 
   Widget _buildTab(String text) {
     return Tab(
-      child: SizedBox(
-        height: 30,
-        child: Marquee(
-          text: text,
-          style: const TextStyle(
-            fontFamily: "Inter_medium",
-            fontSize: 14,
-            color: AppColors.blue_344256,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontFamily: "Inter_medium",
+              fontSize: 14,
+              color: AppColors.blue_344256,
+            ),
           ),
-          scrollAxis: Axis.horizontal,
-          blankSpace: 20.0,
-          velocity: 25.0,
-          pauseAfterRound: const Duration(seconds: 1),
-          startPadding: 5.0,
-          accelerationDuration: const Duration(seconds: 1),
-          accelerationCurve: Curves.linear,
-          decelerationDuration: const Duration(milliseconds: 500),
-          decelerationCurve: Curves.easeOut,
         ),
       ),
     );
@@ -190,22 +169,35 @@ class _OrderFragmentState extends State<OrderFragment>
       builder: (context, _) {
         return TabBarView(
           controller: _tabController,
+          physics: const NeverScrollableScrollPhysics(),
           children: [
-            OrderList(
-              orders: viewModel.allOrders,
-              isLoading: viewModel.isLoadingAll,
+            RefreshIndicator(
+              onRefresh: () async => _fetchPageForCurrentTab(page: currentPageAll),
+              child: OrderList(
+                orders: viewModel.allOrders,
+                isLoading: viewModel.isLoadingAll,
+              ),
             ),
-            OrderList(
-              orders: viewModel.pickupRequestOrders,
-              isLoading: viewModel.isLoadingPickupRequest,
+            RefreshIndicator(
+              onRefresh: () async => _fetchPageForCurrentTab(page: currentPagePickup),
+              child: OrderList(
+                orders: viewModel.pickupRequestOrders,
+                isLoading: viewModel.isLoadingPickupRequest,
+              ),
             ),
-            OrderList(
-              orders: viewModel.shippingOrders,
-              isLoading: viewModel.isLoadingShipping,
+            RefreshIndicator(
+              onRefresh: () async => _fetchPageForCurrentTab(page: currentPageShipping),
+              child: OrderList(
+                orders: viewModel.shippingOrders,
+                isLoading: viewModel.isLoadingShipping,
+              ),
             ),
-            OrderList(
-              orders: viewModel.returningOrders,
-              isLoading: viewModel.isLoadingReturning,
+            RefreshIndicator(
+              onRefresh: () async => _fetchPageForCurrentTab(page: currentPageReturning),
+              child: OrderList(
+                orders: viewModel.returningOrders,
+                isLoading: viewModel.isLoadingReturning,
+              ),
             ),
           ],
         );
@@ -278,37 +270,38 @@ class _OrderFragmentState extends State<OrderFragment>
       IconButton(
         icon: const Icon(Icons.chevron_left, size: 20),
         color: currentPage > 1 ? Colors.black : Colors.grey,
-        onPressed: currentPage > 1 ? () => _onPageButtonPressed(currentPage - 1) : null,
+        onPressed: currentPage > 1
+            ? () => _onPageButtonPressed(currentPage - 1)
+            : null,
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(minWidth: 0, minHeight: 0),
       ),
     ]);
 
-    // Nút số
     for (int i = startPage; i <= endPage; i++) {
       bool isCurrent = i == currentPage;
-      buttons.add(SizedBox(
-        width: pageButtonWidth,
-        child: TextButton(
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.zero,
-            minimumSize: const Size(0, 0),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-          onPressed: isCurrent ? null : () => _onPageButtonPressed(i),
-          child: Text(
-            '$i',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-              fontSize: 14,
-              color: isCurrent
-                  ? Colors.blue
-                  : Colors.black,
+      buttons.add(
+        SizedBox(
+          width: pageButtonWidth,
+          child: TextButton(
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: const Size(0, 0),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            onPressed: isCurrent ? null : () => _onPageButtonPressed(i),
+            child: Text(
+              '$i',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                fontSize: 14,
+                color: isCurrent ? Colors.blue : Colors.black,
+              ),
             ),
           ),
         ),
-      ));
+      );
     }
 
     // >, >>
@@ -316,14 +309,18 @@ class _OrderFragmentState extends State<OrderFragment>
       IconButton(
         icon: const Icon(Icons.chevron_right, size: 20),
         color: currentPage < totalPages ? Colors.black : Colors.grey,
-        onPressed: currentPage < totalPages ? () => _onPageButtonPressed(currentPage + 1) : null,
+        onPressed: currentPage < totalPages
+            ? () => _onPageButtonPressed(currentPage + 1)
+            : null,
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(minWidth: 0, minHeight: 0),
       ),
       IconButton(
         icon: const Icon(Icons.last_page, size: 20),
         color: currentPage < totalPages ? Colors.black : Colors.grey,
-        onPressed: currentPage < totalPages ? () => _onPageButtonPressed(totalPages) : null,
+        onPressed: currentPage < totalPages
+            ? () => _onPageButtonPressed(totalPages)
+            : null,
         padding: EdgeInsets.zero,
         constraints: const BoxConstraints(minWidth: 0, minHeight: 0),
       ),
@@ -331,10 +328,18 @@ class _OrderFragmentState extends State<OrderFragment>
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: buttons,
+      child: Container(
+        width: double.infinity,
+        margin: EdgeInsetsGeometry.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: buttons,
+        ),
       ),
     );
   }
@@ -356,5 +361,35 @@ class _OrderFragmentState extends State<OrderFragment>
     }
     _fetchPageForCurrentTab(page: page);
     setState(() {});
+  }
+
+  void _fetchPageForCurrentTab({int? page}) {
+    switch (_tabController.index) {
+      case 0:
+        currentPageAll = page ?? currentPageAll;
+        viewModel.fetchAllOrders(widget.loginResponse, page: currentPageAll);
+        break;
+      case 1:
+        currentPagePickup = page ?? currentPagePickup;
+        viewModel.fetchPickupRequestOrders(
+          widget.loginResponse,
+          page: currentPagePickup,
+        );
+        break;
+      case 2:
+        currentPageShipping = page ?? currentPageShipping;
+        viewModel.fetchShippingOrders(
+          widget.loginResponse,
+          page: currentPageShipping,
+        );
+        break;
+      case 3:
+        currentPageReturning = page ?? currentPageReturning;
+        viewModel.fetchReturningOrders(
+          widget.loginResponse,
+          page: currentPageReturning,
+        );
+        break;
+    }
   }
 }
