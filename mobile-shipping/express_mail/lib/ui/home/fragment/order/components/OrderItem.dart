@@ -10,7 +10,9 @@ import 'package:express_mail/ui/detailorder/DetailOrderActivity.dart';
 class OrderItem extends StatelessWidget {
   final DetailOrder detailOrder;
 
-  const OrderItem({super.key, required this.detailOrder});
+  final VoidCallback? onFinish;
+
+  const OrderItem({super.key, required this.detailOrder, this.onFinish});
 
   @override
   Widget build(BuildContext context) {
@@ -122,7 +124,11 @@ class OrderItem extends StatelessWidget {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 11),
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    if (onFinish != null) {
+                      onFinish!();
+                    }
+                  },
                   child: Text(
                     (detailOrder.status == ShippingStatus.SHIPPING)
                         ? AppStrings.finish

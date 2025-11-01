@@ -17,4 +17,5 @@ class Constants {
   static const String keyAccessToken = 'ACCESS_TOKEN';
   static const String keyRefreshToken = 'REFRESH_TOKEN';
   static const String keyUser = 'USER_DATA';
+  static const int limit = 10;
 }
