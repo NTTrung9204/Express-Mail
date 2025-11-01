@@ -40,7 +40,6 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
         lastName: safeUser.lastName || "",
       });
       setExcludePermissions(safeUser.excludePermissions || []); 
-      console.log("DEBUG(UserModal): User Role:", safeUser.role, "Exclude Permissions:", safeUser.excludePermissions || []); // DEBUG
     } else if (mode === "add") {
       setForm({
         username: "",
@@ -90,8 +89,6 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
     delete dataToSend.confirmPassword;
     if (mode === "edit" && !form.password) delete dataToSend.password;
     
-    console.log("DEBUG(UserModal): Dữ liệu gửi đi:", dataToSend); 
-
     const result = await onSave(dataToSend);
 
     if (!result?.success) {
@@ -118,7 +115,6 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
   };
 
   const userGroupId = ROLE_GROUP_MAP[user?.role] || 1;
-  console.log("DEBUG(UserModal): Target Group ID:", userGroupId); 
 
   if (!open) return null;
 

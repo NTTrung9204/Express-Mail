@@ -117,7 +117,7 @@ const LoginPage = () => {
                   Mật khẩu
                 </label>
                 <a
-                  href="#"
+                  href="/reset-password"
                   className="text-sm text-orange-500 hover:underline"
                   tabIndex={-1}
                 >
