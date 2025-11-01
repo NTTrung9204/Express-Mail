@@ -1,4 +1,3 @@
-// src/store/shippingRateStore.js
 import { useState, useEffect } from "react";
 import { shippingRateService } from "../api/shippingRateService";
 
@@ -9,14 +8,10 @@ export const useShippingRateStore = (initialPage = 1, pageSize = 10) => {
   const [totalCount, setTotalCount] = useState(0);
   
 
-  // Modal quản lý phí ship: add | view
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState("add"); // "add" | "view"
+  const [mode, setMode] = useState("add");
   const [selected, setSelected] = useState(null);
 
-  // Modal tính phí ship
-
-  // Lấy danh sách phí ship (chỉ phân trang, không search)
   const fetchShippingRates = async () => {
     try {
       setLoading(true);
@@ -32,12 +27,10 @@ export const useShippingRateStore = (initialPage = 1, pageSize = 10) => {
     }
   };
 
-  // Gọi lại khi page hoặc pageSize thay đổi
   useEffect(() => {
     fetchShippingRates();
   }, [page, pageSize]);
 
-  // Mở modal: add hoặc view
   const handleOpen = async (m, rate = null) => {
     setMode(m);
     if (m === "view" && rate?.id) {
@@ -54,18 +47,16 @@ export const useShippingRateStore = (initialPage = 1, pageSize = 10) => {
     setOpen(true);
   };
 
-  // Đóng modal
   const handleClose = () => {
     setOpen(false);
     setSelected(null);
     setMode("add");
   };
 
-  // Lưu phí ship mới (chỉ hỗ trợ thêm)
   const handleSave = async (data) => {
     try {
       await shippingRateService.createShippingRate(data);
-      await fetchShippingRates(); // Tải lại danh sách
+      await fetchShippingRates(); 
       handleClose();
       return { success: true, message: "Thêm phí ship thành công!" };
     } catch (error) {
@@ -74,7 +65,6 @@ export const useShippingRateStore = (initialPage = 1, pageSize = 10) => {
     }
   };
 
-  // ✅ Đổi trạng thái active (chỉ 1 active duy nhất)
     const handleToggleActive = async (id, currentStatus) => {
     if (currentStatus) return; // Đang active → không cho tắt thủ công
 
@@ -98,7 +88,6 @@ export const useShippingRateStore = (initialPage = 1, pageSize = 10) => {
     };
 
   return {
-    // State
     shippingRates,
     loading,
     page,
@@ -108,11 +97,9 @@ export const useShippingRateStore = (initialPage = 1, pageSize = 10) => {
     mode,
     selected,
 
-    // Setters
     setPage,
-    setOpen: handleClose, // override để có logic đóng sạch
+    setOpen: handleClose, 
 
-    // Actions
     handleOpen,
     handleSave,
     handleToggleActive,

@@ -283,7 +283,7 @@ export default function PermissionModal({
                 <div>
                   <input
                     type="text"
-                    className={`border rounded-md p-2 text-sm w-full focus:ring-2 focus:ring-orange-300 ${
+                    className={`border rounded-md p-2 text-sm w-full outline-none focus:ring-2 focus:ring-orange-300 ${
                       errors.address ? "border-red-500" : "border-gray-300"
                     }`}
                     placeholder="Địa chỉ"
@@ -301,7 +301,7 @@ export default function PermissionModal({
                 <div>
                   <input
                     type="text"
-                    className={`border rounded-md p-2 text-sm w-full focus:ring-2 focus:ring-orange-300 ${
+                    className={`border rounded-md p-2 text-sm w-full outline-none focus:ring-2 focus:ring-orange-300 ${
                       errors.phoneNumber ? "border-red-500" : "border-gray-300"
                     }`}
                     placeholder="Số điện thoại"

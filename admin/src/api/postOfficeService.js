@@ -27,7 +27,6 @@ export const postOfficeService = {
     await baseAPI.delete(`/post-offices/${id}/`);
   },
 
-  // Additional endpoints for managing staff
   addStaffToOffice: async (officeId, userId) => {
     const response = await baseAPI.post(`/post-offices/${officeId}/staff/`, {
       user_id: userId

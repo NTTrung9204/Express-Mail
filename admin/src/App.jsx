@@ -7,14 +7,16 @@ import MainLayout from "./pages/MainLayout";
 import LoginPage from "./pages/LoginPage";
 import { ToastContainer } from "react-toastify";
 import ShippingRate from "./pages/ShippingRate";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 
 function App() {
   return (
     <div>
       <ToastContainer/>
       <Routes>
-        <Route path="/" element={<Navigate to="/admin/login" replace />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/reset-password" element={<ForgotPasswordPage/>} />
         
         <Route path="/admin" element={<MainLayout />}>
           <Route path="home" element={<Dashboard />} />

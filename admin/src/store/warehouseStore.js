@@ -148,7 +148,7 @@ export const useWarehouseStore = (initialPage = 1, limit = 20) => {
   }, [page]);
 
   return {
-    warehouses: filteredWarehouses, // TRẢ VỀ enhancedWarehouses đã được lọc
+    warehouses: filteredWarehouses, 
     total,
     page,
     limit,

@@ -8,7 +8,6 @@ export const baseAPI = axios.create({
   }
 });
 
-// Request interceptor
 baseAPI.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
@@ -20,7 +19,6 @@ baseAPI.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor
 baseAPI.interceptors.response.use(
   (response) => response,
   async (error) => {
