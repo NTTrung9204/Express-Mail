@@ -46,7 +46,7 @@ class OrderViewModel extends ChangeNotifier {
 
     String url = '${Constants.shipperOrderUrl}${loginResponse.user.id}?';
     if (status != null) url += 'status=$status&';
-    url += 'page=$page&limit=10';
+    url += 'page=$page&limit=${Constants.limit}';
 
     try {
       final response = await http.get(Uri.parse(url), headers: {

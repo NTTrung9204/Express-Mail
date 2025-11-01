@@ -6,8 +6,14 @@ import 'package:lottie/lottie.dart';
 class OrderList extends StatelessWidget {
   final List<DetailOrder> orders;
   final bool isLoading;
+  final Function(int orderId)? onOrderFinished;
 
-  const OrderList({super.key, required this.orders, required this.isLoading});
+  const OrderList({
+    super.key,
+    required this.orders,
+    required this.isLoading,
+    this.onOrderFinished,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +56,14 @@ class OrderList extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 0.0),
       itemCount: orders.length,
       itemBuilder: (context, index) {
-        return OrderItem(detailOrder: orders[index]);
+        return OrderItem(
+          detailOrder: orders[index],
+          onFinish: () {
+            if (onOrderFinished != null) {
+              onOrderFinished!(orders[index].id);
+            }
+          },
+        );
       },
     );
   }

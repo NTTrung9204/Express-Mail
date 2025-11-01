@@ -1,6 +1,6 @@
+import 'package:express_mail/constants/Constants.dart';
 import 'package:express_mail/data/model/LoginResponse.dart';
 import 'package:flutter/material.dart';
-import 'package:marquee/marquee.dart';
 import 'OrderViewModel.dart';
 import 'components/OrderList.dart';
 import 'package:express_mail/resources/colors.dart';
@@ -172,31 +172,63 @@ class _OrderFragmentState extends State<OrderFragment>
           physics: const NeverScrollableScrollPhysics(),
           children: [
             RefreshIndicator(
-              onRefresh: () async => _fetchPageForCurrentTab(page: currentPageAll),
+              onRefresh: () async =>
+                  _fetchPageForCurrentTab(page: currentPageAll),
               child: OrderList(
                 orders: viewModel.allOrders,
                 isLoading: viewModel.isLoadingAll,
+                onOrderFinished: (orderId) {
+                  _finishOrder(
+                    orderId,
+                    page: currentPageAll,
+                    totalPages: viewModel.allCount,
+                  );
+                },
               ),
             ),
             RefreshIndicator(
-              onRefresh: () async => _fetchPageForCurrentTab(page: currentPagePickup),
+              onRefresh: () async =>
+                  _fetchPageForCurrentTab(page: currentPagePickup),
               child: OrderList(
                 orders: viewModel.pickupRequestOrders,
                 isLoading: viewModel.isLoadingPickupRequest,
+                onOrderFinished: (orderId) {
+                  _finishOrder(
+                    orderId,
+                    page: currentPagePickup,
+                    totalPages: viewModel.pickupRequestCount,
+                  );
+                },
               ),
             ),
             RefreshIndicator(
-              onRefresh: () async => _fetchPageForCurrentTab(page: currentPageShipping),
+              onRefresh: () async =>
+                  _fetchPageForCurrentTab(page: currentPageShipping),
               child: OrderList(
                 orders: viewModel.shippingOrders,
                 isLoading: viewModel.isLoadingShipping,
+                onOrderFinished: (orderId) {
+                  _finishOrder(
+                    orderId,
+                    page: currentPageShipping,
+                    totalPages: viewModel.shippingCount,
+                  );
+                },
               ),
             ),
             RefreshIndicator(
-              onRefresh: () async => _fetchPageForCurrentTab(page: currentPageReturning),
+              onRefresh: () async =>
+                  _fetchPageForCurrentTab(page: currentPageReturning),
               child: OrderList(
                 orders: viewModel.returningOrders,
                 isLoading: viewModel.isLoadingReturning,
+                onOrderFinished: (orderId) {
+                  _finishOrder(
+                    orderId,
+                    page: currentPageReturning,
+                    totalPages: viewModel.returningCount,
+                  );
+                },
               ),
             ),
           ],
@@ -391,5 +423,16 @@ class _OrderFragmentState extends State<OrderFragment>
         );
         break;
     }
+  }
+
+  void _finishOrder(int orderId, {required int page, required int totalPages}) {
+    int currentPage = page;
+
+    int newTotalPages = ((totalPages - 1) / Constants.limit).ceil();
+    totalPages = newTotalPages;
+    if (currentPage > totalPages) {
+      currentPage = totalPages;
+    }
+    _fetchPageForCurrentTab(page: currentPage);
   }
 }
