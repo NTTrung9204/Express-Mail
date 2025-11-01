@@ -6,6 +6,7 @@ import Warehouses from "./pages/Warehouses";
 import MainLayout from "./pages/MainLayout";
 import LoginPage from "./pages/LoginPage";
 import { ToastContainer } from "react-toastify";
+import ShippingRate from "./pages/ShippingRate";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="home" element={<Dashboard />} />
           <Route path="users" element={<Users />} />
           <Route path="warehouses" element={<Warehouses />} />
+          <Route path="shipping-rate" element={<ShippingRate/>} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />
