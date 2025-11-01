@@ -172,6 +172,10 @@ class _OrderFragmentState extends State<OrderFragment>
           physics: const NeverScrollableScrollPhysics(),
           children: [
             RefreshIndicator(
+              color: Colors.blue,
+              backgroundColor: Colors.white,
+              strokeWidth: 2,
+              displacement: 5,
               onRefresh: () async =>
                   _fetchPageForCurrentTab(page: currentPageAll),
               child: OrderList(
@@ -187,6 +191,10 @@ class _OrderFragmentState extends State<OrderFragment>
               ),
             ),
             RefreshIndicator(
+              color: Colors.blue,
+              backgroundColor: Colors.white,
+              strokeWidth: 2,
+              displacement: 5,
               onRefresh: () async =>
                   _fetchPageForCurrentTab(page: currentPagePickup),
               child: OrderList(
@@ -202,6 +210,10 @@ class _OrderFragmentState extends State<OrderFragment>
               ),
             ),
             RefreshIndicator(
+              color: Colors.blue,
+              backgroundColor: Colors.white,
+              strokeWidth: 2,
+              displacement: 5,
               onRefresh: () async =>
                   _fetchPageForCurrentTab(page: currentPageShipping),
               child: OrderList(
@@ -217,6 +229,10 @@ class _OrderFragmentState extends State<OrderFragment>
               ),
             ),
             RefreshIndicator(
+              color: Colors.blue,
+              backgroundColor: Colors.white,
+              strokeWidth: 2,
+              displacement: 5,
               onRefresh: () async =>
                   _fetchPageForCurrentTab(page: currentPageReturning),
               child: OrderList(
