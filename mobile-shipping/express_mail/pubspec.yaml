@@ -41,6 +41,7 @@ dependencies:
   http: ^1.1.0
   flutter_polyline_points: ^2.0.0
   marquee: ^2.3.0
+  flutter_dotenv: ^6.0.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -71,14 +72,15 @@ flutter:
   assets:
     - assets/images/
     - assets/animation/
+    - .env
 
   fonts:
-    - family: Inter_Bold
+    - family: Inter_bold
       fonts:
         - asset: assets/fonts/inter_bold.ttf
           weight: 700
 
-    - family: Inter_Regular
+    - family: Inter_regular
       fonts:
         - asset: assets/fonts/inter_regular.ttf
 
