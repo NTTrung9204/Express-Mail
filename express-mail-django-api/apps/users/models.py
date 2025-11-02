@@ -45,6 +45,13 @@ class User(AbstractUser, BaseModel):
 
         db_table = "users"
 
+    def remove_all_groups(self):
+        """
+        Removes all groups associated with this user.
+        """
+
+        self.groups.clear()
+
 
 class PasswordResetOTP(BaseModel):
     """

@@ -22,6 +22,7 @@ from apps.users.serializers import (
     GetNameListRequestSerializer,
     GetNameListResponseSerializer,
 )
+from services.groups.group_services import GroupService
 from services.permissions.permission_services import PermissionService
 from services.profiles.profile_services import ProfileService
 from services.users.password_reset_otp_services import PasswordResetOTPService
@@ -286,6 +287,10 @@ class ProfileViewSet(BaseAPIViewSet):
 
         # Create profile
         instance = create_func(profile_data)
+
+        user.remove_all_groups()
+        user.groups.add(GroupService.get_group_by_name(role_value))
+
         return self.response_created(serializer_class(instance).data)
 
     @transaction.atomic()
