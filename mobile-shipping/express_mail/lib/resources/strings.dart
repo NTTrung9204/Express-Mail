@@ -117,4 +117,8 @@ class AppStrings {
   static const no_profile_data = "Không có dữ liệu hồ sơ";
   static const loading_data = "Đang tải dữ liệu...";
   static const logout = "Đăng xuất";
+  static const user = "Người dùng";
+  static const confirm_logout = "Xác nhận đăng xuất";
+  static const are_you_sure_you_want_to_log_out_of_the_app = "Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng không?";
+  static const cancel = "Hủy";
 }
