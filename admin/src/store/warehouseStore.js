@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
 import { postOfficeService } from "../api/postOfficeService";
+import { fetchProvinces } from "../api/locationService"; 
+
+const findNameByCode = (code, list) => {
+    if (!code || !list) return code;
+    const item = list.find(p => p.code === code);
+    return item ? item.name : code;
+};
 
 export const useWarehouseStore = (initialPage = 1, limit = 20) => {
   const [warehouses, setWarehouses] = useState([]);
@@ -14,13 +21,26 @@ export const useWarehouseStore = (initialPage = 1, limit = 20) => {
   const [selectedWarehouse, setSelectedWarehouse] = useState(null);
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [warehouseToDelete, setWarehouseToDelete] = useState(null);
+  
+  const [provinces, setProvinces] = useState([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await fetchProvinces();
+        setProvinces(data);
+      } catch (err) {
+        console.error("Lỗi khi tải danh sách tỉnh thành:", err);
+      }
+    })();
+  }, []);
 
   const fetchWarehouses = async () => {
     setLoading(true);
     try {
       const data = await postOfficeService.getPostOffices(page, limit);
-      setWarehouses(data.results || data.items || []);
-      setTotal(data.count || data.total || 0);
+      setWarehouses(data.results || []);
+      setTotal(data.count || 0);
     } catch (error) {
       console.error("Lỗi khi tải danh sách kho:", error);
     } finally {
@@ -55,18 +75,35 @@ export const useWarehouseStore = (initialPage = 1, limit = 20) => {
     setOpenWarehouseModal(true);
   };
 
+  const openViewWarehouse = (warehouse) => {
+    setModalMode("view");
+    setEditingWarehouse(warehouse);
+    setOpenWarehouseModal(true);
+  };
+
   const handleSubmitWarehouse = async (form) => {
     try {
+      const payload = {
+        name: form.name,
+        address: form.address,
+        provinceCity: form.provinceCity, 
+        district: form.district,         
+        wardCommune: form.wardCommune,   
+        latitude: parseFloat(form.latitude),
+        longitude: parseFloat(form.longitude),
+      };
+
       if (modalMode === "add") {
-        await postOfficeService.createPostOffice(form);
-      } else {
-        await postOfficeService.updatePostOffice(editingWarehouse.id, form);
+        await postOfficeService.createPostOffice(payload);
+      } else if (editingWarehouse)  {
+        await postOfficeService.updatePostOffice(editingWarehouse.id, payload);
       }
+
       await fetchWarehouses();
       setOpenWarehouseModal(false);
       return true;
     } catch (error) {
-      console.error(error);
+      console.error("Lỗi khi lưu kho:", error);
       return false;
     }
   };
@@ -83,12 +120,26 @@ export const useWarehouseStore = (initialPage = 1, limit = 20) => {
       setOpenDeleteModal(false);
       return true;
     } catch (error) {
-      console.error(error);
+      console.error("Lỗi khi xóa kho:", error);
       return false;
     }
   };
 
-  const filteredWarehouses = warehouses.filter((w) => 
+  const enhancedWarehouses = warehouses.map(w => {
+      
+      let provinceName = w.provinceCity;
+
+      if (provinces.length > 0) {
+          provinceName = findNameByCode(w.provinceCity, provinces);
+      }
+
+      return {
+          ...w,
+          displayProvince: provinceName, 
+      };
+  });
+  
+  const filteredWarehouses = enhancedWarehouses.filter((w) =>
     w.name?.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -97,7 +148,7 @@ export const useWarehouseStore = (initialPage = 1, limit = 20) => {
   }, [page]);
 
   return {
-    warehouses: filteredWarehouses,
+    warehouses: filteredWarehouses, // TRẢ VỀ enhancedWarehouses đã được lọc
     total,
     page,
     limit,
@@ -121,6 +172,7 @@ export const useWarehouseStore = (initialPage = 1, limit = 20) => {
     handleSubmitUser,
     openAddWarehouse,
     openEditWarehouse,
+    openViewWarehouse,
     handleSubmitWarehouse,
     handleDeleteWarehouse,
     confirmDeleteWarehouse,

@@ -1,25 +1,25 @@
 import { useState, useEffect } from "react";
 import { userService } from "../api/userService";
 
-// Các lựa chọn vai trò
 export const roleOptions = [
-  { value: "staff", label: "Nhân viên kho" },
+  { value: "", label: "Chọn vai trò" }, 
+  { value: "admin", label: "Quản trị viên" },
+  { value: "superadmin", label: "Super Admin" },
+  { value: "post_office_manager", label: "Trưởng bưu cục" },
+  { value: "post_office_staff", label: "Nhân viên bưu cục" },
+  { value: "shop", label: "Chủ shop" },
   { value: "shipper", label: "Shipper" },
-  { value: "shopOwner", label: "Chủ shop" },
-  { value: "warehouseOwner", label: "Chủ kho" },
-  { value: "superadmin", label: "Quản trị viên" },
 ];
 
-// Custom hook quản lý users
+
 export const useUserStore = (initialPage = 1, pageSize = 10) => {
-  // State cơ bản
+
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(initialPage);
   const [totalCount, setTotalCount] = useState(0);
 
-  // Modal & thao tác
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState("add");
   const [selected, setSelected] = useState(null);
@@ -30,9 +30,6 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
 
-  // ======================
-  // Fetch danh sách users
-  // ======================
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -46,14 +43,10 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
     }
   };
 
-  // Load lại khi page hoặc pageSize thay đổi
   useEffect(() => {
     fetchUsers();
   }, [page, pageSize]);
 
-  // ======================
-  // Modal thêm/sửa user
-  // ======================
   const handleOpen = (m, user = null) => {
     setMode(m);
     setSelected(user);
@@ -95,7 +88,7 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
           success: false,
           message:
             errorResponse.message || "Không thể lưu người dùng. Vui lòng thử lại!",
-          errors: fieldErrors, // { username: "Tên đăng nhập đã được sử dụng", email: "Email đã tồn tại" }
+          errors: fieldErrors,
         };
       }
 
@@ -108,9 +101,6 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
     }
   };
 
-  // ======================
-  // Quản lý vai trò user
-  // ======================
   const handleRoleChange = (user, newRole) => {
     setSelectedUser({ ...user, newRole });
     setOpenRoleModal(true);
@@ -118,12 +108,14 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
 
   const handleConfirmRole = async () => {
     if (!selectedUser) return;
+    
+    const roleToSend = selectedUser.newRole === "" ? null : selectedUser.newRole;
 
     try {
-      await userService.updateUser(selectedUser.id, { role: selectedUser.newRole });
+      await userService.updateUser(selectedUser.id, { role: roleToSend });
       setUsers((prev) =>
         prev.map((u) =>
-          u.id === selectedUser.id ? { ...u, role: selectedUser.newRole } : u
+          u.id === selectedUser.id ? { ...u, role: roleToSend } : u
         )
       );
       return { success: true };
@@ -136,9 +128,6 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
     }
   };
 
-  // ======================
-  // Xóa user
-  // ======================
   const handleDelete = (user) => {
     setUserToDelete(user);
     setOpenDeleteModal(true);
@@ -159,10 +148,7 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
       setUserToDelete(null);
     }
   };
-
-  // ======================
-  // Lọc user theo email search
-  // ======================
+  
   const filteredUsers = users.filter((u) =>
     u.email?.toLowerCase().includes(search.toLowerCase())
   );
