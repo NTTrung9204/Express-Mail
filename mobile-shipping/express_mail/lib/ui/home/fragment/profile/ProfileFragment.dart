@@ -89,6 +89,7 @@ class _ProfileFragmentState extends State<ProfileFragment> {
                   HeaderProfile(
                     loginResponse: widget.loginResponse,
                     profile: profile,
+                    profileViewModel: profileViewModel,
                   ),
                   Expanded(
                     child: Container(

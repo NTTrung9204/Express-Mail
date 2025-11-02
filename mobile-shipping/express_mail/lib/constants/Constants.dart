@@ -14,6 +14,7 @@ class Constants {
   // Shipper
   static const String shipperOrderUrl = '$baseUrlTrung/shipping/shipper/';
   static const String profileUrl = '$baseUrlTai/users/';
+  static const String logoutUrl = '$baseUrlTai/auth/logout/';
 
   // User
   // static const String userProfileUrl = '$baseUrlTai/user/profile/';
