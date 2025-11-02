@@ -13,3 +13,15 @@ class GroupService:
         """
 
         return Group.objects.get(name=group_name).permissions.all()
+
+    @staticmethod
+    def get_group_by_name(group_name):
+        """
+        Get group by name.
+        """
+
+        try:
+            group = Group.objects.get(name=group_name)
+            return group
+        except Group.DoesNotExist:
+            return None
