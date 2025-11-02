@@ -1,54 +1,27 @@
-import 'dart:io';
-
-import 'package:express_mail/data/model/Shipper.dart';
+import 'package:express_mail/data/model/LoginResponse.dart';
+import 'package:express_mail/data/model/Profile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:lottie/lottie.dart';
 import 'package:express_mail/resources/colors.dart';
 import 'package:express_mail/resources/strings.dart';
 
-class HeaderProfile extends StatefulWidget {
-  final Shipper shipper;
+class HeaderProfile extends StatelessWidget {
+  final Profile profile;
+  final LoginResponse loginResponse;
 
-  const HeaderProfile({super.key, required this.shipper});
-
-  @override
-  State<HeaderProfile> createState() => _HeaderProfileState();
-}
-
-class _HeaderProfileState extends State<HeaderProfile> {
-  File? _imageFile;
-
-  late Shipper shipper;
-
-  @override
-  void initState() {
-    super.initState();
-    shipper = widget.shipper;
-  }
-
-  final ImagePicker _picker = ImagePicker();
-
-  Future<void> _pickImage() async {
-    final XFile? pickedFile = await _picker.pickImage(
-      source: ImageSource.gallery,
-    );
-
-    if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-      });
-    }
-  }
+  const HeaderProfile({
+    super.key,
+    required this.loginResponse,
+    required this.profile,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [AppColors.blue_127AE2, AppColors.blue_5AA6F2],
         ),
         border: Border(bottom: BorderSide(color: AppColors.gray_DADFE7)),
@@ -56,11 +29,11 @@ class _HeaderProfileState extends State<HeaderProfile> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
+              const Text(
                 AppStrings.profile,
                 style: TextStyle(
                   fontFamily: "Inter_bold",
@@ -69,44 +42,46 @@ class _HeaderProfileState extends State<HeaderProfile> {
                 ),
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  //
+                },
                 style: ButtonStyle(
                   padding: WidgetStateProperty.all(
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
                   ),
                   shape: WidgetStateProperty.all(
                     RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
-                      side: BorderSide(color: AppColors.white_20, width: 1.5),
+                      side: const BorderSide(
+                        color: AppColors.white_20,
+                        width: 1.5,
+                      ),
                     ),
                   ),
-                  overlayColor: WidgetStateProperty.resolveWith<Color?>((
-                    states,
-                  ) {
-                    if (states.contains(WidgetState.pressed)) {
-                      return Colors.blue.withOpacity(0.1);
-                    }
-                    return null;
-                  }),
+                  overlayColor: WidgetStateProperty.resolveWith<Color?>(
+                    (states) => states.contains(WidgetState.pressed)
+                        ? AppColors.gray_E0E5EB.withValues(alpha: 0.5)
+                        : null,
+                  ),
                 ),
                 child: Row(
                   children: [
                     SvgPicture.asset(
-                      "assets/images/ic_edit.svg",
-                      colorFilter: ColorFilter.mode(
+                      "assets/images/ic_logout.svg",
+                      colorFilter: const ColorFilter.mode(
                         AppColors.white,
                         BlendMode.srcIn,
                       ),
                       width: 14,
                       height: 14,
                     ),
-                    SizedBox(width: 12),
-                    Text(
-                      AppStrings.edit,
+                    const SizedBox(width: 12),
+                    const Text(
+                      AppStrings.logout,
                       style: TextStyle(
-                        color: Colors.white,
                         fontFamily: "Inter_regular",
                         fontSize: 14,
+                        color: AppColors.white,
                       ),
                     ),
                   ],
@@ -114,33 +89,46 @@ class _HeaderProfileState extends State<HeaderProfile> {
               ),
             ],
           ),
-          SizedBox(height: 18),
+
+          const SizedBox(height: 18),
+
+          // Avatar + Name
           Row(
             children: [
-              GestureDetector(
-                onTap: _pickImage, // click vào avatar
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.white_20, width: 2),
-                  ),
-                  child: CircleAvatar(
-                    radius: 38,
-                    backgroundImage: _imageFile != null
-                        ? FileImage(_imageFile!) as ImageProvider
-                        : NetworkImage(shipper.avatar!),
-                    backgroundColor: Colors.grey[200],
-                  ),
+              Container(
+                width: 80,
+                height: 80,
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.white_20, width: 2),
+                ),
+                child: ClipOval(
+                  child: profile.avatar != null && profile.avatar!.isNotEmpty
+                      ? Image.network(
+                          profile.avatar!,
+                          fit: BoxFit.cover,
+                          width: 80,
+                          height: 80,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(
+                                Icons.person,
+                                size: 70,
+                                color: AppColors.gray_DADFE7,
+                              ),
+                        )
+                      : const Icon(
+                          Icons.person,
+                          size: 70,
+                          color: AppColors.gray_DADFE7,
+                        ),
                 ),
               ),
-              SizedBox(width: 20),
+              const SizedBox(width: 20),
               Expanded(
                 child: Text(
-                  shipper.fullName,
-                  style: TextStyle(
+                  loginResponse.user.fullName,
+                  style: const TextStyle(
                     fontFamily: "Inter_bold",
                     fontSize: 20,
                     color: AppColors.white,

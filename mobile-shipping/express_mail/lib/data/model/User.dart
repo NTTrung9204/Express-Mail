@@ -4,8 +4,9 @@ class User {
   final String firstName;
   final String lastName;
   final String role;
+  final String email;
 
-  /// Getter trả về họ tên đầy đủ
+  /// Getter
   String get fullName => ("$firstName $lastName").trim();
 
   const User({
@@ -14,6 +15,7 @@ class User {
     required this.firstName,
     required this.lastName,
     required this.role,
+    required this.email,
   });
 
   /// Parse JSON → User
@@ -24,6 +26,7 @@ class User {
       firstName: json['firstName'],
       lastName: json['lastName'],
       role: json['role'],
+      email: json['email'],
     );
   }
 
@@ -35,6 +38,7 @@ class User {
       'firstName': firstName,
       'lastName': lastName,
       'role': role,
+      'email': email,
     };
   }
 
@@ -45,6 +49,7 @@ class User {
     String? firstName,
     String? lastName,
     String? role,
+    String? email,
   }) {
     return User(
       id: id ?? this.id,
@@ -52,6 +57,7 @@ class User {
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       role: role ?? this.role,
+      email: email ?? this.email,
     );
   }
 }
