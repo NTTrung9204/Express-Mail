@@ -4,6 +4,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PeopleIcon from "@mui/icons-material/People";
 import WarehouseIcon from "@mui/icons-material/Warehouse";
+import { LocalShipping } from "@mui/icons-material";
 import { authService } from "../../api/authService";
 
 const Sidebar = ({ setTitle }) => {
@@ -61,6 +62,16 @@ const Sidebar = ({ setTitle }) => {
           >
             <WarehouseIcon className="w-5 h-5 mr-3" />
             Quản lý Kho
+          </NavLink>
+          <NavLink
+            to="/admin/shipping-rate"
+            className={({ isActive }) =>
+              `${linkStyle} ${isActive ? activeStyle : ""}`
+            }
+            onClick={() => setTitle && setTitle("Quản lý phí Ship")}
+          >
+            <LocalShipping className="w-5 h-5 mr-3" />
+            Quản lý Phi ship
           </NavLink>
         </nav>
       </div>
