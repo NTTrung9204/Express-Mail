@@ -267,59 +267,90 @@ class _VerifyCodeActivityState extends State<VerifyCodeActivity> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: List.generate(6, (index) {
-                              bool isFilled =
-                                  _controllers[index].text.isNotEmpty;
                               return Container(
                                 margin: const EdgeInsets.symmetric(
                                   horizontal: 4,
                                 ),
                                 width: boxWidth,
                                 height: 60,
-                                child: TextField(
-                                  controller: _controllers[index],
-                                  focusNode: _focusNodes[index],
-                                  textAlign: TextAlign.center,
-                                  keyboardType: TextInputType.number,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontFamily: "Inter_regular",
-                                    color: AppColors.black_1D2530,
-                                  ),
-                                  inputFormatters: [
-                                    LengthLimitingTextInputFormatter(1),
-                                    FilteringTextInputFormatter.digitsOnly,
-                                  ],
-                                  onChanged: (value) {
-                                    setState(() {});
-                                    if (value.isNotEmpty && index < 5) {
-                                      _focusNodes[index + 1].requestFocus();
-                                    } else if (value.isEmpty && index > 0) {
-                                      _focusNodes[index - 1].requestFocus();
+                                child: KeyboardListener(
+                                  focusNode: FocusNode(),
+                                  onKeyEvent: (event) {
+                                    if (event is KeyDownEvent &&
+                                        event.logicalKey ==
+                                            LogicalKeyboardKey.backspace) {
+                                      if (_controllers[index].text.isEmpty &&
+                                          index > 0) {
+                                        _focusNodes[index - 1].requestFocus();
+                                      }
                                     }
                                   },
-                                  decoration: InputDecoration(
-                                    isDense: true,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      vertical: 12,
+                                  child: TextField(
+                                    controller: _controllers[index],
+                                    focusNode: _focusNodes[index],
+                                    textAlign: TextAlign.center,
+                                    keyboardType: TextInputType.number,
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontFamily: "Inter_regular",
+                                      color: AppColors.black_1D2530,
                                     ),
-                                    filled: true,
-                                    fillColor: isFilled
-                                        ? AppColors.blue_F0F7FF
-                                        : AppColors.white,
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      borderSide: BorderSide(
-                                        color: isFilled
-                                            ? AppColors.blue_4591FF
-                                            : AppColors.gray_E0E5EB,
-                                        width: 1,
+                                    inputFormatters: [
+                                      LengthLimitingTextInputFormatter(1),
+                                      FilteringTextInputFormatter.digitsOnly,
+                                    ],
+                                    onChanged: (value) {
+                                      setState(() {});
+                                      if (value.length > 1) {
+                                        _controllers[index].text =
+                                            value[value.length - 1];
+                                        _controllers[index].selection =
+                                            TextSelection.fromPosition(
+                                              TextPosition(offset: 1),
+                                            );
+                                      }
+                                      if (value.isNotEmpty &&
+                                          index < _controllers.length - 1) {
+                                        _focusNodes[index + 1].requestFocus();
+                                      }
+                                    },
+                                    onTap: () {
+                                      for (int i = 0; i < index; i++) {
+                                        if (_controllers[i].text.isEmpty) {
+                                          _focusNodes[i].requestFocus();
+                                          return;
+                                        }
+                                      }
+                                    },
+                                    decoration: InputDecoration(
+                                      isDense: true,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            vertical: 12,
+                                          ),
+                                      filled: true,
+                                      fillColor:
+                                          _controllers[index].text.isNotEmpty
+                                          ? AppColors.blue_F0F7FF
+                                          : AppColors.white,
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide(
+                                          color:
+                                              _controllers[index]
+                                                  .text
+                                                  .isNotEmpty
+                                              ? AppColors.blue_4591FF
+                                              : AppColors.gray_E0E5EB,
+                                          width: 1,
+                                        ),
                                       ),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      borderSide: const BorderSide(
-                                        color: AppColors.blue_4591FF,
-                                        width: 1,
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: const BorderSide(
+                                          color: AppColors.blue_4591FF,
+                                          width: 1,
+                                        ),
                                       ),
                                     ),
                                   ),
