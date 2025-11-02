@@ -211,6 +211,11 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               decoration: InputDecoration(
                                 labelText: _userLabel,
+                                labelStyle: TextStyle(
+                                  color: AppColors.gray_7B899D,
+                                  fontSize: 15,
+                                  fontFamily: "Inter_regular",
+                                ),
                                 filled: true,
                                 fillColor: AppColors.white_F8F7FC,
                                 enabledBorder: const OutlineInputBorder(
@@ -258,6 +263,11 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               decoration: InputDecoration(
                                 labelText: AppStrings.password,
+                                labelStyle: TextStyle(
+                                  color: AppColors.gray_7B899D,
+                                  fontSize: 15,
+                                  fontFamily: "Inter_regular",
+                                ),
                                 filled: true,
                                 fillColor: AppColors.white_F8F7FC,
                                 enabledBorder: OutlineInputBorder(
@@ -292,6 +302,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     _obscurePassword
                                         ? Icons.visibility
                                         : Icons.visibility_off,
+                                    color: AppColors.gray_7B899D,
                                   ),
                                   onPressed: () {
                                     setState(() {
@@ -515,7 +526,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: double.infinity,
                         child: DecoratedBox(
                           decoration: BoxDecoration(
-                            color: AppColors.green_22C35D,
+                            gradient: LinearGradient(
+                              colors: [AppColors.green_22C35D, AppColors.green_22C35D],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: TextButton(

@@ -134,207 +134,201 @@ class _ForgotActivityState extends State<ForgotActivity> {
               child: SafeArea(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    return SingleChildScrollView(
-                      padding: EdgeInsets.only(
-                        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-                        top: 16,
-                      ),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minHeight: constraints.maxHeight,
+                    return Center(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.only(
+                          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+                          top: 16,
                         ),
-                        child: IntrinsicHeight(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                                padding: const EdgeInsets.all(32),
-                                decoration: BoxDecoration(
-                                  color: AppColors.white,
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.black.withOpacity(0.05),
-                                      blurRadius: 8,
-                                      spreadRadius: 5,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              padding: const EdgeInsets.all(32),
+                              decoration: BoxDecoration(
+                                color: AppColors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.black.withOpacity(0.05),
+                                    blurRadius: 8,
+                                    spreadRadius: 5,
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Lock icon
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: const BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          AppColors.blue_0680F9,
+                                          AppColors.blue_680F9,
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
                                     ),
-                                  ],
-                                ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // Lock icon
-                                    Container(
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: const BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            AppColors.blue_0680F9,
-                                            AppColors.blue_680F9,
-                                          ],
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
+                                    child: const Icon(
+                                      Icons.lock_outline,
+                                      color: Colors.white,
+                                      size: 36,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24),
+
+                                  // Title
+                                  const Text(
+                                    AppStrings.forgot_password_,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 30,
+                                      fontFamily: "Inter_bold",
+                                      color: AppColors.black_1D2530,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+
+                                  // Subtitle
+                                  const Text(
+                                    AppStrings.enter_your_email_address,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: AppColors.blue_6C7C93,
+                                      fontFamily: "Inter_regular",
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 28),
+
+                                  // Email input
+                                  TextField(
+                                    controller: _emailController,
+                                    keyboardType: TextInputType.emailAddress,
+                                    style: const TextStyle(
+                                      fontFamily: "Inter_regular",
+                                      color: AppColors.blue_6C7C93,
+                                      fontSize: 15,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      hintText: AppStrings.enter_your_email,
+                                      filled: true,
+                                      fillColor: AppColors.blue_F0F7FF,
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(
+                                          Radius.circular(10),
+                                        ),
+                                        borderSide: BorderSide(
+                                          color: AppColors.gray_E0E5EB,
+                                          width: 1,
                                         ),
                                       ),
-                                      child: const Icon(
-                                        Icons.lock_outline,
-                                        color: Colors.white,
-                                        size: 36,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 24),
-
-                                    // Title
-                                    const Text(
-                                      AppStrings.forgot_password_,
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 30,
-                                        fontFamily: "Inter_bold",
-                                        color: AppColors.black_1D2530,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-
-                                    // Subtitle
-                                    const Text(
-                                      AppStrings.enter_your_email_address,
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        color: AppColors.blue_6C7C93,
-                                        fontFamily: "Inter_regular",
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 28),
-
-                                    // Email input
-                                    TextField(
-                                      controller: _emailController,
-                                      keyboardType: TextInputType.emailAddress,
-                                      style: const TextStyle(
-                                        fontFamily: "Inter_regular",
-                                        color: AppColors.blue_6C7C93,
-                                        fontSize: 15,
-                                      ),
-                                      decoration: const InputDecoration(
-                                        hintText: AppStrings.enter_your_email,
-                                        filled: true,
-                                        fillColor: AppColors.blue_F0F7FF,
-                                        enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.all(
-                                            Radius.circular(10),
-                                          ),
-                                          borderSide: BorderSide(
-                                            color: AppColors.gray_E0E5EB,
-                                            width: 1,
-                                          ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.all(
+                                          Radius.circular(10),
                                         ),
-                                        focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.all(
-                                            Radius.circular(10),
-                                          ),
-                                          borderSide: BorderSide(
-                                            color: AppColors.blue_4591FF,
-                                            width: 1,
-                                          ),
+                                        borderSide: BorderSide(
+                                          color: AppColors.blue_4591FF,
+                                          width: 1,
                                         ),
-                                        prefixIcon: Padding(
-                                          padding: EdgeInsets.fromLTRB(
-                                            12,
-                                            16,
-                                            12,
-                                            16,
-                                          ),
-                                          child: Icon(
-                                            Icons.email_outlined,
-                                            color: AppColors.blue_6C7C93,
-                                          ),
+                                      ),
+                                      prefixIcon: Padding(
+                                        padding: EdgeInsets.fromLTRB(
+                                          12,
+                                          16,
+                                          12,
+                                          16,
+                                        ),
+                                        child: Icon(
+                                          Icons.email_outlined,
+                                          color: AppColors.blue_6C7C93,
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(height: 24),
+                                  ),
+                                  const SizedBox(height: 24),
 
-                                    // Send Code button
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: ElevatedButton(
-                                        onPressed: viewModel.isLoading
-                                            ? null
-                                            : () => _onSendCodePressed(context),
-                                        style: ButtonStyle(
-                                          backgroundColor:
-                                              MaterialStateProperty.all(
-                                                buttonColor,
-                                              ),
-                                          shape: MaterialStateProperty.all(
-                                            RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
+                                  // Send Code button
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      onPressed: viewModel.isLoading
+                                          ? null
+                                          : () => _onSendCodePressed(context),
+                                      style: ButtonStyle(
+                                        backgroundColor:
+                                            MaterialStateProperty.all(
+                                              buttonColor,
+                                            ),
+                                        shape: MaterialStateProperty.all(
+                                          RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              10,
                                             ),
                                           ),
-                                          padding: MaterialStateProperty.all(
-                                            const EdgeInsets.all(16),
-                                          ),
-                                          elevation: MaterialStateProperty.all(
-                                            2,
-                                          ),
                                         ),
-                                        child: SizedBox(
-                                          child: Stack(
-                                            alignment: Alignment.center,
-                                            children: [
-                                              Opacity(
-                                                opacity: viewModel.isLoading
-                                                    ? 0
-                                                    : 1,
-                                                child: const Text(
-                                                  AppStrings.reset_paswword,
-                                                  style: TextStyle(
-                                                    color: AppColors.white,
-                                                    fontFamily: "Inter_bold",
-                                                    fontSize: 16,
-                                                  ),
+                                        padding: MaterialStateProperty.all(
+                                          const EdgeInsets.all(16),
+                                        ),
+                                        elevation: MaterialStateProperty.all(2),
+                                      ),
+                                      child: SizedBox(
+                                        child: Stack(
+                                          alignment: Alignment.center,
+                                          children: [
+                                            Opacity(
+                                              opacity: viewModel.isLoading
+                                                  ? 0
+                                                  : 1,
+                                              child: const Text(
+                                                AppStrings.reset_paswword,
+                                                style: TextStyle(
+                                                  color: AppColors.white,
+                                                  fontFamily: "Inter_bold",
+                                                  fontSize: 16,
                                                 ),
                                               ),
-                                              if (viewModel.isLoading)
-                                                const SizedBox(
-                                                  width: 20,
-                                                  height: 20,
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                        color: Colors.white,
-                                                        strokeWidth: 2,
-                                                      ),
-                                                ),
-                                            ],
-                                          ),
+                                            ),
+                                            if (viewModel.isLoading)
+                                              const SizedBox(
+                                                width: 20,
+                                                height: 20,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      color: Colors.white,
+                                                      strokeWidth: 2,
+                                                    ),
+                                              ),
+                                          ],
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(height: 32),
+                                  ),
+                                  const SizedBox(height: 32),
 
-                                    // Back button
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text(
-                                        AppStrings.back_to_home,
-                                        style: TextStyle(
-                                          fontFamily: "Inter_regular",
-                                          color: AppColors.blue_0680F9,
-                                          fontSize: 13,
-                                        ),
+                                  // Back button
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text(
+                                      AppStrings.back_to_home,
+                                      style: TextStyle(
+                                        fontFamily: "Inter_regular",
+                                        color: AppColors.blue_0680F9,
+                                        fontSize: 13,
                                       ),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     );
