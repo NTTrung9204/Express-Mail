@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
     OrderFragment(loginResponse: widget.loginResponse),
     MapFragment(),
     EarningFragment(),
-    ProfileFragment(),
+    ProfileFragment(loginResponse: widget.loginResponse),
   ];
 
   @override

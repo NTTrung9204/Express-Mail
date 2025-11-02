@@ -114,4 +114,7 @@ class AppStrings {
   static const passwords_match = "Mật khẩu trùng khớp";
   static const password_must_be_at_least_8_characters = "Mật khẩu phải có ít nhất 8 ký tự.";
   static const passwords_do_not_match = "Mật khẩu không khớp";
+  static const no_profile_data = "Không có dữ liệu hồ sơ";
+  static const loading_data = "Đang tải dữ liệu...";
+  static const logout = "Đăng xuất";
 }

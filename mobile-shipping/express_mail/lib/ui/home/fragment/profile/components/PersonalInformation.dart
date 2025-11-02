@@ -1,32 +1,38 @@
-import 'package:express_mail/data/model/Shipper.dart';
+import 'package:express_mail/data/model/LoginResponse.dart';
+import 'package:express_mail/data/model/Profile.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:lottie/lottie.dart';
 import 'package:express_mail/resources/colors.dart';
 import 'package:express_mail/resources/strings.dart';
 
 class PersonalInformation extends StatefulWidget {
-  final Shipper shipper;
+  final LoginResponse loginResponse;
+  final Profile profile;
 
-  const PersonalInformation({super.key, required this.shipper});
+  const PersonalInformation({
+    super.key,
+    required this.loginResponse,
+    required this.profile,
+  });
 
   @override
   State<PersonalInformation> createState() => _PersonalInformationState();
 }
 
 class _PersonalInformationState extends State<PersonalInformation> {
-  late Shipper shipper;
+  late LoginResponse loginResponse;
+  late Profile profile;
 
   @override
   void initState() {
     super.initState();
-    shipper = widget.shipper;
+    loginResponse = widget.loginResponse;
+    profile = widget.profile;
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       padding: EdgeInsetsGeometry.all(25),
       width: double.infinity,
       decoration: BoxDecoration(
@@ -91,7 +97,7 @@ class _PersonalInformationState extends State<PersonalInformation> {
                     border: Border.all(color: AppColors.gray_DADFE7, width: 1),
                   ),
                   child: Text(
-                    shipper.fullName,
+                    loginResponse.user.fullName,
                     style: TextStyle(
                       color: AppColors.blue_344256,
                       fontFamily: "Inter_regular",
@@ -132,7 +138,7 @@ class _PersonalInformationState extends State<PersonalInformation> {
                     border: Border.all(color: AppColors.gray_DADFE7, width: 1),
                   ),
                   child: Text(
-                    shipper.email,
+                    loginResponse.user.email,
                     style: TextStyle(
                       color: AppColors.blue_344256,
                       fontFamily: "Inter_regular",
@@ -173,7 +179,7 @@ class _PersonalInformationState extends State<PersonalInformation> {
                     border: Border.all(color: AppColors.gray_DADFE7, width: 1),
                   ),
                   child: Text(
-                    shipper.phone ?? '',
+                    profile.phoneNumber ?? '',
                     style: TextStyle(
                       color: AppColors.blue_344256,
                       fontFamily: "Inter_regular",
@@ -215,9 +221,7 @@ class _PersonalInformationState extends State<PersonalInformation> {
                   ),
                   child: Text(
                     [
-                      shipper.address ?? '',
-                      shipper.wardCommune ?? '',
-                      shipper.provinceCity ?? '',
+                      profile.address ?? '',
                     ].where((e) => e.trim().isNotEmpty).join(', '),
                     style: TextStyle(
                       color: AppColors.blue_344256,
@@ -233,76 +237,4 @@ class _PersonalInformationState extends State<PersonalInformation> {
       ),
     );
   }
-}
-
-/// Builder cho 2 giá trị: distance và time
-class DistanceTimeBuilder<A, B, C> extends StatelessWidget {
-  final ValueNotifier<A> first;
-  final ValueNotifier<B> second;
-  final ValueNotifier<C> third;
-  final Widget Function(BuildContext, A, B, C, Widget?) builder;
-
-  const DistanceTimeBuilder({
-    super.key,
-    required this.first,
-    required this.second,
-    required this.third,
-    required this.builder,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder<A>(
-      valueListenable: first,
-      builder: (context, valueA, _) {
-        return ValueListenableBuilder<B>(
-          valueListenable: second,
-          builder: (context, valueB, _) {
-            return ValueListenableBuilder<C>(
-              valueListenable: third,
-              builder: (context, valueC, child) {
-                return builder(context, valueA, valueB, valueC, child);
-              },
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-// HEADER COLUMN ITEM
-Widget buildHeader(String myText, String title, Color color, bool isLoading) {
-  return Column(
-    children: [
-      isLoading
-          ? SizedBox(
-              key: const ValueKey("loading"),
-              height: 30,
-              child: Lottie.asset(
-                'assets/animation/ani_load.json',
-                fit: BoxFit.contain,
-                repeat: true,
-              ),
-            )
-          : Text(
-              key: ValueKey("content"),
-              myText,
-              style: TextStyle(
-                fontSize: 17,
-                color: color,
-                fontFamily: "Inter_bold",
-              ),
-            ),
-      SizedBox(height: 5),
-      Text(
-        title,
-        style: TextStyle(
-          fontSize: 11,
-          color: AppColors.gray_7B899D,
-          fontFamily: "Inter_regular",
-        ),
-      ),
-    ],
-  );
 }

@@ -232,7 +232,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   borderSide: BorderSide(
                                     color: AppColors.blue_127AE2,
-                                    width: 2,
+                                    width: 1,
                                   ),
                                 ),
                                 prefixIcon: Padding(
@@ -284,7 +284,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   borderSide: BorderSide(
                                     color: AppColors.blue_127AE2,
-                                    width: 2,
+                                    width: 1,
                                   ),
                                 ),
                                 prefixIcon: Padding(
