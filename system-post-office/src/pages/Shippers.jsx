@@ -30,7 +30,6 @@ const Shippers = () => {
   const closeModal = () => setModalOpen(false);
 
   const handleConfirm = () => {
-    console.log(`✅ ${modalContent.type} cho ${modalContent.name}`);
     setModalOpen(false);
   };
 
