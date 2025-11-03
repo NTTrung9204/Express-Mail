@@ -1,6 +1,7 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework.viewsets import ModelViewSet
 
+from apps.post_offices.filters import PostOfficeFilter
 from apps.post_offices.models import PostOffice
 from apps.post_offices.serializers import PostOfficeSerializer
 from shared.apis import BaseAPIViewSet
@@ -16,3 +17,4 @@ class PostOfficeViewSet(ModelViewSet, BaseAPIViewSet):
     queryset = PostOffice.objects.all()
     serializer_class = PostOfficeSerializer
     permission_classes = [FullDjangoModelPermissions]
+    filterset_class = PostOfficeFilter
