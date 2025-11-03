@@ -7,6 +7,7 @@ from rest_framework import status
 
 from apps.permissions.constants import Roles
 from apps.users.constants import PROFILE_VIEWSET_ACTION_PERMISSIONS
+from apps.users.filters import UserFilter
 from apps.users.models import User
 from apps.users.permissions import ProfileObjectPermission
 from apps.users.serializers import (
@@ -39,6 +40,7 @@ class UserViewSet(ModelViewSet, BaseAPIViewSet):
     """
 
     serializer_class = UserSerializer
+    filterset_class = UserFilter
     permission_classes = [FullDjangoModelPermissions]
     queryset = User.objects.prefetch_related("exclude_permissions")
 
