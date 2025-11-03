@@ -112,6 +112,12 @@ export class OrderResponseDto {
   shipping_cost_payper: number;
 
   @ApiProperty({
+    description: 'Indicates whether the receiver pays for shipping',
+    example: true,
+  })
+  is_receiver_pay_shipping: boolean;
+
+  @ApiProperty({
     description: 'Shipping status',
     enum: ShippingStatus,
     example: 'PICKUP_REQUESTED',

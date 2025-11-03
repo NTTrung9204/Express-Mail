@@ -7,6 +7,7 @@ import {
   IsNotEmpty,
   Min,
   MaxLength,
+  IsBoolean,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -115,6 +116,13 @@ export class CreateOrderDto {
   @IsNumber()
   @Min(0)
   shipping_cost_payper: number;
+
+  @ApiProperty({
+    description: 'Indicates whether the receiver pays for shipping',
+    example: true,
+  })
+  @IsBoolean()
+  is_receiver_pay_shipping: boolean;
 
   @ApiProperty({
     description: 'List of products',

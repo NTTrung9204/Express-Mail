@@ -64,6 +64,9 @@ export class Order {
   @Column('float')
   shipping_cost_payper: number;
 
+  @Column('boolean', { default: true })
+  is_receiver_pay_shipping: boolean;
+
   @Column({
     type: 'enum',
     enum: ShippingStatus,
