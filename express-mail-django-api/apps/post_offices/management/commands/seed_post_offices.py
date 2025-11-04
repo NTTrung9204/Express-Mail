@@ -3,6 +3,7 @@ from django.db import transaction
 from faker import Faker
 
 from apps.post_offices.models import PostOffice
+import random
 
 
 class Command(BaseCommand):
@@ -27,8 +28,8 @@ class Command(BaseCommand):
             province_city = fake.random_int(min=1, max=63)
             ward_commune = fake.random_int(min=1, max=15)
             address = fake.street_address()
-            latitude = round(float(fake.latitude()), 6)
-            longitude = round(float(fake.longitude()), 6)
+            latitude = round(random.uniform(16.35, 16.55), 6)
+            longitude = round(random.uniform(107.45, 107.65), 6)
 
             defaults = {
                 "district": district,

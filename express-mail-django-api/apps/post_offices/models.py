@@ -13,8 +13,8 @@ class PostOffice(BaseModel):
     province_city = models.PositiveIntegerField()
     ward_commune = models.PositiveIntegerField()
     address = models.TextField()
-    latitude = models.FloatField()
-    longitude = models.FloatField()
+    latitude = models.DecimalField(max_digits=9, decimal_places=6)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6)
 
     class Meta:
         """

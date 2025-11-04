@@ -297,3 +297,9 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STATICFILES_FINDERS = ["django.contrib.staticfiles.finders.FileSystemFinder"]
+
+# Map APIs
+MAP_API_KEY = os.getenv("MAP_API_KEY")
+MAP_ROUTE_URL = os.getenv("MAP_ROUTE_URL")
+MAP_API_VERSION = os.getenv("MAP_API_VERSION")
+MAP_API_TIMEOUT = 10
