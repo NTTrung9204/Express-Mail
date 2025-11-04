@@ -27,11 +27,11 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrderResponseDto } from './dto/order-response.dto';
 import { OrderQueryDto } from './dto/order-query.dto';
+import { ShipperOrderQueryDto } from './dto/shipper-order-query.dto';
 import { ApiResponseDto } from 'src/common/dto/api-response.dto';
 // import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { AuthJwtRequest } from 'src/common/@type/jwt-payload.type';
 import { PaginatedResponseDto } from 'src/common/dto/paginated-response.dto';
-import { Order } from './entities/order.entity';
 
 @ApiTags('Orders')
 @Controller('orders')
@@ -39,6 +39,21 @@ import { Order } from './entities/order.entity';
 @ApiBearerAuth()
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
+
+  private transformToOrderResponseDto(order: any): OrderResponseDto {
+    return {
+      ...order,
+      shipping: order.shipping?.map((ship: any) => ({
+        id: ship.id,
+        shipperId: ship.shipperId,
+        orderId: order.id,
+        status: ship.status,
+        createdAt: ship.createdAt,
+        updatedAt: ship.updatedAt,
+      })),
+      deleted_at: order.deleted_at ?? undefined,
+    } as OrderResponseDto;
+  }
 
   @Post()
   @ApiOperation({ summary: 'Create a new order with products' })
@@ -57,7 +72,7 @@ export class OrderController {
     return new ApiResponseDto<OrderResponseDto>(
       true,
       'Order created successfully',
-      order as OrderResponseDto,
+      this.transformToOrderResponseDto(order),
       undefined,
       201,
     );
@@ -94,9 +109,24 @@ export class OrderController {
   @ApiQuery({ name: 'limit', required: false, description: 'Items per page' })
   async findAll(
     @Query() query: OrderQueryDto,
-  ): Promise<ApiResponseDto<PaginatedResponseDto<Order>>> {
+  ): Promise<ApiResponseDto<PaginatedResponseDto<OrderResponseDto>>> {
     const paginated = await this.orderService.findAll(query);
-    return new ApiResponseDto(true, 'Orders retrieved successfully', paginated);
+
+    // Transform each order using helper function
+    const transformedItems = paginated.data.map((order) =>
+      this.transformToOrderResponseDto(order),
+    );
+
+    const transformedPaginated = {
+      ...paginated,
+      data: transformedItems,
+    } as PaginatedResponseDto<OrderResponseDto>;
+
+    return new ApiResponseDto(
+      true,
+      'Orders retrieved successfully',
+      transformedPaginated,
+    );
   }
 
   @Get('code/:code')
@@ -115,7 +145,7 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Order retrieved successfully',
-      order as OrderResponseDto,
+      this.transformToOrderResponseDto(order),
     );
   }
 
@@ -134,7 +164,50 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Orders retrieved successfully',
-      orders as OrderResponseDto[],
+      orders.map((order) => this.transformToOrderResponseDto(order)),
+    );
+  }
+
+  @Get('shipper/:shipperId')
+  @ApiOperation({ summary: 'Get orders assigned to a shipper (paginated)' })
+  @ApiParam({
+    name: 'shipperId',
+    description: 'Shipper ID',
+    example: 'SHPR001',
+  })
+  @ApiQuery({
+    name: 'shipping_status',
+    required: false,
+    description: 'Filter by shipping status',
+  })
+  @ApiQuery({
+    name: 'from',
+    required: false,
+    description: 'From date (ISO8601)',
+  })
+  @ApiQuery({ name: 'to', required: false, description: 'To date (ISO8601)' })
+  @ApiQuery({ name: 'page', required: false, description: 'Page number' })
+  @ApiQuery({ name: 'limit', required: false, description: 'Items per page' })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated orders for shipper',
+    type: [OrderResponseDto],
+  })
+  async findByShipperId(
+    @Param('shipperId') shipperId: string,
+    @Query() query: ShipperOrderQueryDto,
+  ): Promise<ApiResponseDto<PaginatedResponseDto<OrderResponseDto>>> {
+    const paginated = await this.orderService.findByShipperId(shipperId, query);
+
+    const transformed = {
+      ...paginated,
+      data: paginated.data.map((o) => this.transformToOrderResponseDto(o)),
+    } as PaginatedResponseDto<OrderResponseDto>;
+
+    return new ApiResponseDto(
+      true,
+      'Orders retrieved successfully',
+      transformed,
     );
   }
 
@@ -158,7 +231,7 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Orders retrieved successfully',
-      orders as OrderResponseDto[],
+      orders.map((order) => this.transformToOrderResponseDto(order)),
     );
   }
 
@@ -188,7 +261,7 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Orders retrieved successfully',
-      orders as OrderResponseDto[],
+      orders.map((order) => this.transformToOrderResponseDto(order)),
     );
   }
 
@@ -208,7 +281,7 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Order retrieved successfully',
-      order as OrderResponseDto,
+      this.transformToOrderResponseDto(order),
     );
   }
 
@@ -231,7 +304,7 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Order updated successfully',
-      order as OrderResponseDto,
+      this.transformToOrderResponseDto(order),
     );
   }
 

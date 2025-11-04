@@ -3,6 +3,7 @@ import { ShippingService } from './shipping.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Shipping } from './entities/shipping.entity';
 import { Repository } from 'typeorm';
+import { DjangoService } from 'src/common/services/django.service';
 
 describe('ShippingService', () => {
   let service: ShippingService;
@@ -17,6 +18,11 @@ describe('ShippingService', () => {
     delete: jest.fn(),
   };
 
+  const mockDjangoService = {
+    getData: jest.fn(),
+    postData: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -24,6 +30,10 @@ describe('ShippingService', () => {
         {
           provide: getRepositoryToken(Shipping),
           useValue: mockRepository,
+        },
+        {
+          provide: DjangoService,
+          useValue: mockDjangoService,
         },
       ],
     }).compile();

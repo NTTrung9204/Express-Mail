@@ -5,6 +5,8 @@ import { ShippingService } from './shipping.service';
 import { ShippingController } from './shipping.controller';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { JwtModule } from '@nestjs/jwt';
+import { RedisService } from 'src/common/services/redis.service';
+import { DjangoService } from 'src/common/services/django.service';
 
 @Module({
   imports: [
@@ -15,7 +17,7 @@ import { JwtModule } from '@nestjs/jwt';
     }),
   ],
   controllers: [ShippingController],
-  providers: [ShippingService, JwtAuthGuard],
+  providers: [ShippingService, JwtAuthGuard, RedisService, DjangoService],
   exports: [ShippingService],
 })
 export class ShippingModule {}

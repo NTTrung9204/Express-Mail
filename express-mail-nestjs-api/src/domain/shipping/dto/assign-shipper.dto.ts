@@ -7,5 +7,3 @@ export class AssignShipperDto {
   @IsNotEmpty()
   shipperId: string;
 }
-
-

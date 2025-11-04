@@ -46,13 +46,6 @@ jobs:
         run: npm run build --if-present
         working-directory: ./express-mail-nestjs-api
 
-      - name: Upload build artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: nestjs-build
-          path: ./express-mail-nestjs-api/dist
-
   docker-deploy:
     name: Build, Push & Deploy with Docker Compose
     needs: ci
@@ -79,26 +72,26 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_DATABASE: ${{ secrets.DB_DATABASE }}
           APP_PORT: ${{ secrets.APP_PORT }}
-          APP_ENV: ${{ secrets.APP_ENV }}
+          APP_ENV: development
           SWAGGER_USER: ${{ secrets.SWAGGER_USER }}
           SWAGGER_PASSWORD: ${{ secrets.SWAGGER_PASSWORD }}
           JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
+          DJANGO_BACKEND_URL: ${{ secrets.DJANGO_BACKEND_URL }}
+          DJANGO_USERNAME: ${{ secrets.DJANGO_USERNAME }}
+          DJANGO_PASSWORD: ${{ secrets.DJANGO_PASSWORD }}
+          REDIS_PORT: ${{ secrets.REDIS_PORT }}
         run: |
-          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
-            IMAGE_TAG=pr-${{ github.event.pull_request.number }}
-            COMPOSE_PROJECT_NAME=pr${{ github.event.pull_request.number }}
-            export APP_PORT=$((APP_PORT + 1000))
-          else
-            IMAGE_TAG=latest
-            COMPOSE_PROJECT_NAME=prod
-          fi
+          IMAGE_TAG=latest
+          COMPOSE_PROJECT_NAME=nestjs-dev
+          export IMAGE_TAG
+          export APP_PORT=${{ secrets.APP_PORT }}
 
-          docker-compose -f docker-compose.yml build --build-arg IMAGE_TAG=$IMAGE_TAG
-          docker-compose -f docker-compose.yml push
-          docker-compose -f docker-compose.yml pull
+          echo "Building Docker image (dev mode) on port $APP_PORT..."
 
+          docker-compose -f docker-compose.yml build --no-cache --build-arg IMAGE_TAG=$IMAGE_TAG
           docker-compose -f docker-compose.yml down || true
           docker-compose -f docker-compose.yml up -d
 
       - name: Clean up unused images
         run: docker image prune -af
+

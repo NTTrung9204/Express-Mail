@@ -122,6 +122,7 @@ export class OrderService {
       .leftJoinAndSelect('order.products', 'products')
       .leftJoinAndSelect('order.transitions', 'transitions')
       .leftJoinAndSelect('order.orderPostOffices', 'orderPostOffices')
+      .leftJoinAndSelect('order.shipping', 'shipping')
       .where('order.deleted_at IS NULL');
 
     if (query?.code) {
@@ -156,7 +157,7 @@ export class OrderService {
   async findOne(id: number): Promise<Order> {
     const order = await this.orderRepository.findOne({
       where: { id },
-      relations: ['products', 'transitions', 'orderPostOffices'],
+      relations: ['products', 'transitions', 'orderPostOffices', 'shipping'],
       withDeleted: false,
     });
 
@@ -170,7 +171,7 @@ export class OrderService {
   async findByCode(code: string): Promise<Order> {
     const order = await this.orderRepository.findOne({
       where: { code },
-      relations: ['products', 'transitions', 'orderPostOffices'],
+      relations: ['products', 'transitions', 'orderPostOffices', 'shipping'],
       withDeleted: false,
     });
 
@@ -184,7 +185,7 @@ export class OrderService {
   async findByShopId(shopId: string): Promise<Order[]> {
     return await this.orderRepository.find({
       where: { shopId },
-      relations: ['products', 'transitions', 'orderPostOffices'],
+      relations: ['products', 'transitions', 'orderPostOffices', 'shipping'],
       withDeleted: false,
     });
   }
@@ -192,7 +193,7 @@ export class OrderService {
   async findByOrderStatus(orderStatus: string): Promise<Order[]> {
     return await this.orderRepository.find({
       where: { order_status: orderStatus as any },
-      relations: ['products', 'transitions', 'orderPostOffices'],
+      relations: ['products', 'transitions', 'orderPostOffices', 'shipping'],
       withDeleted: false,
     });
   }
@@ -203,6 +204,47 @@ export class OrderService {
       relations: ['products', 'transitions', 'orderPostOffices'],
       withDeleted: false,
     });
+  }
+
+  /**
+   * Find orders assigned to a given shipperId with optional shipping status and date range, paginated
+   */
+  async findByShipperId(
+    shipperId: string,
+    query?: any,
+  ): Promise<PaginatedResponseDto<Order>> {
+    const page = query?.page ?? 1;
+    const limit = query?.limit ?? 10;
+
+    const qb = this.orderRepository
+      .createQueryBuilder('order')
+      .innerJoinAndSelect('order.shipping', 'shipping')
+      .leftJoinAndSelect('order.products', 'products')
+      .leftJoinAndSelect('order.transitions', 'transitions')
+      .leftJoinAndSelect('order.orderPostOffices', 'orderPostOffices')
+      .where('order.deleted_at IS NULL')
+      .andWhere('shipping.deleted_at IS NULL')
+      .andWhere('shipping.shipper_id = :shipperId', { shipperId });
+
+    if (query?.shipping_status) {
+      qb.andWhere('shipping.status = :status', {
+        status: query.shipping_status,
+      });
+    }
+
+    if (query?.from) {
+      qb.andWhere('shipping.created_at >= :from', { from: query.from });
+    }
+
+    if (query?.to) {
+      qb.andWhere('shipping.created_at <= :to', { to: query.to });
+    }
+
+    qb.skip((page - 1) * limit).take(limit);
+
+    const [items, total] = await qb.getManyAndCount();
+
+    return new PaginatedResponseDto<Order>(items, total, page, limit);
   }
 
   async update(id: number, updateOrderDto: UpdateOrderDto): Promise<Order> {

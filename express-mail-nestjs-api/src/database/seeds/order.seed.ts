@@ -86,6 +86,7 @@ export default class OrderSeeder implements Seeder {
           cod: faker.number.int({ min: 50000, max: 2000000 }),
           shipping_cost: faker.number.int({ min: 20000, max: 100000 }),
           shipping_cost_payper: faker.number.int({ min: 20000, max: 100000 }),
+          is_receiver_pay_shipping: faker.datatype.boolean(),
           products,
         };
 
