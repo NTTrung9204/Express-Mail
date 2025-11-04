@@ -14,6 +14,8 @@ from rest_framework import mixins
 
 from shared.permissions import FullDjangoModelPermissions
 from rest_framework import status
+import requests
+from operator import itemgetter
 
 
 @extend_schema(tags=["Shipping Rate"])
@@ -82,12 +84,34 @@ class ShippingRateViewSet(
         request_serializer = CalculateShippingFeeRequestSerializer(data=request.data)
         request_serializer.is_valid(raise_exception=True)
 
-        validated_data = request_serializer.validated_data
-        length = validated_data["length_cm"]
-        width = validated_data["width_cm"]
-        height = validated_data["height_cm"]
-        weight = validated_data["weight_kg"]
-        distance = validated_data["distance_km"]
+        get = itemgetter(
+            "length_cm",
+            "width_cm",
+            "height_cm",
+            "weight_kg",
+            "post_office",
+            "receiver_latitude",
+            "receiver_longitude",
+        )
+        (
+            length,
+            width,
+            height,
+            weight,
+            post_office,
+            receiver_latitude,
+            receiver_longitude,
+        ) = get(request_serializer.validated_data)
+
+        try:
+            distance = ShippingRateService.calculate_distance(
+                (post_office.latitude, post_office.longitude),
+                (receiver_latitude, receiver_longitude),
+            )
+        except requests.RequestException as e:
+            return self.response(
+                data={"error": str(e)}, status_code=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
 
         shipping_rate = ShippingRate.get_current_rate()
         if shipping_rate:
@@ -97,6 +121,7 @@ class ShippingRateViewSet(
             data = {
                 "shipping_rate_id": shipping_rate.id,
                 "total_fee": total_fee,
+                "distance_km": distance,
             }
             return self.response_ok(CalculateShippingFeeResponseSerializer(data).data)
 
