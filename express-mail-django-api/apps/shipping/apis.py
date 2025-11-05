@@ -1,6 +1,7 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 
+from apps.routing.constants import VEHICLE_CAPACITY_MAP, Vehicles
 from apps.shipping.models import ShippingRate
 from apps.shipping.permissions import CanChangeShippingRateStatus
 from apps.shipping.serializers import (
@@ -107,6 +108,16 @@ class ShippingRateViewSet(
             distance = ShippingRateService.calculate_distance(
                 (post_office.latitude, post_office.longitude),
                 (receiver_latitude, receiver_longitude),
+                Vehicles.TRUCK.value,
+                int(VEHICLE_CAPACITY_MAP[Vehicles.TRUCK.value]["max_weight"] / 1000),
+            )
+            if distance is None:
+                return self.response_error(
+                    "path_not_found", status_code=status.HTTP_404_NOT_FOUND
+                )
+        except requests.HTTPError as e:
+            return self.response(
+                data=e.response.json(), status_code=e.response.status_code
             )
         except requests.RequestException as e:
             return self.response(
