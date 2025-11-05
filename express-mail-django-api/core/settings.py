@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "apps.users",
     "apps.permissions",
     "apps.shipping",
+    "apps.routing",
 ]
 
 MIDDLEWARE = [
@@ -301,5 +302,6 @@ STATICFILES_FINDERS = ["django.contrib.staticfiles.finders.FileSystemFinder"]
 # Map APIs
 MAP_API_KEY = os.getenv("MAP_API_KEY")
 MAP_ROUTE_URL = os.getenv("MAP_ROUTE_URL")
+MAP_VRP_URL = os.getenv("MAP_VRP_URL")
 MAP_API_VERSION = os.getenv("MAP_API_VERSION")
 MAP_API_TIMEOUT = 10
