@@ -1,7 +1,9 @@
 
 services:
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: express-mail-api
     container_name: express_mail_api
     command: python manage.py runserver 0.0.0.0:8000

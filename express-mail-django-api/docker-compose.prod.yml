@@ -1,0 +1,32 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    image: express-mail-api-prod:latest
+    container_name: express_mail_api_prod
+    command: gunicorn core.wsgi:application --bind 0.0.0.0:8000
+    env_file:
+      - .env
+    ports:
+      - "${MAPPING_API_PORT}:8000"
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:15
+    container_name: express_mail_postgres_prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "${MAPPING_DB_PORT}:5432"
+    volumes:
+      - data_express_mail_prod:/var/lib/postgresql/data
+
+volumes:
+  data_express_mail_prod:
