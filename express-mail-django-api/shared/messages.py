@@ -16,7 +16,7 @@ _ERROR_MESSAGES = {
         "invalid_reset_password_otp": "Invalid reset password OTP.",
         "invalid_email": "Invalid email.",
         "active_shipping_rate_not_set": "There is currently no active shipping rate.",
-        "capacity_required_when_vehicle_is_truck": "Capacity is required for vehicle truck.",
+        "capacity_required_when_vehicle_is_truck": "Capacity is required for vehicle 'truck'.",
         "path_not_found": "Path not found.",
     },
     "vi": {
