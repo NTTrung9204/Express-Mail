@@ -8,6 +8,7 @@ import { ShippingModule } from './domain/shipping/shipping.module';
 import { DjangoService } from './common/services/django.service';
 import { RedisService } from './common/services/redis.service';
 import { dataSourceOptions } from './config/database.config';
+import { PlanModule } from './domain/plan/plan.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { dataSourceOptions } from './config/database.config';
     OrderModule,
     ProductModule,
     ShippingModule,
+    PlanModule,
   ],
   controllers: [AppController],
   providers: [AppService, RedisService, DjangoService],
