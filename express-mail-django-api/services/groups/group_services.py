@@ -1,4 +1,5 @@
 from django.contrib.auth.models import Group
+from django.contrib.auth.models import Permission
 
 
 class GroupService:
@@ -12,7 +13,7 @@ class GroupService:
         Get all permissions of a group.
         """
 
-        return Group.objects.get(name=group_name).permissions.all()
+        return Permission.objects.filter(group__name=group_name)
 
     @staticmethod
     def get_group_by_name(group_name):
