@@ -27,5 +27,5 @@ jobs:
           script: |
             cd /home/ec2-user/Express-Mail/express-mail-django-api
             git pull origin develop
-            docker-compose up --build -d
-            docker exec express_mail_api python manage.py migrate
+            docker compose -f docker-compose.prod.yml up --build -d
+            docker compose -f docker-compose.prod.yml exec api python manage.py migrate
