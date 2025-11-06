@@ -33,7 +33,7 @@ _ERROR_MESSAGES = {
         "invalid_reset_password_otp": "Mã OTP sai hoặc đã hết hạn.",
         "invalid_email": "Email không tồn tại.",
         "active_shipping_rate_not_set": "Mức phí vận chuyển chưa được thiết lập.",
-        "capacity_required_when_vehicle_is_truck": "Cần tham số capacity khi phương tiện là truck.",
+        "capacity_required_when_vehicle_is_truck": "Cần tham số capacity khi phương tiện là 'truck'.",
         "path_not_found": "Không tìm thấy đường đi.",
     },
 }
