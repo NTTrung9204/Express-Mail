@@ -1,28 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
-import { fetchProvinces, fetchDistricts, fetchWards } from "../../api/locationService";
+import React, { useEffect, useRef, useState } from "react";
+import { useWarehouseStore } from "../../store/warehouseStore";
 import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
-const loadGoogleMapsScript = (apiKey, callback) => {
-  if (window.google && window.google.maps) {
-    callback();
-    return;
-  }
-
-  const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`);
-  if (existingScript) {
-    existingScript.onload = callback;
-    return;
-  }
-
-  const script = document.createElement("script");
-  script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`;
-  script.async = true;
-  script.defer = true;
-  script.onerror = () => callback(new Error("Script load failed"));
-  script.onload = callback;
-  document.body.appendChild(script);
-};
 
 const WarehouseModal = ({ open, onClose, mode = "add", warehouse = {}, onSubmit }) => {
   const isView = mode === "view";
@@ -31,360 +9,408 @@ const WarehouseModal = ({ open, onClose, mode = "add", warehouse = {}, onSubmit 
   const disabledClass = `${defaultClass} ${disabledBg}`;
   const enabledClass = `${defaultClass} focus:border-orange-500`;
 
+  const {
+    provinces,
+    districts,
+    wards,
+    setSelectedProvince,
+    setSelectedDistrict,
+  } = useWarehouseStore();
+
   const [form, setForm] = useState({
     name: "",
     address: "",
     provinceCity: "",
     district: "",
     wardCommune: "",
-    status: "active",
     latitude: "",
     longitude: "",
   });
-  const [provinces, setProvinces] = useState([]);
-  const [districts, setDistricts] = useState([]);
-  const [wards, setWards] = useState([]);
-  const [mapError, setMapError] = useState(false);
 
   const mapRef = useRef(null);
-  const markerRef = useRef(null);
-  const googleMapRef = useRef(null);
-
-  const getCodeByName = (value, list) => {
-    if (!value || !list || list.length === 0) return value;
-    const item = list.find((i) => i.name === value || i.code === value);
-    return item ? item.code : value;
-  };
+  const mapInstance = useRef(null);
+  const markerInstance = useRef(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapError, setMapError] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const data = await fetchProvinces();
-        setProvinces(data);
-      } catch (err) {
-        console.error(err);
+    const apiKey = import.meta.env.VITE_VIETMAP_API_KEY;
+    if (!apiKey) {
+      toast.error("Thiếu VITE_VIETMAP_API_KEY trong .env!");
+      setMapError(true);
+      return;
+    }
+
+    const scriptId = "vietmap-gl-js";
+    const cssId = "vietmap-gl-css";
+
+    if (window.vietmapgl) {
+      window.vietmapgl.accessToken = apiKey;
+      setMapLoaded(true);
+      return;
+    }
+
+    if (!document.getElementById(scriptId)) {
+      if (!document.getElementById(cssId)) {
+        const link = document.createElement("link");
+        link.id = cssId;
+        link.rel = "stylesheet";
+        link.href = "https://unpkg.com/@vietmap/vietmap-gl-js@6.0.0/dist/vietmap-gl.css";
+        document.head.appendChild(link);
       }
-    })();
+
+      const script = document.createElement("script");
+      script.id = scriptId;
+      script.src = "https://unpkg.com/@vietmap/vietmap-gl-js@6.0.0/dist/vietmap-gl.js";
+      script.async = true;
+
+      script.onload = () => {
+        window.vietmapgl.accessToken = apiKey;
+        setMapLoaded(true);
+      };
+
+      script.onerror = () => {
+        setMapError(true);
+        toast.error("Không tải được Vietmap SDK!");
+      };
+
+      document.body.appendChild(script);
+    }
   }, []);
 
-  const fetchDistrictsData = async (provinceCode) => {
-    try {
-      const data = await fetchDistricts(provinceCode);
-      setDistricts(data);
-      return data;
-    } catch (err) {
-      console.error(err);
-      return [];
-    }
-  };
-
-  const fetchWardsData = async (districtCode) => {
-    try {
-      const data = await fetchWards(districtCode);
-      setWards(data);
-      return data;
-    } catch (err) {
-      console.error(err);
-      return [];
-    }
-  };
-
   useEffect(() => {
-    if (warehouse && mode !== "add" && provinces.length > 0) {
-      const provinceCode = getCodeByName(warehouse.provinceCity, provinces);
+    if (!open) return;
 
-      setForm({
-        name: warehouse.name || "",
-        address: warehouse.address || "",
-        provinceCity: provinceCode,
-        district: getCodeByName(warehouse.district, []),
-        wardCommune: getCodeByName(warehouse.wardCommune, []),
-        status: warehouse.status || "active",
-        latitude: warehouse.latitude || "",
-        longitude: warehouse.longitude || "",
-      });
-
-      const loadLocations = async () => {
-        if (provinceCode) {
-          const loadedDistricts = await fetchDistrictsData(provinceCode);
-          const districtCode = getCodeByName(warehouse.district, loadedDistricts);
-          setForm((prev) => ({ ...prev, district: districtCode }));
-
-          if (districtCode) {
-            const loadedWards = await fetchWardsData(districtCode);
-            const wardCode = getCodeByName(warehouse.wardCommune, loadedWards);
-            setForm((prev) => ({ ...prev, wardCommune: wardCode }));
-          }
-        }
-      };
-      loadLocations();
-    } else if (mode === "add") {
+    if (mode === "add") {
       setForm({
         name: "",
         address: "",
         provinceCity: "",
         district: "",
         wardCommune: "",
-        status: "active",
         latitude: "",
         longitude: "",
       });
-      setDistricts([]);
-      setWards([]);
+      setSelectedProvince("");
+      setSelectedDistrict("");
+    } else if (warehouse) {
+      setForm({
+        name: warehouse.name || "",
+        address: warehouse.address || "",
+        provinceCity: warehouse.provinceCity || "",
+        district: warehouse.district || "",
+        wardCommune: warehouse.wardCommune || "",
+        latitude: warehouse.latitude || "",
+        longitude: warehouse.longitude || "",
+      });
+      setSelectedProvince(warehouse.provinceCity || "");
+      setSelectedDistrict(warehouse.district || "");
     }
-  }, [warehouse, mode, open, provinces]);
+  }, [open, mode, warehouse, setSelectedProvince, setSelectedDistrict]);
 
   useEffect(() => {
-    setMapError(false);
-    if (open) {
-      const apiKey = import.meta.env.VITE_GOOGLE_MAP_API_KEY;
-      window.gm_authFailure = () => {
-        console.error("Google Maps Error: Invalid or missing API key");
-        setMapError(true);
-      };
+    if (!open || isView || !window.vietmapgl || mapInstance.current) return;
 
-      loadGoogleMapsScript(apiKey, (error) => {
-        if (error || !window.google || !window.google.maps) {
-          setMapError(true);
-          return;
-        }
+    const tryInitMap = () => {
+      if (mapRef.current && !mapInstance.current) {
         initMap();
-      });
-    }
-  }, [open, form.latitude, form.longitude]);
+      } else {
+        requestAnimationFrame(tryInitMap);
+      }
+    };
+    tryInitMap();
+  }, [open, isView]);
+
+  useEffect(() => {
+    if (!open || isView || !mapLoaded || !mapInstance.current) return;
+
+    const { provinceCity, district, wardCommune } = form;
+    if (!provinceCity || !district || !wardCommune) return;
+
+    const province = provinces.find(p => p.code === provinceCity)?.name || "";
+    const districtName = districts.find(d => d.code === district)?.name || "";
+    const ward = wards.find(w => w.code === wardCommune)?.name || "";
+
+    const fullAddress = `${ward}, ${districtName}, ${province}`;
+    const apiKey = import.meta.env.VITE_VIETMAP_API_KEY;
+
+    fetch(`https://maps.vietmap.vn/api/search?text=${encodeURIComponent(fullAddress)}&apikey=${apiKey}`)
+      .then(res => res.json())
+      .then(data => {
+        const features = data?.data?.features || data?.features;
+        if (features && features.length > 0) {
+          const [lng, lat] = features[0].geometry.coordinates;
+          setForm(prev => ({ ...prev, latitude: lat.toFixed(6), longitude: lng.toFixed(6) }));
+          markerInstance.current?.setLngLat([lng, lat]);
+          mapInstance.current.flyTo({ center: [lng, lat], zoom: 13 });
+        }
+      })
+      .catch(err => console.error("Lỗi gọi Vietmap API:", err));
+  }, [form.provinceCity, form.district, form.wardCommune, open, isView, mapLoaded, provinces, districts, wards]);
 
   const initMap = () => {
-    if (!window.google || !window.google.maps || !mapRef.current) {
-      setMapError(true);
-      return;
-    }
+    if (!mapRef.current || !window.vietmapgl || mapInstance.current) return;
 
-    try {
-      const lat = form.latitude ? parseFloat(form.latitude) : 21.0285;
-      const lng = form.longitude ? parseFloat(form.longitude) : 105.8542;
-      const initialPosition = { lat, lng };
+    const lat = form.latitude ? parseFloat(form.latitude) : 21.0285;
+    const lng = form.longitude ? parseFloat(form.longitude) : 105.8542;
 
-      if (!googleMapRef.current) {
-        googleMapRef.current = new window.google.maps.Map(mapRef.current, {
-          center: initialPosition,
-          zoom: 15,
-        });
+    const map = new window.vietmapgl.Map({
+      container: mapRef.current,
+      style: `https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=${import.meta.env.VITE_VIETMAP_API_KEY}`,
+      center: [lng, lat],
+      zoom: 15,
+    });
 
-        markerRef.current = new window.google.maps.Marker({
-          position: initialPosition,
-          map: googleMapRef.current,
-          draggable: !isView,
-        });
+    mapInstance.current = map;
 
-        if (!isView) {
-          googleMapRef.current.addListener("click", (e) => {
-            const lat = e.latLng.lat();
-            const lng = e.latLng.lng();
-            setForm((prev) => ({ ...prev, latitude: lat.toFixed(6), longitude: lng.toFixed(6) }));
-            markerRef.current.setPosition({ lat, lng });
-          });
+    const marker = new window.vietmapgl.Marker({
+      draggable: !isView,
+    })
+      .setLngLat([lng, lat])
+      .addTo(map);
 
-          markerRef.current.addListener("dragend", () => {
-            const lat = markerRef.current.getPosition().lat();
-            const lng = markerRef.current.getPosition().lng();
-            setForm((prev) => ({ ...prev, latitude: lat.toFixed(6), longitude: lng.toFixed(6) }));
-          });
-        }
-      } else {
-        markerRef.current.setPosition(initialPosition);
-        googleMapRef.current.panTo(initialPosition);
-      }
-    } catch (error) {
-      console.error("Error initializing map:", error);
-      setMapError(true);
-    }
+    markerInstance.current = marker;
+
+    map.on("click", (e) => {
+      const { lng, lat } = e.lngLat;
+      setForm(prev => ({
+        ...prev,
+        latitude: lat.toFixed(6),
+        longitude: lng.toFixed(6),
+      }));
+      marker.setLngLat([lng, lat]);
+    });
+
+    marker.on("dragend", () => {
+      const { lng, lat } = marker.getLngLat();
+      setForm(prev => ({
+        ...prev,
+        latitude: lat.toFixed(6),
+        longitude: lng.toFixed(6),
+      }));
+    });
+
+    map.on("load", () => {
+      setMapLoaded(true);
+    });
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm(prev => ({ ...prev, [name]: value }));
 
     if (name === "provinceCity") {
-      setDistricts([]);
-      setWards([]);
-      setForm((prev) => ({ ...prev, district: "", wardCommune: "" }));
-      if (value) fetchDistrictsData(value);
-    }
-    if (name === "district") {
-      setWards([]);
-      setForm((prev) => ({ ...prev, wardCommune: "" }));
-      if (value) fetchWardsData(value);
+      setSelectedProvince(value);
+      setForm(prev => ({ ...prev, district: "", wardCommune: "" }));
+    } else if (name === "district") {
+      setSelectedDistrict(value);
+      setForm(prev => ({ ...prev, wardCommune: "" }));
     }
   };
 
   const handleCoordinateChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm(prev => ({ ...prev, [name]: value }));
 
-    if (markerRef.current && googleMapRef.current) {
-      const lat = name === "latitude" ? parseFloat(value) : parseFloat(form.latitude);
-      const lng = name === "longitude" ? parseFloat(value) : parseFloat(form.longitude);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        const position = { lat, lng };
-        markerRef.current.setPosition(position);
-        googleMapRef.current.panTo(position);
-      }
+    const lat = name === "latitude" ? parseFloat(value) : parseFloat(form.latitude);
+    const lng = name === "longitude" ? parseFloat(value) : parseFloat(form.longitude);
+
+    if (!isNaN(lat) && !isNaN(lng) && markerInstance.current && mapInstance.current) {
+      const pos = [lng, lat];
+      markerInstance.current.setLngLat(pos);
+      mapInstance.current.flyTo({ center: pos, zoom: 16 });
     }
   };
 
   const handleSave = () => {
     const { name, address, provinceCity, district, wardCommune, latitude, longitude } = form;
     if (!name || !address || !provinceCity || !district || !wardCommune || !latitude || !longitude) {
-      toast.warn("Vui lòng nhập đầy đủ thông tin và chọn tọa độ kho!");
+      toast.warn("Vui lòng nhập đầy đủ thông tin và chọn tọa độ!");
       return;
     }
 
-    const payload = {
-      ...form,
-      provinceCity: getCodeByName(provinceCity, provinces),
-      district: getCodeByName(district, districts),
-      wardCommune: getCodeByName(wardCommune, wards),
-    };
-
-    onSubmit(payload);
+    onSubmit(form);
     toast.success(mode === "add" ? "Thêm kho thành công!" : "Cập nhật kho thành công!");
+    onClose();
   };
+
+  useEffect(() => {
+    if (!open && mapInstance.current) {
+      try {
+        mapInstance.current.remove(); 
+      } catch (err) {
+        console.warn("Lỗi khi hủy map:", err);
+      }
+      mapInstance.current = null;
+      markerInstance.current = null;
+      setMapLoaded(false);
+    }
+  }, [open]);
+
 
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-orange-50 w-full max-w-2xl p-6 rounded-xl shadow-xl max-h-screen overflow-y-auto">
-        <div className="flex justify-between mb-4">
-          <h2 className="text-lg font-semibold">
-            {mode === "add" ? "Thêm Kho mới" : mode === "edit" ? "Sửa Kho" : "Xem Kho"}
+      <div className="bg-orange-50 w-full max-w-3xl p-6 rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-orange-700">
+            {mode === "add" ? "Thêm Kho Mới" : mode === "edit" ? "Chỉnh Sửa Kho" : "Xem Chi Tiết Kho"}
           </h2>
-          <button onClick={onClose} className="text-3xl hover:text-orange-600 cursor-pointer">
+          <button
+            onClick={onClose}
+            className="text-3xl text-orange-600 hover:text-orange-800 transition cursor-pointer"
+          >
             ×
           </button>
         </div>
 
-        <div className="mb-4">
-          <label className="block font-medium mb-1">Tên kho</label>
-          <input
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            disabled={isView}
-            placeholder="Nhập tên kho"
-            className={isView ? disabledClass : enabledClass}
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block font-medium mb-1">Địa chỉ cụ thể</label>
-          <input
-            name="address"
-            value={form.address}
-            onChange={handleChange}
-            disabled={isView}
-            placeholder="Nhập địa chỉ"
-            className={isView ? disabledClass : enabledClass}
-          />
-        </div>
-
-        <div className="mb-4 grid grid-cols-3 gap-4">
-          <select
-            name="provinceCity"
-            value={form.provinceCity}
-            onChange={handleChange}
-            disabled={isView}
-            className={isView ? disabledClass : enabledClass}
-          >
-            <option value="">Chọn Tỉnh / Thành phố</option>
-            {provinces.map((p) => (
-              <option key={p.code} value={p.code}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-
-          <select
-            name="district"
-            value={form.district}
-            onChange={handleChange}
-            disabled={isView || !form.provinceCity}
-            className={isView ? disabledClass : enabledClass}
-          >
-            <option value="">Chọn Quận / Huyện</option>
-            {districts.map((d) => (
-              <option key={d.code} value={d.code}>
-                {d.name}
-              </option>
-            ))}
-          </select>
-
-          <select
-            name="wardCommune"
-            value={form.wardCommune}
-            onChange={handleChange}
-            disabled={isView || !form.district}
-            className={isView ? disabledClass : enabledClass}
-          >
-            <option value="">Chọn Xã / Phường</option>
-            {wards.map((w) => (
-              <option key={w.code} value={w.code}>
-                {w.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="mb-4 grid grid-cols-2 gap-4">
+        <div className="space-y-5">
           <div>
-            <label className="block font-medium mb-1">Vĩ độ (Latitude)</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Tên kho *</label>
             <input
-              name="latitude"
-              value={form.latitude}
-              onChange={handleCoordinateChange}
+              name="name"
+              value={form.name}
+              onChange={handleChange}
               disabled={isView}
-              placeholder="Vĩ độ"
+              placeholder="VD: Kho Hà Nội 1"
               className={isView ? disabledClass : enabledClass}
             />
           </div>
+
           <div>
-            <label className="block font-medium mb-1">Kinh độ (Longitude)</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Địa chỉ cụ thể *</label>
             <input
-              name="longitude"
-              value={form.longitude}
-              onChange={handleCoordinateChange}
+              name="address"
+              value={form.address}
+              onChange={handleChange}
               disabled={isView}
-              placeholder="Kinh độ"
+              placeholder="Số nhà, đường, thôn/xóm..."
               className={isView ? disabledClass : enabledClass}
             />
           </div>
-        </div>
 
-        <div className="mb-4">
-          <label className="block font-medium mb-1">Bản đồ kho</label>
-          <div ref={mapRef} className="w-full h-64 border rounded relative">
-            {mapError && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-orange-50/90 text-red-600 p-4 rounded text-center">
-                <p className="font-bold mb-2">Lỗi tải Google Maps</p>
-                <p className="text-sm">
-                  Vui lòng kiểm tra API Key (VITE_GOOGLE_MAP_API_KEY) hoặc kết nối mạng.
-                </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Tỉnh / Thành phố *</label>
+              <select
+                name="provinceCity"
+                value={form.provinceCity}
+                onChange={handleChange}
+                disabled={isView}
+                className={isView ? disabledClass : enabledClass}
+              >
+                <option value="">Chọn tỉnh</option>
+                {provinces.map((p) => (
+                  <option key={p.code} value={p.code}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Quận / Huyện *</label>
+              <select
+                name="district"
+                value={form.district}
+                onChange={handleChange}
+                disabled={isView || !form.provinceCity}
+                className={isView ? disabledClass : enabledClass}
+              >
+                <option value="">Chọn quận</option>
+                {districts.map((d) => (
+                  <option key={d.code} value={d.code}>{d.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Phường / Xã *</label>
+              <select
+                name="wardCommune"
+                value={form.wardCommune}
+                onChange={handleChange}
+                disabled={isView || !form.district}
+                className={isView ? disabledClass : enabledClass}
+              >
+                <option value="">Chọn phường</option>
+                {wards.map((w) => (
+                  <option key={w.code} value={w.code}>{w.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Vĩ độ (Latitude) *</label>
+              <input
+                name="latitude"
+                value={form.latitude}
+                onChange={handleCoordinateChange}
+                disabled={isView}
+                placeholder="21.028511"
+                className={isView ? disabledClass : enabledClass}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Kinh độ (Longitude) *</label>
+              <input
+                name="longitude"
+                value={form.longitude}
+                onChange={handleCoordinateChange}
+                disabled={isView}
+                placeholder="105.854200"
+                className={isView ? disabledClass : enabledClass}
+              />
+            </div>
+          </div>
+
+          {!isView && (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                Vị trí trên bản đồ (Click hoặc kéo marker để chọn)
+              </label>
+              <div
+                ref={mapRef}
+                className="w-full h-80 border-2 border-orange-300 rounded-lg relative overflow-hidden"
+                style={{ minHeight: "320px" }}
+              >
+                {!mapLoaded && !mapError && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-orange-50/80">
+                    <p className="text-orange-600">Đang tải bản đồ Vietmap...</p>
+                  </div>
+                )}
+                {mapError && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-orange-50/90 text-red-600 p-4 text-center">
+                    <p className="font-bold text-lg">Lỗi tải Vietmap</p>
+                    <p className="text-sm">Kiểm tra VITE_VIETMAP_API_KEY hoặc kết nối mạng.</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {isView && form.latitude && form.longitude && (
+            <div className="mt-4 p-4 bg-orange-100 rounded-lg text-sm">
+              <p className="font-semibold text-orange-700 mb-1">Vị trí đã chọn:</p>
+              <p>
+                <strong>Vĩ độ:</strong> {form.latitude} | <strong>Kinh độ:</strong> {form.longitude}
+              </p>
+            </div>
+          )}
         </div>
 
-        <div className="flex justify-end gap-3 mt-6">
+        <div className="flex justify-end gap-3 mt-8">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 cursor-pointer"
+            className="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition cursor-pointer font-medium"
           >
             {isView ? "Đóng" : "Hủy"}
           </button>
           {!isView && (
             <button
               onClick={handleSave}
-              className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 cursor-pointer"
+              className="px-6 py-2.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition cursor-pointer font-medium shadow-md"
             >
               {mode === "edit" ? "Cập nhật" : "Thêm mới"}
             </button>

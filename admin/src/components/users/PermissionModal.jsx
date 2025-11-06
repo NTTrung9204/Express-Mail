@@ -1,9 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { Checkbox, MenuItem, Select, FormControl, InputLabel } from "@mui/material";
-import { Tooltip } from "@mui/material";
 import { LockOutlined } from "@mui/icons-material";
 import { toast } from "react-toastify";
 import { usePermissionStore } from "../../store/userPermissionStore";
+
+import permissionData from "../../data/permissions.json";
+
+const permissionViMap = permissionData.reduce((acc, perm) => {
+  if (!acc[perm.contentTypeId]) acc[perm.contentTypeId] = {};
+  acc[perm.contentTypeId][perm.id] = perm.name_vi;
+  return acc;
+}, {});
 
 const contentTypeNames = {
   1: "Admin",
@@ -36,12 +43,13 @@ export default function PermissionModal({
   setExcludePermissions,
   isView,
   user,
+  onRoleChange
 }) {
   const [isPermissionsLoading, setIsPermissionsLoading] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [selectedPostOffice, setSelectedPostOffice] = useState(user?.postOffice || "");
   const [userProfile, setUserProfile] = useState({});
-  const [errors, setErrors] = useState({}); 
+  const [errors, setErrors] = useState({});
 
   const {
     groups,
@@ -72,6 +80,10 @@ export default function PermissionModal({
     const currentRole = groupToRoleMap[selectedGroup];
     const newErrors = {};
 
+    if (!selectedGroup) {
+      newErrors.role = "Vui lòng chọn vai trò.";
+    }
+
     if (
       ["post_office_manager", "post_office_staff", "shipper"].includes(currentRole) &&
       !selectedPostOffice
@@ -83,14 +95,18 @@ export default function PermissionModal({
       if (!userProfile.address?.trim()) {
         newErrors.address = "Vui lòng nhập địa chỉ.";
       }
+
       if (!userProfile.phoneNumber?.trim()) {
         newErrors.phoneNumber = "Vui lòng nhập số điện thoại.";
+      } else if (!/^0\d{8,10}$/.test(userProfile.phoneNumber)) {
+        newErrors.phoneNumber = "Số điện thoại không hợp lệ (9-11 số).";
       }
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
 
   const handleSavePermissions = async () => {
     if (isView || isSaving || !user?.id || !selectedGroup) return;
@@ -108,6 +124,11 @@ export default function PermissionModal({
       };
       await updateUserPermissions(updatedUser, excludePermissions, selectedGroup);
       toast.success("Cập nhật quyền thành công!");
+
+      if (typeof onRoleChange === "function") {
+        onRoleChange(groupToRoleMap[selectedGroup]);
+      }
+
       onClose();
     } catch (err) {
       toast.error("Lỗi lưu quyền: " + (err.message || "Không xác định"));
@@ -168,7 +189,7 @@ export default function PermissionModal({
     };
 
     init();
-  }, [open]);
+  }, [open, user?.role]);
 
   const handleRoleChange = async (e) => {
     const gId = e.target.value;
@@ -210,47 +231,42 @@ export default function PermissionModal({
   const currentRole = selectedGroup ? groupToRoleMap[selectedGroup] : null;
 
   return (
-    <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white w-full max-w-3xl max-h-[85vh] overflow-y-auto shadow-2xl rounded-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40" onClick={onClose}>
+      <div className="bg-white w-full max-w-3xl max-h-[85vh] overflow-y-auto shadow-2xl rounded-xl" onClick={(e) => e.stopPropagation()}>
         <div className="sticky top-0 bg-white z-10 border-b p-6 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-orange-600 flex items-center gap-2">
             <LockOutlined className="text-orange-500" />
             Hồ sơ người dùng {isView ? "(Xem)" : ""}
           </h2>
-          <button
-            onClick={onClose}
-            className="text-3xl leading-none hover:text-orange-600"
-            disabled={isPermissionsLoading || isSaving}
-          >
+          <button onClick={onClose} className="text-3xl leading-none hover:text-orange-600" disabled={isPermissionsLoading || isSaving}>
             ×
           </button>
         </div>
 
         <div className="p-6 space-y-6 mb-4">
           <div className="space-y-4">
-            <FormControl fullWidth sx={{ mb:2 }}>
-              <InputLabel id="role-select-label">Chọn vai trò</InputLabel>
-              <Select
-                labelId="role-select-label"
-                value={selectedGroup || ""}
-                label="Chọn vai trò"
-                onChange={handleRoleChange}
-                disabled={isView || isSaving}
-              >
-                <MenuItem value="">Chọn vai trò</MenuItem>
-                {Object.entries(contentTypeNames).map(([id, name]) => (
-                  <MenuItem key={id} value={Number(id)}>
-                    {name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            {isView && !user?.role ? (
+              <div className="w-full p-2 bg-gray-100 text-gray-500 rounded-md text-center">
+                Chưa có vai trò
+              </div>
+            ) : (
+              <FormControl fullWidth sx={{ mb: 2 }} error={!!errors.role}>
+                <InputLabel id="role-select-label">Chọn vai trò</InputLabel>
+                <Select
+                  labelId="role-select-label"
+                  value={selectedGroup || ""}
+                  label="Chọn vai trò"
+                  onChange={handleRoleChange}
+                  disabled={isView || isSaving}
+                >
+                  <MenuItem value="">Chọn vai trò</MenuItem>
+                  {Object.entries(contentTypeNames).map(([id, name]) => (
+                    <MenuItem key={id} value={Number(id)}>{name}</MenuItem>
+                  ))}
+                </Select>
+                {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
+              </FormControl>
+            )}
 
             {selectedGroup &&
               ["post_office_manager", "post_office_staff", "shipper"].includes(currentRole) && (
@@ -262,19 +278,14 @@ export default function PermissionModal({
                       value={selectedPostOffice}
                       onChange={(e) => setSelectedPostOffice(e.target.value)}
                       disabled={isView}
-                      className={errors.postOffice ? "border border-red-500" : ""}
                     >
                       <MenuItem value="">Chọn bưu cục</MenuItem>
                       {postOffices.map((po) => (
-                        <MenuItem key={po.id} value={po.id}>
-                          {po.name}
-                        </MenuItem>
+                        <MenuItem key={po.id} value={po.id}>{po.name}</MenuItem>
                       ))}
                     </Select>
                   </FormControl>
-                  {errors.postOffice && (
-                    <p className="text-red-500 text-sm mt-1">{errors.postOffice}</p>
-                  )}
+                  {errors.postOffice && <p className="text-red-500 text-sm mt-1">{errors.postOffice}</p>}
                 </div>
               )}
 
@@ -288,16 +299,11 @@ export default function PermissionModal({
                     }`}
                     placeholder="Địa chỉ"
                     value={userProfile.address || ""}
-                    onChange={(e) =>
-                      setUserProfile((prev) => ({ ...prev, address: e.target.value }))
-                    }
+                    onChange={(e) => setUserProfile((prev) => ({ ...prev, address: e.target.value }))}
                     disabled={isView}
                   />
-                  {errors.address && (
-                    <p className="text-red-500 text-sm mt-1">{errors.address}</p>
-                  )}
+                  {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
                 </div>
-
                 <div>
                   <input
                     type="text"
@@ -306,20 +312,15 @@ export default function PermissionModal({
                     }`}
                     placeholder="Số điện thoại"
                     value={userProfile.phoneNumber || ""}
-                    onChange={(e) =>
-                      setUserProfile((prev) => ({ ...prev, phoneNumber: e.target.value }))
-                    }
+                    onChange={(e) => setUserProfile((prev) => ({ ...prev, phoneNumber: e.target.value }))}
                     disabled={isView}
                   />
-                  {errors.phoneNumber && (
-                    <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>
-                  )}
+                  {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>}
                 </div>
               </div>
             )}
           </div>
 
-          {/* Permissions */}
           {selectedGroup && (
             <>
               {isPermissionsLoading ? (
@@ -342,22 +343,25 @@ export default function PermissionModal({
                     <span className="font-medium">Chọn tất cả</span>
                   </div>
                   <div className="grid grid-cols-2 gap-y-2">
-                    {permissions.map((perm) => (
-                      <label
-                        key={perm.id}
-                        className={`flex items-center gap-2 select-none rounded-md px-2 py-1 ${
-                          !isView ? "cursor-pointer hover:bg-gray-50" : "opacity-70"
-                        }`}
-                      >
-                        <Checkbox
-                          color="warning"
-                          disabled={isView}
-                          checked={hasPermission(perm.id)}
-                          onChange={() => handleTogglePermission(perm.id)}
-                        />
-                        {perm.name}
-                      </label>
-                    ))}
+                    {permissions.map((perm) => {
+                      const viName = selectedGroup && permissionViMap[selectedGroup]?.[perm.id];
+                      return (
+                        <label
+                          key={perm.id}
+                          className={`flex items-center gap-2 select-none rounded-md px-2 py-1 ${
+                            !isView ? "cursor-pointer hover:bg-gray-50" : "opacity-70"
+                          }`}
+                        >
+                          <Checkbox
+                            color="warning"
+                            disabled={isView}
+                            checked={hasPermission(perm.id)}
+                            onChange={() => handleTogglePermission(perm.id)}
+                          />
+                          {viName || perm.name}
+                        </label>
+                      );
+                    })}
                   </div>
                 </>
               )}
@@ -365,29 +369,28 @@ export default function PermissionModal({
           )}
         </div>
 
-      <div className="flex justify-end p-6 border-t bg-white sticky bottom-0 gap-3">
-        <button
-          onClick={onClose}
-          className="px-5 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-          disabled={isSaving}
-        >
-          Đóng
-        </button>
-        {!isView && (
+        <div className="flex justify-end p-6 border-t bg-white sticky bottom-0 gap-3">
           <button
-            onClick={handleSavePermissions}
-            className="px-5 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-400 cursor-not-allowed"
-            disabled={
-              isSaving ||
-              isPermissionsLoading ||
-              !selectedGroup ||
-              currentRole === "shipper"  
-            }
+            onClick={onClose}
+            className="px-5 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 cursor-pointer"
+            disabled={isSaving}
           >
-            {isSaving ? "Đang lưu..." : "Lưu Thay Đổi"}
+            Đóng
           </button>
-        )}
-      </div>
+          {!isView && (
+            <button
+              onClick={handleSavePermissions}
+              className={`px-5 py-2 rounded-lg text-white ${
+                currentRole === "shipper"
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-orange-500 hover:bg-orange-600 cursor-pointer"
+              }`}
+              disabled={isSaving || isPermissionsLoading || !selectedGroup || currentRole === "shipper"}
+            >
+              {isSaving ? "Đang lưu..." : "Lưu Thay Đổi"}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

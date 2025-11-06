@@ -11,9 +11,7 @@ export const roleOptions = [
   { value: "shipper", label: "Shipper" },
 ];
 
-
 export const useUserStore = (initialPage = 1, pageSize = 10) => {
-
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -46,6 +44,12 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
   useEffect(() => {
     fetchUsers();
   }, [page, pageSize]);
+
+  useEffect(() => {
+    if (search === "") {
+      fetchUsers();
+    }
+  }, [search]);
 
   const handleOpen = (m, user = null) => {
     setMode(m);
@@ -148,13 +152,9 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
       setUserToDelete(null);
     }
   };
-  
-  const filteredUsers = users.filter((u) =>
-    u.email?.toLowerCase().includes(search.toLowerCase())
-  );
 
   return {
-    users: filteredUsers,
+    users, 
     loading,
     search,
     page,

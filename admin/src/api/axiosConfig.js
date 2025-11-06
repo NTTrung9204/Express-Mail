@@ -28,7 +28,7 @@ baseAPI.interceptors.response.use(
       originalRequest._retry = true;
       try {
         const refreshToken = localStorage.getItem('refreshToken');
-        const response = await baseAPI.post('/auth/refresh/', {
+        const response = await baseAPI.post('/auth/refresh', {
           refresh: refreshToken,
         });
         const { access } = response.data;
@@ -38,7 +38,6 @@ baseAPI.interceptors.response.use(
       } catch (refreshError) {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        window.location.href = '/admin/login';
         return Promise.reject(refreshError);
       }
     }
