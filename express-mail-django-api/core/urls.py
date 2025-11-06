@@ -30,16 +30,16 @@ from apps.jwt_auth.apis import (
 
 urlpatterns = [
     path(
-        "api/v1/auth/login/",
+        "api/v1/auth/login",
         CustomTokenObtainPairView.as_view(),
         name="token_obtain_pair",
     ),
     path(
-        "api/v1/auth/refresh/",
+        "api/v1/auth/refresh",
         CustomTokenRefreshView.as_view(),
         name="token_refresh",
     ),
-    path("api/v1/auth/logout/", LogoutView.as_view(), name="logout"),
+    path("api/v1/auth/logout", LogoutView.as_view(), name="logout"),
     path("api/v1/", include(route)),
 ]
 

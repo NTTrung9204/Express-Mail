@@ -6,7 +6,7 @@ from apps.routing.apis import RoutingViewSet
 from apps.shipping.apis import ShippingRateViewSet
 from apps.users.apis import UserViewSet, ProfileViewSet, ResetPasswordViewSet
 
-api_router = routers.SimpleRouter()
+api_router = routers.SimpleRouter(trailing_slash=False)
 api_router.register(r"users", UserViewSet, basename="user")
 api_router.register(r"permissions", PermissionViewSet, basename="permission")
 api_router.register(r"groups", GroupViewSet, basename="group")
