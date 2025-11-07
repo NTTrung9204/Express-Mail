@@ -32,6 +32,7 @@ import { ApiResponseDto } from 'src/common/dto/api-response.dto';
 // import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { AuthJwtRequest } from 'src/common/@type/jwt-payload.type';
 import { PaginatedResponseDto } from 'src/common/dto/paginated-response.dto';
+import { TransitionOrderDto } from './dto/transition-order.deo';
 
 @ApiTags('Orders')
 @Controller('orders')
@@ -319,5 +320,28 @@ export class OrderController {
   @ApiResponse({ status: 404, description: 'Order not found' })
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.orderService.remove(id);
+  }
+
+  @Post('transition-order')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Transition order to next post office or confirm order moved to next post office',
+  })
+  @ApiParam({ name: 'transitionOrderDto', type: TransitionOrderDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Order transitioned successfully',
+    type: OrderResponseDto,
+  })
+  async transitionOrder(
+    @Body() transitionOrderDto: TransitionOrderDto,
+  ): Promise<ApiResponseDto<OrderResponseDto>> {
+    const order = await this.orderService.transitionOrder(transitionOrderDto);
+    return new ApiResponseDto(
+      true,
+      'Order transitioned successfully',
+      this.transformToOrderResponseDto(order),
+    );
   }
 }

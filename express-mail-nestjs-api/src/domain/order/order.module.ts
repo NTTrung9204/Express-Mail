@@ -8,6 +8,8 @@ import { OrderController } from './order.controller';
 import { ProductModule } from '../product/product.module';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { DjangoService } from 'src/common/services/django.service';
+import { RedisService } from 'src/common/services/redis.service';
 
 @Module({
   imports: [
@@ -19,7 +21,7 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
     }),
   ],
   controllers: [OrderController],
-  providers: [OrderService, JwtAuthGuard],
+  providers: [OrderService, JwtAuthGuard, RedisService, DjangoService],
   exports: [OrderService],
 })
 export class OrderModule {}

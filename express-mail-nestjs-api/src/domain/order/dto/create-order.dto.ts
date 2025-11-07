@@ -40,12 +40,6 @@ export class CreateProductForOrderDto {
 }
 
 export class CreateOrderDto {
-  @ApiProperty({ description: 'Shipping fee ID', example: 'SHIP001' })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(100)
-  shippingFeeId: string;
-
   @ApiProperty({ description: 'Receiver phone number', example: '0123456789' })
   @IsString()
   @IsNotEmpty()
@@ -106,16 +100,6 @@ export class CreateOrderDto {
   @IsNumber()
   @Min(0)
   cod: number;
-
-  @ApiProperty({ description: 'Shipping cost', example: 25000 })
-  @IsNumber()
-  @Min(0)
-  shipping_cost: number;
-
-  @ApiProperty({ description: 'Shipping cost payer', example: 25000 })
-  @IsNumber()
-  @Min(0)
-  shipping_cost_payper: number;
 
   @ApiProperty({
     description: 'Indicates whether the receiver pays for shipping',

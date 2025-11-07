@@ -4,9 +4,10 @@ import {
   BadRequestException,
   Inject,
   forwardRef,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DeepPartial, Repository } from 'typeorm';
 import { Order } from './entities/order.entity';
 import { OrderTransition } from './entities/order-transition.entity';
 import { OrderPostOffice } from './entities/post-office-order.entity';
@@ -19,6 +20,9 @@ import { OrderTransitionStatus } from './enums/order-transition-status.enum';
 import { OrderPostOfficeStatus } from './enums/order-post-office-status.enum';
 import { ProductService } from '../product/product.service';
 import { JwtPayload } from 'src/common/@type/jwt-payload.type';
+import { DjangoService } from 'src/common/services/django.service';
+import { ShippingCostInformationDto } from '../shipping/dto/shipping-cost-information.dto';
+import { TransitionOrderDto } from './dto/transition-order.deo';
 
 @Injectable()
 export class OrderService {
@@ -31,12 +35,14 @@ export class OrderService {
     private readonly orderPostOfficeRepository: Repository<OrderPostOffice>,
     @Inject(forwardRef(() => ProductService))
     private readonly productService: ProductService,
+    private readonly djangoService: DjangoService,
   ) {}
 
   async create(
     createOrderDto: CreateOrderDto,
     jwtPayload: JwtPayload,
   ): Promise<Order> {
+    const officeId = '17';
     try {
       // Generate unique order code
       let orderCode: string;
@@ -57,11 +63,34 @@ export class OrderService {
         throw new BadRequestException('Unable to generate unique order code');
       }
 
+      const [receiverLatitude = '', receiverLongitude = ''] =
+        createOrderDto.receiver_coordinate?.split(',').map((s) => s.trim()) ||
+        [];
+
+      Logger.log(
+        `Fetching shipping rates for coordinates: ${receiverLatitude}, ${receiverLongitude}`,
+      );
+      const shippingCostInformation: ShippingCostInformationDto =
+        await this.djangoService.fetchShippingRates(
+          createOrderDto.length,
+          createOrderDto.width,
+          createOrderDto.height,
+          createOrderDto.weight,
+          officeId,
+          receiverLatitude,
+          receiverLongitude,
+        );
+      Logger.log(
+        `Received shipping cost information: ${JSON.stringify(
+          shippingCostInformation,
+        )}`,
+      );
+
       // Create order
-      const order = this.orderRepository.create({
+      const orderData: DeepPartial<Order> = {
         code: orderCode,
-        shopId: jwtPayload.userId.toString(),
-        shippingFeeId: createOrderDto.shippingFeeId,
+        shopId: '4',
+        shippingFeeId: shippingCostInformation.shippingRateId,
         receiver_phone: createOrderDto.receiver_phone,
         receiver_province_city: createOrderDto.receiver_province_city,
         receiver_ward_commune: createOrderDto.receiver_ward_commune,
@@ -72,9 +101,12 @@ export class OrderService {
         height: createOrderDto.height,
         weight: createOrderDto.weight,
         cod: createOrderDto.cod,
-        shipping_cost: createOrderDto.shipping_cost,
-        shipping_cost_payper: createOrderDto.shipping_cost_payper,
-      });
+        shipping_cost: shippingCostInformation.totalFee,
+        shipping_cost_payper: 0,
+        is_receiver_pay_shipping: createOrderDto.is_receiver_pay_shipping,
+      };
+
+      const order = this.orderRepository.create(orderData);
 
       const savedOrder = await this.orderRepository.save(order);
 
@@ -82,7 +114,8 @@ export class OrderService {
       const orderTransition = new OrderTransition();
       orderTransition.order = savedOrder;
       orderTransition.currentPostOfficeId = null;
-      orderTransition.nextPostOfficeId = jwtPayload.shopId?.toString() || null;
+      orderTransition.nextPostOfficeId =
+        jwtPayload?.shopId?.toString() || officeId;
       orderTransition.status = OrderTransitionStatus.PENDING;
 
       await this.orderTransitionRepository.save(orderTransition);
@@ -91,7 +124,9 @@ export class OrderService {
       const orderPostOffice = this.orderPostOfficeRepository.create({
         order: savedOrder,
         postOfficeId:
-          jwtPayload.shopId?.toString() || jwtPayload.userId.toString(),
+          jwtPayload?.shopId?.toString() ||
+          jwtPayload?.userId.toString() ||
+          officeId,
         status: OrderPostOfficeStatus.PICKUP_REQUESTED,
       });
 
@@ -279,6 +314,33 @@ export class OrderService {
     } catch (error) {
       console.error('Error deleting order:', error);
       throw new BadRequestException('Failed to delete order');
+    }
+  }
+
+  async transitionOrder(transitionOrderDto: TransitionOrderDto) {
+    const order = await this.findOne(Number(transitionOrderDto.orderId));
+
+    if (!order) {
+      throw new NotFoundException(
+        `Order with ID ${transitionOrderDto.orderId} not found`,
+      );
+    }
+
+    try {
+      const orderTransition = new OrderTransition();
+      orderTransition.order = order;
+      orderTransition.currentPostOfficeId =
+        transitionOrderDto.currentPostOfficeId || null;
+      orderTransition.nextPostOfficeId =
+        transitionOrderDto.nextPostOfficeId || null;
+      orderTransition.status = transitionOrderDto.status;
+
+      await this.orderTransitionRepository.save(orderTransition);
+
+      return await this.findOne(order.id);
+    } catch (error) {
+      console.error('Error transitioning order:', error);
+      throw new BadRequestException('Failed to transition order');
     }
   }
 }

@@ -1,20 +1,79 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
 import { RedisService } from './redis.service';
-
-const DJANGO_BASE = process.env.DJANGO_BACKEND_URL || 'localhost:8000';
+import { ShippingCostInformationDto } from 'src/domain/shipping/dto/shipping-cost-information.dto';
 
 @Injectable()
 export class DjangoService {
   private readonly logger = new Logger(DjangoService.name);
   private readonly http: AxiosInstance;
   private readonly redis: ReturnType<RedisService['getClient']>;
-  private readonly loginPath = '/api/v1/auth/login/';
-  private readonly refreshPath = '/api/v1/auth/refresh/';
+  private readonly loginPath = '/api/v1/auth/login';
+  private readonly refreshPath = '/api/v1/auth/refresh';
 
   constructor(private readonly redisService: RedisService) {
+    const DJANGO_BASE = process.env.DJANGO_BACKEND_URL || 'localhost:8000';
     this.http = axios.create({ baseURL: DJANGO_BASE, timeout: 5000 });
     this.redis = this.redisService.getClient();
+    this.setupInterceptors();
+
+    this.logger.log(`DjangoService using backend URL: ${DJANGO_BASE}`);
+  }
+
+  private setupInterceptors() {
+    this.http.interceptors.request.use(
+      async (config) => {
+        try {
+          const url = config.url || '';
+          if (url.endsWith(this.loginPath) || url.endsWith(this.refreshPath)) {
+            return config;
+          }
+
+          const token = await this.loginIfNeeded();
+          config.headers = config.headers || {};
+          const hasAuthHeader = Boolean(
+            config.headers['Authorization'] || config.headers['authorization'],
+          );
+          if (!hasAuthHeader) {
+            config.headers['Authorization'] = `Bearer ${token}`;
+          }
+        } catch (e) {
+          this.logger.warn('Failed to attach Django token to request', e);
+        }
+        return config;
+      },
+      (err) => Promise.reject(err as Error),
+    );
+
+    this.http.interceptors.response.use(
+      (res) => res,
+      async (error) => {
+        const originalConfig: any = error.config;
+        if (!originalConfig) {
+          return Promise.reject(error as Error);
+        }
+
+        if (
+          error.response &&
+          error.response.status === 401 &&
+          !originalConfig._djangoRetry
+        ) {
+          originalConfig._djangoRetry = true;
+          try {
+            const token = await this.loginIfNeeded();
+            originalConfig.headers = originalConfig.headers || {};
+            originalConfig.headers['Authorization'] = `Bearer ${token}`;
+            return this.http.request(originalConfig);
+          } catch (e) {
+            // fall through to reject
+            this.logger.warn('Retry after 401 failed', e);
+            return Promise.reject(e as Error);
+          }
+        }
+
+        return Promise.reject(error as Error);
+      },
+    );
   }
 
   private async saveTokens(
@@ -94,30 +153,49 @@ export class DjangoService {
       }
     }
 
-    const token = await this.loginIfNeeded();
     try {
-      const res = await this.http.get(`/api/v1/users/${shopId}/profile/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await this.http.get(`/api/v1/users/${shopId}/profile`);
       const profile = res.data;
       // cache 1 hour
       await this.redis.set(cacheKey, JSON.stringify(profile), 'EX', 3600);
       return profile;
     } catch (err: any) {
-      // if unauthorized, try refresh+retry once
-      if (err.response && err.response.status === 401) {
-        const access = await this.loginIfNeeded();
-        const retry = await this.http.get(`/api/v1/users/${shopId}/profile/`, {
-          headers: { Authorization: `Bearer ${access}` },
-        });
-        const profile = retry.data;
-        await this.redis.set(cacheKey, JSON.stringify(profile), 'EX', 3600);
-        return profile;
-      }
-      this.logger.warn(
-        `Failed to fetch shop profile ${shopId}: ${err?.message}`,
-      );
+      const warnMsg =
+        'Failed to fetch shop profile ' + shopId + ': ' + (err?.message || '');
+      this.logger.warn(warnMsg);
       return null;
+    }
+  }
+
+  async fetchShippingRates(
+    lengthCm: number,
+    widthCm: number,
+    heightCm: number,
+    weightKg: number,
+    postOffice: string,
+    receiverLatitude: string,
+    receiverLongitude: string,
+  ): Promise<ShippingCostInformationDto> {
+    try {
+      console.log(
+        `Fetching shipping rates from Django for dimensions: ${lengthCm}x${widthCm}x${heightCm} cm, weight: ${weightKg} g, post office: ${postOffice}, receiver coords: ${receiverLatitude}, ${receiverLongitude}`,
+      );
+      const res = await this.http.post('/api/v1/shipping-rates/calculate-fee', {
+        lengthCm,
+        widthCm,
+        heightCm,
+        weightKg,
+        postOffice,
+        receiverLatitude,
+        receiverLongitude: receiverLongitude,
+      });
+      console.log(
+        `Received shipping cost information: ${JSON.stringify(res.data)}`,
+      );
+      return res.data;
+    } catch (error) {
+      this.logger.error('Failed to fetch shipping rates from Django:', error);
+      throw error;
     }
   }
 }
