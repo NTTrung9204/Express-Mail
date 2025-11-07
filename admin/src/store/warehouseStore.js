@@ -1,4 +1,3 @@
-// src/store/warehouseStore.js
 import { useState, useEffect, useMemo } from "react";
 import { postOfficeService } from "../api/postOfficeService";
 import { getProvinces, getDistricts, getWards } from "../api/locationCache";
@@ -44,10 +43,10 @@ export const useWarehouseStore = (initialPage = 1, pageSize = 10) => {
     getWards(selectedDistrict).then(setWards);
   }, [selectedDistrict]);
 
-  const fetchWarehouses = async () => {
+  const fetchWarehouses = async (currentPage = page, currentSearch = search) => {
     setLoading(true);
     try {
-      const data = await postOfficeService.getPostOffices(page, pageSize);
+      const data = await postOfficeService.getPostOffices(currentPage, pageSize, currentSearch);
       setWarehouses(data.results || data.items || []);
       setTotal(data.count || data.total || 0);
     } catch (error) {
@@ -60,8 +59,15 @@ export const useWarehouseStore = (initialPage = 1, pageSize = 10) => {
   };
 
   useEffect(() => {
-    fetchWarehouses();
-  }, [page]);
+    fetchWarehouses(page, search);
+  }, [page, pageSize]);
+
+  const searchWarehouses = (query) => {
+    const trimmed = query.trim();
+    setSearch(trimmed);
+    setPage(1);
+    fetchWarehouses(1, trimmed); 
+  };
 
   const provinceMap = useMemo(() => {
     const map = new Map();
@@ -78,21 +84,6 @@ export const useWarehouseStore = (initialPage = 1, pageSize = 10) => {
       displayProvince: getProvinceName(w.provinceCity),
     }));
   }, [warehouses, provinceMap]);
-
-  const searchWarehouses = async () => {
-    setLoading(true);
-    try {
-      const data = await postOfficeService.getPostOffices(page, pageSize, search);
-      setWarehouses(data.results || data.items || []);
-      setTotal(data.count || data.total || 0);
-    } catch (error) {
-      console.error("Lỗi tìm kiếm kho:", error);
-      setWarehouses([]);
-      setTotal(0);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const openAddWarehouse = () => {
     setModalMode("add");
@@ -138,10 +129,10 @@ export const useWarehouseStore = (initialPage = 1, pageSize = 10) => {
 
       await fetchWarehouses();
       setOpenWarehouseModal(false);
-      return true;
+      return { success: true };
     } catch (error) {
       console.error("Lỗi lưu kho:", error);
-      return false;
+      return { success: false };
     }
   };
 
@@ -150,15 +141,22 @@ export const useWarehouseStore = (initialPage = 1, pageSize = 10) => {
     setOpenDeleteModal(true);
   };
 
-  const confirmDeleteWarehouse = async (id) => {
+  const confirmDeleteWarehouse = async () => {
+    if (!warehouseToDelete) return { success: false };
+
     try {
-      await postOfficeService.deletePostOffice(id);
-      await fetchWarehouses();
+      await postOfficeService.deletePostOffice(warehouseToDelete.id);
+      if (warehouses.length === 1 && page > 1) {
+        setPage(page - 1);
+      } else {
+        await fetchWarehouses();
+      }
       setOpenDeleteModal(false);
-      return true;
+      setWarehouseToDelete(null);
+      return { success: true };
     } catch (error) {
       console.error("Lỗi xóa kho:", error);
-      return false;
+      return { success: false };
     }
   };
 
@@ -190,7 +188,7 @@ export const useWarehouseStore = (initialPage = 1, pageSize = 10) => {
     setSelectedDistrict,
 
     fetchWarehouses,
-    searchWarehouses, 
+    searchWarehouses,
     openAddWarehouse,
     openEditWarehouse,
     openViewWarehouse,

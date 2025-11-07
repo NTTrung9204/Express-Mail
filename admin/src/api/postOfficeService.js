@@ -1,10 +1,12 @@
 import baseAPI from './axiosConfig';
 
 export const postOfficeService = {
-  getPostOffices: async (page = 1, page_size = 10) => {
-    const response = await baseAPI.get('/post-offices', {
-      params: { page, page_size }
-    });
+  getPostOffices: async (page = 1, page_size = 10, name = '') => {
+    const params = { page, page_size };
+    if (name) {
+      params.name = name;
+    }
+    const response = await baseAPI.get('/post-offices', { params });
     return response.data;
   },
 

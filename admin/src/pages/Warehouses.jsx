@@ -1,5 +1,4 @@
-// src/pages/Warehouses.jsx
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Add, Edit, Delete, Visibility, Search } from "@mui/icons-material";
 import { useWarehouseStore } from "../store/warehouseStore";
 import { getPageNumbers } from "../utils/pagination";
@@ -20,7 +19,6 @@ export default function Warehouses() {
     openDeleteModal,
     warehouseToDelete,
     setPage,
-    setSearch,
     setOpenWarehouseModal,
     setOpenDeleteModal,
     openAddWarehouse,
@@ -29,10 +27,23 @@ export default function Warehouses() {
     handleSubmitWarehouse,
     handleDeleteWarehouse,
     confirmDeleteWarehouse,
-    searchWarehouses, 
+    searchWarehouses,
   } = useWarehouseStore();
 
+const [searchInput, setSearchInput] = useState("");
   const totalPages = Math.ceil(total / pageSize) || 1;
+
+  useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
+
+  const handleSearch = () => {
+    searchWarehouses(searchInput);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") handleSearch();
+  };
 
   return (
     <div className="p-6 space-y-6 bg-orange-50 min-h-screen">
@@ -44,14 +55,15 @@ export default function Warehouses() {
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="flex w-full md:w-auto gap-2">
           <input
-            type="text"
-            placeholder="Nhập tên kho hoặc tỉnh/thành phố..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+           type="text"
+            placeholder="Nhập tên kho"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyPress={handleKeyPress}
             className="w-full md:w-96 px-4 py-2.5 border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-gray-700"
           />
           <button
-            onClick={searchWarehouses}
+            onClick={handleSearch}
             className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2.5 rounded-lg hover:bg-orange-600 transition shadow-md font-medium cursor-pointer"
           >
             <Search fontSize="small" /> Tìm kiếm

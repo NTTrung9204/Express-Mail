@@ -2,10 +2,17 @@
 import baseAPI from './axiosConfig';
 
 export const userService = {
-  getUsers: async (page = 1, page_size = 10) => {
-    const response = await baseAPI.get('/users', {
-      params: { page, page_size },
-    });
+  getUsers: async (page = 1, page_size = 10, search = '') => {
+    const params = {
+      page,
+      page_size
+    }
+
+    if (search) {
+      params.search = search;
+    }
+
+    const response = await baseAPI.get('/users', { params });
     return response.data;
   },
 
