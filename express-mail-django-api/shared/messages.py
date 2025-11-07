@@ -18,6 +18,8 @@ _ERROR_MESSAGES = {
         "active_shipping_rate_not_set": "There is currently no active shipping rate.",
         "capacity_required_when_vehicle_is_truck": "Capacity is required for vehicle 'truck'.",
         "path_not_found": "Path not found.",
+        "no_post_office_near_by": "No post office near by this location.",
+        "no_post_office_exist": "No post office exist.",
     },
     "vi": {
         "common": {
@@ -35,6 +37,8 @@ _ERROR_MESSAGES = {
         "active_shipping_rate_not_set": "Mức phí vận chuyển chưa được thiết lập.",
         "capacity_required_when_vehicle_is_truck": "Cần tham số capacity khi phương tiện là 'truck'.",
         "path_not_found": "Không tìm thấy đường đi.",
+        "no_post_office_near_by": "Không có bưu cục nào gần đây.",
+        "no_post_office_exist": "Không tồn tại bưu cục nào trên hệ thống.",
     },
 }
 

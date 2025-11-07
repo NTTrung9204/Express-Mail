@@ -1,0 +1,1 @@
+MAX_DISTANCE_TO_ADD_SHOP = 30  # km
