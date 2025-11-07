@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from apps.permissions.constants import Groups
-from apps.post_offices.constants import MAX_DISTANCE_TO_ADD_SHOP
+from apps.users.mixins import ShopLocationValidationMixin
 from apps.users.models import (
     User,
     AdminProfile,
@@ -12,7 +12,6 @@ from apps.users.models import (
     PostOfficeStaffProfile,
 )
 from services.groups.group_services import GroupService
-from services.post_offices.post_office_services import PostOfficeService
 from shared.messages import ERROR_MESSAGES
 
 
@@ -142,7 +141,7 @@ class PostOfficeStaffProfileSerializer(BaseProfileSerializer):
         fields = ["id", "user", "post_office", "exclude_permissions"]
 
 
-class ShopProfileSerializer(BaseProfileSerializer):
+class ShopProfileSerializer(ShopLocationValidationMixin, BaseProfileSerializer):
     """
     Serializer for ShopProfile model.
     """
@@ -177,25 +176,7 @@ class ShopProfileSerializer(BaseProfileSerializer):
         Check if there is post office nearby shop.
         """
 
-        latitude = attrs.get("latitude") or self.instance.latitude
-        longitude = attrs.get("longitude") or self.instance.longitude
-
-        nearest_post_office, distance = PostOfficeService.find_nearest_post_office(
-            latitude, longitude
-        )
-
-        if nearest_post_office is not None:
-            if distance > MAX_DISTANCE_TO_ADD_SHOP:
-                raise serializers.ValidationError(
-                    {"detail": ERROR_MESSAGES["no_post_office_near_by"]}
-                )
-            attrs["post_office"] = nearest_post_office
-        else:
-            raise serializers.ValidationError(
-                {"detail": ERROR_MESSAGES["no_post_office_exist"]}
-            )
-
-        return attrs
+        return self.validate_location(attrs, getattr(self, "instance", None))
 
 
 class ShipperProfileSerializer(BaseProfileSerializer):
@@ -280,3 +261,75 @@ class GetNameListResponseSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "first_name", "last_name"]
         read_only_fields = ["id", "first_name", "last_name"]
+
+
+class UserRegisterSerializer(serializers.ModelSerializer):
+    """
+    Serializer for user registration.
+    """
+
+    username = serializers.CharField(
+        validators=[
+            UniqueValidator(
+                queryset=User.all_objects.all(),
+                message=ERROR_MESSAGES["username_already_exists"],
+            )
+        ]
+    )
+    email = serializers.EmailField(
+        validators=[
+            UniqueValidator(
+                queryset=User.all_objects.all(),
+                message=ERROR_MESSAGES["email_already_exists"],
+            )
+        ]
+    )
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        """
+        Meta class for UserRegisterSerializer.
+        """
+
+        model = User
+        fields = ["id", "username", "password", "email", "first_name", "last_name"]
+
+
+class ShopProfileRegisterSerializer(
+    ShopLocationValidationMixin, serializers.ModelSerializer
+):
+    """
+    Serializer for shop profile registration.
+    """
+
+    class Meta:
+        """
+        Meta class for ShopProfileRegisterSerializer.
+        """
+
+        model = ShopProfile
+        fields = [
+            "id",
+            "address",
+            "phone_number",
+            "latitude",
+            "longitude",
+            "post_office",
+        ]
+        read_only_fields = ["id", "post_office"]
+
+    def validate(self, attrs):
+        """
+        Check if there is post office nearby shop.
+        """
+
+        return self.validate_location(attrs)
+
+
+class ShopRegisterSerializer(serializers.Serializer):
+    """
+    Serializer for shop registration.
+    """
+
+    user = UserRegisterSerializer()
+    profile = ShopProfileRegisterSerializer()
