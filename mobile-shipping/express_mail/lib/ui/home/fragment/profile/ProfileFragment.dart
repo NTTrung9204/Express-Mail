@@ -73,8 +73,8 @@ class _ProfileFragmentState extends State<ProfileFragment> {
                 child: Text(
                   AppStrings.no_profile_data,
                   style: TextStyle(
-                    fontSize: 30,
-                    fontFamily: "Inter_bold",
+                    fontSize: 20,
+                    fontFamily: "Inter_regular",
                     color: AppColors.black,
                   ),
                 ),
