@@ -12,6 +12,9 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { PaginatedResponseDto } from 'src/common/dto/paginated-response.dto';
 import { UpdateShippingStatusDto } from './dto/update-status.dto';
 import { GetShipperOrdersDto } from './dto/get-shipper-orders.dto';
+import { ShippingStatus } from './enums/shipping-status.enum';
+import { OrderService } from '../order/order.service';
+import { OrderStatus } from '../order/enums/order-status.enum';
 
 @Injectable()
 export class ShippingService {
@@ -19,16 +22,35 @@ export class ShippingService {
     @InjectRepository(Shipping)
     private readonly shippingRepository: Repository<Shipping>,
     private readonly djangoService: DjangoService,
+    private readonly orderService: OrderService,
   ) {}
 
   async create(createShippingDto: CreateShippingDto): Promise<Shipping> {
     try {
+      if (createShippingDto.status === ShippingStatus.FINISHED) {
+        const latestShipping =
+          await this.orderService.getLastestShippingByOrderId(
+            createShippingDto.orderId,
+          );
+        console.log('Latest shipping:', latestShipping);
+        if (
+          latestShipping &&
+          latestShipping.status === ShippingStatus.SHIPPING
+        ) {
+          await this.orderService.update(createShippingDto.orderId, {
+            order_status: OrderStatus.COMPLETED,
+          });
+        }
+      }
+
       const shipping = this.shippingRepository.create({
         shipperId: createShippingDto.shipperId,
         status: createShippingDto.status,
         order: { id: createShippingDto.orderId } as any,
       });
-      return await this.shippingRepository.save(shipping);
+      const savedShipping = await this.shippingRepository.save(shipping);
+
+      return savedShipping;
     } catch (error) {
       console.error(error);
       throw new BadRequestException('Failed to create shipping');

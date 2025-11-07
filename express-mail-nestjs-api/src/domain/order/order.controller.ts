@@ -33,6 +33,7 @@ import { ApiResponseDto } from 'src/common/dto/api-response.dto';
 import { AuthJwtRequest } from 'src/common/@type/jwt-payload.type';
 import { PaginatedResponseDto } from 'src/common/dto/paginated-response.dto';
 import { TransitionOrderDto } from './dto/transition-order.deo';
+import { OrderPostOfficeDto } from './dto/order-post-office.dto';
 
 @ApiTags('Orders')
 @Controller('orders')
@@ -341,6 +342,27 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Order transitioned successfully',
+      this.transformToOrderResponseDto(order),
+    );
+  }
+
+  @Post('order-post-office')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create order-post-office association' })
+  @ApiBody({ type: OrderPostOfficeDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Order-PostOffice association created successfully',
+    type: OrderResponseDto,
+  })
+  async createOrderPostOffice(
+    @Body() orderPostOfficeDto: OrderPostOfficeDto,
+  ): Promise<ApiResponseDto<OrderResponseDto>> {
+    const order =
+      await this.orderService.createOrderPostOffice(orderPostOfficeDto);
+    return new ApiResponseDto(
+      true,
+      'Order-PostOffice association created successfully',
       this.transformToOrderResponseDto(order),
     );
   }

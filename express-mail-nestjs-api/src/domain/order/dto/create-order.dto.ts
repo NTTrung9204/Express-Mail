@@ -8,9 +8,11 @@ import {
   Min,
   MaxLength,
   IsBoolean,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { OrderStatus } from '../enums/order-status.enum';
 
 export class CreateProductForOrderDto {
   @ApiProperty({ description: 'Product name', example: 'Laptop Dell XPS 13' })
@@ -116,4 +118,13 @@ export class CreateOrderDto {
   @ValidateNested({ each: true })
   @Type(() => CreateProductForOrderDto)
   products: CreateProductForOrderDto[];
+
+  @ApiProperty({
+    description: 'Status of the order',
+    example: 'PENDING',
+  })
+  @IsEnum(OrderStatus)
+  @IsOptional()
+  @MaxLength(50)
+  order_status?: OrderStatus;
 }

@@ -23,6 +23,8 @@ import { JwtPayload } from 'src/common/@type/jwt-payload.type';
 import { DjangoService } from 'src/common/services/django.service';
 import { ShippingCostInformationDto } from '../shipping/dto/shipping-cost-information.dto';
 import { TransitionOrderDto } from './dto/transition-order.deo';
+import { OrderPostOfficeDto } from './dto/order-post-office.dto';
+import { Shipping } from '../shipping/entities/shipping.entity';
 
 @Injectable()
 export class OrderService {
@@ -33,6 +35,8 @@ export class OrderService {
     private readonly orderTransitionRepository: Repository<OrderTransition>,
     @InjectRepository(OrderPostOffice)
     private readonly orderPostOfficeRepository: Repository<OrderPostOffice>,
+    @InjectRepository(Shipping)
+    private readonly shippingRepository: Repository<Shipping>,
     @Inject(forwardRef(() => ProductService))
     private readonly productService: ProductService,
     private readonly djangoService: DjangoService,
@@ -341,6 +345,78 @@ export class OrderService {
     } catch (error) {
       console.error('Error transitioning order:', error);
       throw new BadRequestException('Failed to transition order');
+    }
+  }
+
+  async getLastestTransitionByOrderId(
+    orderId: number,
+  ): Promise<OrderTransition> {
+    try {
+      const transitions = await this.orderTransitionRepository.find({
+        where: { order: { id: orderId } },
+        order: { createdAt: 'DESC' },
+        take: 1,
+      });
+      return transitions[0];
+    } catch (error) {
+      console.error('Error fetching latest transition:', error);
+      throw new BadRequestException('Failed to fetch latest transition');
+    }
+  }
+
+  async getLastestShippingByOrderId(orderId: number): Promise<Shipping> {
+    try {
+      const shippings = await this.shippingRepository.find({
+        where: { order: { id: orderId } },
+        order: { createdAt: 'DESC' },
+        take: 1,
+      });
+      return shippings[0];
+    } catch (error) {
+      console.error('Error fetching latest shipping:', error);
+      throw new BadRequestException('Failed to fetch latest shipping');
+    }
+  }
+
+  async createOrderPostOffice(orderPostOfficeDto: OrderPostOfficeDto) {
+    const order = await this.findOne(Number(orderPostOfficeDto.orderId));
+
+    if (!order) {
+      throw new NotFoundException(
+        `Order with ID ${orderPostOfficeDto.orderId} not found`,
+      );
+    }
+
+    try {
+      if (orderPostOfficeDto.status === OrderPostOfficeStatus.IN_WAREHOUSE) {
+        const latestTransition = await this.getLastestTransitionByOrderId(
+          orderPostOfficeDto.orderId,
+        );
+
+        const orderTransition = new OrderTransition();
+        orderTransition.order = order;
+        orderTransition.currentPostOfficeId =
+          latestTransition.currentPostOfficeId || null;
+        orderTransition.nextPostOfficeId =
+          latestTransition.nextPostOfficeId || null;
+        orderTransition.status = OrderTransitionStatus.DONE;
+
+        await this.orderTransitionRepository.save(orderTransition);
+      }
+
+      const orderPostOffice = this.orderPostOfficeRepository.create({
+        order: order,
+        postOfficeId: orderPostOfficeDto.postOfficeId,
+        status: orderPostOfficeDto.status,
+      });
+      await this.orderPostOfficeRepository.save(orderPostOffice);
+
+      return await this.findOne(order.id);
+    } catch (error) {
+      console.error('Error creating order-post-office association:', error);
+      throw new BadRequestException(
+        'Failed to create order-post-office association',
+      );
     }
   }
 }

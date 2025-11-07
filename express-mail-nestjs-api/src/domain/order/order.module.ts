@@ -10,10 +10,16 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { DjangoService } from 'src/common/services/django.service';
 import { RedisService } from 'src/common/services/redis.service';
+import { Shipping } from '../shipping/entities/shipping.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Order, OrderTransition, OrderPostOffice]),
+    TypeOrmModule.forFeature([
+      Order,
+      OrderTransition,
+      OrderPostOffice,
+      Shipping,
+    ]),
     forwardRef(() => ProductModule),
     JwtModule.register({
       secret: process.env.JWT_ACCESS_SECRET,
