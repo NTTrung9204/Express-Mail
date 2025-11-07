@@ -45,14 +45,14 @@ urlpatterns = [
 
 urlpatterns += [
     # Swagger and API Docs
-    path("api/v1/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("api/v1/schema", SpectacularAPIView.as_view(), name="schema"),
     path(
-        "api/v1/swagger/",
+        "api/v1/swagger",
         SpectacularSwaggerView.as_view(url_name="schema"),
         name="swagger",
     ),
     path(
-        "api/v1/docs/",
+        "api/v1/docs",
         SpectacularRedocView.as_view(url_name="schema"),
         name="docs",
     ),
