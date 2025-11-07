@@ -4,6 +4,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Shipping } from './entities/shipping.entity';
 import { Repository } from 'typeorm';
 import { DjangoService } from 'src/common/services/django.service';
+import { OrderService } from '../order/order.service';
 
 describe('ShippingService', () => {
   let service: ShippingService;
@@ -23,6 +24,11 @@ describe('ShippingService', () => {
     postData: jest.fn(),
   };
 
+  const mockOrderService = {
+    createOrder: jest.fn(),
+    updateOrderStatus: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -34,6 +40,10 @@ describe('ShippingService', () => {
         {
           provide: DjangoService,
           useValue: mockDjangoService,
+        },
+        {
+          provide: OrderService,
+          useValue: mockOrderService,
         },
       ],
     }).compile();

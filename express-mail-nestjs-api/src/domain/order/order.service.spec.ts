@@ -5,6 +5,8 @@ import { ProductService } from '../product/product.service';
 import { Order } from './entities/order.entity';
 import { OrderTransition } from './entities/order-transition.entity';
 import { OrderPostOffice } from './entities/post-office-order.entity';
+import { Shipping } from '../shipping/entities/shipping.entity';
+import { DjangoService } from 'src/common/services/django.service';
 
 describe('OrderService', () => {
   let service: OrderService;
@@ -26,7 +28,15 @@ describe('OrderService', () => {
           useValue: {},
         },
         {
+          provide: getRepositoryToken(Shipping),
+          useValue: {},
+        },
+        {
           provide: ProductService,
+          useValue: {},
+        },
+        {
+          provide: DjangoService,
           useValue: {},
         },
       ],
