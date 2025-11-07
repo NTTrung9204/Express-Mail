@@ -22,6 +22,7 @@ from apps.users.serializers import (
     ResetPasswordConfirmSerializer,
     GetNameListRequestSerializer,
     GetNameListResponseSerializer,
+    ShopRegisterSerializer,
 )
 from services.groups.group_services import GroupService
 from services.permissions.permission_services import PermissionService
@@ -129,6 +130,43 @@ class UserViewSet(ModelViewSet, BaseAPIViewSet):
         data = GetNameListResponseSerializer(instance=users, many=True).data
 
         return self.response_ok(data)
+
+    @extend_schema(
+        request=ShopRegisterSerializer,
+        responses={status.HTTP_201_CREATED: ShopRegisterSerializer},
+    )
+    @transaction.atomic
+    @action(
+        methods=["post"], detail=False, url_path="shop-register", permission_classes=[]
+    )
+    def shop_register(self, request):
+        """
+        Register a new shop account.
+        """
+
+        serializer = ShopRegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+
+        user_validated_data = validated_data["user"]
+        profile_validated_data = validated_data["profile"]
+
+        created_user = UserService.create(user_validated_data)
+        profile_validated_data["user"] = created_user
+
+        created_shop_profile = ProfileService.create_shop_profile(
+            profile_validated_data
+        )
+
+        shop_register_data = {
+            "user": created_user,
+            "profile": created_shop_profile,
+        }
+
+        return self.response(
+            data=ShopRegisterSerializer(instance=shop_register_data).data,
+            status_code=status.HTTP_201_CREATED,
+        )
 
 
 @extend_schema(tags=["Reset Password"])
@@ -295,7 +333,7 @@ class ProfileViewSet(BaseAPIViewSet):
 
         return self.response_created(serializer_class(instance).data)
 
-    @transaction.atomic()
+    @transaction.atomic
     @action(
         detail=False,
         methods=["post"],
@@ -312,7 +350,7 @@ class ProfileViewSet(BaseAPIViewSet):
             user_profile_attr_name="admin_profile",
         )
 
-    @transaction.atomic()
+    @transaction.atomic
     @action(
         detail=False,
         methods=["post"],
@@ -329,7 +367,7 @@ class ProfileViewSet(BaseAPIViewSet):
             user_profile_attr_name="post_office_manager_profile",
         )
 
-    @transaction.atomic()
+    @transaction.atomic
     @action(
         detail=False,
         methods=["post"],
@@ -346,7 +384,7 @@ class ProfileViewSet(BaseAPIViewSet):
             user_profile_attr_name="post_office_staff_profile",
         )
 
-    @transaction.atomic()
+    @transaction.atomic
     @action(
         detail=False,
         methods=["post"],
@@ -363,7 +401,7 @@ class ProfileViewSet(BaseAPIViewSet):
             user_profile_attr_name="shop_profile",
         )
 
-    @transaction.atomic()
+    @transaction.atomic
     @action(
         detail=False,
         methods=["post"],
