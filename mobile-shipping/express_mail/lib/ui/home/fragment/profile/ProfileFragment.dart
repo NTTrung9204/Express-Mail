@@ -67,16 +67,30 @@ class _ProfileFragmentState extends State<ProfileFragment> {
 
           final profile = model.profile;
           if (profile == null) {
-            return const Scaffold(
+            return Scaffold(
               backgroundColor: AppColors.white,
               body: Center(
-                child: Text(
-                  AppStrings.no_profile_data,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontFamily: "Inter_regular",
-                    color: AppColors.black,
-                  ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 30),
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: Image.asset(
+                          "assets/images/img_no_data_profile.webp",
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      AppStrings.no_profile_data,
+                      style: TextStyle(color: Colors.black54, fontSize: 18),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               ),
             );
