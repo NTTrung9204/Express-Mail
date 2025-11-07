@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from apps.permissions.constants import Groups
+from apps.post_offices.constants import MAX_DISTANCE_TO_ADD_SHOP
 from apps.users.models import (
     User,
     AdminProfile,
@@ -11,6 +12,7 @@ from apps.users.models import (
     PostOfficeStaffProfile,
 )
 from services.groups.group_services import GroupService
+from services.post_offices.post_office_services import PostOfficeService
 from shared.messages import ERROR_MESSAGES
 
 
@@ -158,7 +160,42 @@ class ShopProfileSerializer(BaseProfileSerializer):
         """
 
         model = ShopProfile
-        fields = ["id", "user", "exclude_permissions", "address", "phone_number"]
+        fields = [
+            "id",
+            "user",
+            "exclude_permissions",
+            "address",
+            "phone_number",
+            "latitude",
+            "longitude",
+            "post_office",
+        ]
+        read_only_fields = ["post_office"]
+
+    def validate(self, attrs):
+        """
+        Check if there is post office nearby shop.
+        """
+
+        latitude = attrs.get("latitude") or self.instance.latitude
+        longitude = attrs.get("longitude") or self.instance.longitude
+
+        nearest_post_office, distance = PostOfficeService.find_nearest_post_office(
+            latitude, longitude
+        )
+
+        if nearest_post_office is not None:
+            if distance > MAX_DISTANCE_TO_ADD_SHOP:
+                raise serializers.ValidationError(
+                    {"detail": ERROR_MESSAGES["no_post_office_near_by"]}
+                )
+            attrs["post_office"] = nearest_post_office
+        else:
+            raise serializers.ValidationError(
+                {"detail": ERROR_MESSAGES["no_post_office_exist"]}
+            )
+
+        return attrs
 
 
 class ShipperProfileSerializer(BaseProfileSerializer):

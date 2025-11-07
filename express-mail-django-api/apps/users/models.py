@@ -167,6 +167,11 @@ class ShopProfile(BaseModel):
     )
     phone_number = models.CharField(max_length=10)
     address = models.TextField()
+    latitude = models.DecimalField(max_digits=9, decimal_places=6)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6)
+    post_office = models.ForeignKey(
+        PostOffice, null=True, blank=True, on_delete=models.SET_NULL
+    )
 
     class Meta:
         """
