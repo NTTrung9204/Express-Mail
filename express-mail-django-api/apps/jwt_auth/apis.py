@@ -1,11 +1,11 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework.generics import GenericAPIView
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from apps.jwt_auth.serializers import (
     LogoutSerializer,
+    CustomTokenObtainPairSerializer,
 )
 from rest_framework.response import Response
 from rest_framework import status
@@ -19,7 +19,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     Custom login view.
     """
 
-    serializer_class = TokenObtainPairSerializer
+    serializer_class = CustomTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
         """

@@ -1,9 +1,11 @@
 from rest_framework_simplejwt.serializers import (
     TokenBlacklistSerializer,
+    TokenObtainPairSerializer,
 )
 from rest_framework import serializers
 from rest_framework_simplejwt.exceptions import TokenError
 from apps.jwt_auth.models import AccessTokenWhiteList
+from apps.permissions.constants import Roles
 from shared.messages import ERROR_MESSAGES
 
 
@@ -38,3 +40,26 @@ class LogoutSerializer(serializers.Serializer):
             raise serializers.ValidationError(str(e))
 
         return value
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """
+    JWT serializer with extra claims
+    """
+
+    @classmethod
+    def get_token(cls, user):
+        """
+        Return token with custom claims.
+        """
+
+        token = super().get_token(user)
+        token["role"] = user.role
+        if user.role == Roles.SHOP.value:
+            token["post_office_id"] = (
+                user.shop_profile.post_office.id
+                if user.shop_profile.post_office
+                else None
+            )
+
+        return token
