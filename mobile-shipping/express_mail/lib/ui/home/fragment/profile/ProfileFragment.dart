@@ -39,101 +39,112 @@ class _ProfileFragmentState extends State<ProfileFragment> {
       value: profileViewModel,
       child: Consumer<ProfileViewModel>(
         builder: (context, model, _) {
-          if (model.isLoading) {
-            return Scaffold(
-              backgroundColor: AppColors.white,
-              body: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(
-                      color: AppColors.blue_127AE2,
-                      strokeWidth: 4,
-                    ),
-                    const SizedBox(height: 22),
-                    const Text(
-                      AppStrings.loading_data,
-                      style: TextStyle(
-                        fontFamily: "Inter_regular",
-                        fontSize: 16,
-                        color: AppColors.black,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-
           final profile = model.profile;
-          if (profile == null) {
-            return Scaffold(
-              backgroundColor: AppColors.white,
-              body: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 30),
-                      child: AspectRatio(
-                        aspectRatio: 1,
-                        child: Image.asset(
-                          "assets/images/img_no_data_profile.webp",
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      AppStrings.no_profile_data,
-                      style: TextStyle(color: Colors.black54, fontSize: 18),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
+
           return Scaffold(
             backgroundColor: AppColors.gray_F7F7FC,
-            body: SafeArea(
+            body: SafeArea(child: _buildBody(model.isLoading, profile)),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildBody(bool isLoading, profile) {
+    if (isLoading) {
+      // Loading shimmer
+      return Column(
+        children: [
+          HeaderProfile(
+            loginResponse: widget.loginResponse,
+            profile: profile,
+            profileViewModel: profileViewModel,
+          ),
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    PersonalInformation(
+                      loginResponse: widget.loginResponse,
+                      profile: profile,
+                      profileViewModel: profileViewModel,
+                    ),
+                    const SizedBox(height: 16),
+                    VehicleInformation(
+                      loginResponse: widget.loginResponse,
+                      profile: profile,
+                      profileViewModel: profileViewModel,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (profile == null) {
+      // No data
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 30),
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: Image.asset(
+                  "assets/images/img_no_data_profile.webp",
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              AppStrings.no_profile_data,
+              style: TextStyle(color: Colors.black54, fontSize: 18),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Profile loaded
+    return Column(
+      children: [
+        HeaderProfile(
+          loginResponse: widget.loginResponse,
+          profile: profile,
+          profileViewModel: profileViewModel,
+        ),
+        Expanded(
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            child: SingleChildScrollView(
               child: Column(
                 children: [
-                  HeaderProfile(
+                  PersonalInformation(
                     loginResponse: widget.loginResponse,
                     profile: profile,
                     profileViewModel: profileViewModel,
                   ),
-                  Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(
-                        vertical: 16,
-                        horizontal: 16,
-                      ),
-                      child: SingleChildScrollView(
-                        child: Column(
-                          children: [
-                            PersonalInformation(
-                              loginResponse: widget.loginResponse,
-                              profile: profile,
-                            ),
-                            SizedBox(height: 16),
-                            VehicleInformation(
-                              loginResponse: widget.loginResponse,
-                              profile: profile,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  const SizedBox(height: 16),
+                  VehicleInformation(
+                    loginResponse: widget.loginResponse,
+                    profile: profile,
+                    profileViewModel: profileViewModel,
                   ),
                 ],
               ),
             ),
-          );
-        },
-      ),
+          ),
+        ),
+      ],
     );
   }
 }

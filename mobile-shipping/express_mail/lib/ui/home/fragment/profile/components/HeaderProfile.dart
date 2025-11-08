@@ -6,9 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:express_mail/resources/colors.dart';
 import 'package:express_mail/resources/strings.dart';
+import 'package:shimmer/shimmer.dart';
 
 class HeaderProfile extends StatelessWidget {
-  final Profile profile;
+  final Profile? profile;
   final LoginResponse loginResponse;
   final ProfileViewModel profileViewModel;
 
@@ -20,13 +21,12 @@ class HeaderProfile extends StatelessWidget {
   });
 
   void _onLogoutPressed(BuildContext context) {
-    final pageContext = context; // lưu context gốc của page
-
+    final pageContext = context;
     showGeneralDialog(
       context: pageContext,
       barrierLabel: "logoutDialog",
       barrierDismissible: true,
-      barrierColor: Colors.black.withOpacity(0.4),
+      barrierColor: Colors.black.withValues(alpha: 0.4),
       transitionDuration: const Duration(milliseconds: 200),
       pageBuilder: (context, anim1, anim2) {
         return Center(
@@ -38,7 +38,7 @@ class HeaderProfile extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withValues(alpha: 0.15),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -102,13 +102,12 @@ class HeaderProfile extends StatelessWidget {
                             horizontal: 20,
                             vertical: 10,
                           ),
-                          overlayColor: AppColors.gray_E0E5EB.withOpacity(0.4),
+                          overlayColor: AppColors.gray_E0E5EB.withValues(
+                            alpha: 0.4,
+                          ),
                         ),
                         onPressed: () async {
-                          Navigator.of(
-                            pageContext,
-                            rootNavigator: true,
-                          ).pop(); // đóng confirm dialog
+                          Navigator.of(pageContext, rootNavigator: true).pop();
                           showDialog(
                             context: pageContext,
                             barrierDismissible: false,
@@ -180,119 +179,176 @@ class HeaderProfile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = profileViewModel.isLoading || profile == null;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           colors: [AppColors.blue_127AE2, AppColors.blue_5AA6F2],
         ),
-        border: Border(bottom: BorderSide(color: AppColors.gray_DADFE7)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                AppStrings.profile,
-                style: TextStyle(
+      child: isLoading ? _buildShimmer() : _buildProfileContent(context),
+    );
+  }
+
+  Widget _buildProfileContent(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              AppStrings.profile,
+              style: TextStyle(
+                fontFamily: "Inter_bold",
+                fontSize: 24,
+                color: AppColors.white,
+              ),
+            ),
+            TextButton(
+              onPressed: () => _onLogoutPressed(context),
+              style: ButtonStyle(
+                padding: WidgetStateProperty.all(
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                ),
+                shape: WidgetStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: const BorderSide(
+                      color: AppColors.white_20,
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  SvgPicture.asset(
+                    "assets/images/ic_logout.svg",
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.white,
+                      BlendMode.srcIn,
+                    ),
+                    width: 14,
+                    height: 14,
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    AppStrings.logout,
+                    style: TextStyle(
+                      fontFamily: "Inter_regular",
+                      fontSize: 14,
+                      color: AppColors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        Row(
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.white_20, width: 2),
+              ),
+              child: ClipOval(
+                child: profile!.avatar != null && profile!.avatar!.isNotEmpty
+                    ? Image.network(
+                        profile!.avatar!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.person,
+                          size: 70,
+                          color: AppColors.gray_DADFE7,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.person,
+                        size: 70,
+                        color: AppColors.gray_DADFE7,
+                      ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                loginResponse.user.fullName.isNotEmpty
+                    ? loginResponse.user.fullName
+                    : AppStrings.user,
+                style: const TextStyle(
                   fontFamily: "Inter_bold",
-                  fontSize: 24,
+                  fontSize: 20,
                   color: AppColors.white,
                 ),
               ),
-              TextButton(
-                onPressed: () => _onLogoutPressed(context),
-                style: ButtonStyle(
-                  padding: WidgetStateProperty.all(
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-                  ),
-                  shape: WidgetStateProperty.all(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      side: const BorderSide(
-                        color: AppColors.white_20,
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
-                  overlayColor: WidgetStateProperty.resolveWith<Color?>(
-                    (states) => states.contains(WidgetState.pressed)
-                        ? AppColors.gray_E0E5EB.withValues(alpha: 0.5)
-                        : null,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    SvgPicture.asset(
-                      "assets/images/ic_logout.svg",
-                      colorFilter: const ColorFilter.mode(
-                        AppColors.white,
-                        BlendMode.srcIn,
-                      ),
-                      width: 14,
-                      height: 14,
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      AppStrings.logout,
-                      style: TextStyle(
-                        fontFamily: "Inter_regular",
-                        fontSize: 14,
-                        color: AppColors.white,
-                      ),
-                    ),
-                  ],
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildShimmer() {
+    const double fontSizeTitle = 24;
+    const double fontSizeName = 20;
+    const double lineHeight = 1.2;
+
+    return Shimmer.fromColors(
+      baseColor: Colors.white.withValues(alpha: 0.3),
+      highlightColor: Colors.white.withValues(alpha: 0.6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                width: 120,
+                height: fontSizeTitle * lineHeight,
+                color: Colors.white,
+              ),
+              Container(
+                width: 80,
+                height: 45,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 18),
-
-          // Avatar + Name
           Row(
             children: [
               Container(
                 width: 80,
                 height: 80,
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.white_20, width: 2),
-                ),
-                child: ClipOval(
-                  child: profile.avatar != null && profile.avatar!.isNotEmpty
-                      ? Image.network(
-                          profile.avatar!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
-                            Icons.person,
-                            size: 70,
-                            color: AppColors.gray_DADFE7,
-                          ),
-                        )
-                      : const Icon(
-                          Icons.person,
-                          size: 70,
-                          color: AppColors.gray_DADFE7,
-                        ),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: Text(
-                  loginResponse.user.fullName.isNotEmpty
-                      ? loginResponse.user.fullName
-                      : AppStrings.user,
-                  style: const TextStyle(
-                    fontFamily: "Inter_bold",
-                    fontSize: 20,
-                    color: AppColors.white,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: fontSizeName * lineHeight,
+                      width: double.infinity,
+                      color: Colors.white,
+                    ),
+                  ],
                 ),
               ),
             ],

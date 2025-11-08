@@ -54,7 +54,7 @@ class ProfileViewModel extends ChangeNotifier {
     _setLoading(true);
     _errorMessage = null;
 
-    final url = '${Constants.profileUrl}${loginResponse.user.id}/profile/';
+    final url = '${Constants.profileUrl}${loginResponse.user.id}/profile';
 
     try {
       final response = await http.get(
