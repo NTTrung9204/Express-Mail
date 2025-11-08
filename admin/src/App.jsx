@@ -9,6 +9,7 @@ import { ToastContainer } from "react-toastify";
 import ShippingRate from "./pages/ShippingRate";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import PostOfficeMainLayout from "../../system-post-office/src/pages/MainLayout"
+import ShopRegisterPage from "./pages/ShopRegisterPage";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/reset-password" element={<ForgotPasswordPage/>} />
+        <Route path="/shop-register" element={<ShopRegisterPage />} />
         
         <Route path="/admin" element={<MainLayout />}>
           <Route path="home" element={<Dashboard />} />
