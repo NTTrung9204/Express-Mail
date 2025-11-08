@@ -121,4 +121,12 @@ class AppStrings {
   static const confirm_logout = "Xác nhận đăng xuất";
   static const are_you_sure_you_want_to_log_out_of_the_app = "Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng không?";
   static const cancel = "Hủy";
+  static const track_your_earnings = "Theo dõi thu nhập của bạn";
+  static const export = "Xuất";
+  static const today = "Hôm nay";
+  static const week = "Tuần";
+  static const month = "Tháng";
+  static const history_delivery = "Lịch sử vận chuyển";
+  static const view_all = "Xem tất cả";
+  static const order_history = "Lịch sử đơn hàng";
 }

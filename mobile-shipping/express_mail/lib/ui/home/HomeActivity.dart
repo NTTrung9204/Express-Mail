@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     HomeFragment(loginResponse: widget.loginResponse),
     OrderFragment(loginResponse: widget.loginResponse),
     MapFragment(),
-    EarningFragment(),
+    EarningFragment(loginResponse: widget.loginResponse),
     ProfileFragment(loginResponse: widget.loginResponse),
   ];
 
