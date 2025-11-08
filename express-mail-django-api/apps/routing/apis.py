@@ -1,6 +1,7 @@
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework.decorators import action
 
+from apps.routing.permissions import CanCallVRP
 from apps.routing.serializers import VRPRequestSerializer
 from services.routing.routing_services import RoutingService
 from shared.apis import BaseAPIViewSet
@@ -20,7 +21,12 @@ class RoutingViewSet(BaseAPIViewSet):
             status.HTTP_200_OK: OpenApiResponse(description="VietMap API raw response")
         },
     )
-    @action(detail=False, methods=["post"], url_path="vehicle-routing-problem")
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="vehicle-routing-problem",
+        permission_classes=[CanCallVRP],
+    )
     def solve_vrp(self, request):
         """
         Solve vehicle routing problem.

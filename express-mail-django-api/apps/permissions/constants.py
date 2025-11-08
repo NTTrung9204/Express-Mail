@@ -68,8 +68,12 @@ GROUP_PERMISSIONS_MAP = {
         "shipping.change_shippingrate",
         "shipping.change_shippingrate_status",
     ],
-    Groups.POST_OFFICE_MANAGER.value: [],
-    Groups.POST_OFFICE_STAFF.value: [],
+    Groups.POST_OFFICE_MANAGER.value: [
+        "routing.call_vrp",
+    ],
+    Groups.POST_OFFICE_STAFF.value: [
+        "routing.call_vrp",
+    ],
     Groups.SHOP.value: [],
     Groups.SHIPPER.value: [],
 }
