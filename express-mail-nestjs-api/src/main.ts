@@ -24,9 +24,8 @@ async function bootstrap() {
   );
 
   if (process.env.APP_ENV === 'development') {
-    // Đặt basic auth cho API endpoints, không phải swagger UI
     app.use(
-      ['/api/v1'], // Chỉ bảo vệ API endpoints
+      ['/api/v1'],
       basicAuth({
         users: {
           [process.env.SWAGGER_USER ?? '']: process.env.SWAGGER_PASSWORD ?? '',
@@ -51,7 +50,7 @@ async function bootstrap() {
           in: 'header',
           name: 'Authorization',
         },
-        'JWT-auth', // This needs to match @ApiBearerAuth() in controllers
+        'JWT-auth',
       )
       .build();
 

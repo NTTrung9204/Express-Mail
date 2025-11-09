@@ -129,63 +129,101 @@ export class ShippingService {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
 
-    const queryBuilder = this.shippingRepository
-      .createQueryBuilder('shipping')
-      .leftJoinAndSelect('shipping.order', 'order')
-      // include products on the joined order so caller gets products with each order
-      .leftJoinAndSelect('order.products', 'products')
-      .where('shipping.shipperId = :shipperId', { shipperId });
+    // First get the latest shipping records for each order
+    const latestShippingsQuery = this.shippingRepository
+      .createQueryBuilder('s')
+      .select([
+        's.order_id as order_id',
+        'MAX(s.created_at) as latest_created_at',
+      ])
+      .where('s.shipper_id = :shipperId', { shipperId })
+      .groupBy('s.order_id');
 
+    console.log('Latest Shippings Query:', latestShippingsQuery.getSql());
+
+    // Apply time filters if provided
+    if (query.from) {
+      latestShippingsQuery.andWhere('s.created_at >= :from', {
+        from: query.from,
+      });
+    }
+    if (query.to) {
+      latestShippingsQuery.andWhere('s.created_at <= :to', {
+        to: query.to,
+      });
+    }
+
+    // Get the latest shipping records with all their data
+    const shippingQuery = this.shippingRepository
+      .createQueryBuilder('shipping')
+      .select([
+        'shipping.id as shipping_id',
+        'shipping.shipper_id as shipping_shipper_id',
+        'shipping.order_id as shipping_order_id',
+        'shipping.status as shipping_status',
+        'shipping.created_at as shipping_created_at',
+        'shipping.updated_at as shipping_updated_at',
+        'shipping.deleted_at as shipping_deleted_at',
+      ])
+      .innerJoin(
+        `(${latestShippingsQuery.getQuery()})`,
+        'latest',
+        'shipping.order_id = latest.order_id AND shipping.created_at = latest.latest_created_at',
+      )
+      .setParameters(latestShippingsQuery.getParameters());
+
+    // Apply status filter if provided
     if (query.status) {
-      queryBuilder.andWhere('shipping.status = :status', {
+      shippingQuery.andWhere('shipping.status = :status', {
         status: query.status,
       });
     }
 
-    if (query.from) {
-      queryBuilder.andWhere('shipping.createdAt >= :from', {
-        from: query.from,
-      });
-    }
+    // Count total before pagination
+    const total = await shippingQuery.getCount();
 
-    if (query.to) {
-      queryBuilder.andWhere('shipping.createdAt <= :to', { to: query.to });
-    }
+    console.log('total', total);
 
-    const [items, total] = await queryBuilder
-      .orderBy('shipping.createdAt', 'DESC')
+    // Apply pagination and get results
+    const shippings = await shippingQuery
+      .orderBy('shipping.created_at', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
-      .getManyAndCount();
+      .getRawMany();
 
-    // Attach shop profile to each shipping.order if shopId present
-    try {
-      const shopIds = Array.from(
-        new Set(
-          items
-            .map((it) => it.order?.shopId)
-            .filter((s) => s !== undefined && s !== null),
-        ),
-      );
+    // Transform raw results to Shipping entities
+    const transformedShippings = shippings.map((raw) => {
+      console.log('Raw shipping:', raw); // Debug log
+      const shipping = new Shipping();
+      shipping.id = raw['shipping_id'];
+      shipping.shipperId = raw['shipping_shipper_id'];
+      shipping.order = { id: raw['shipping_order_id'] } as any;
+      shipping.status = raw['shipping_status'];
+      shipping.createdAt = raw['shipping_created_at'];
+      shipping.updatedAt = raw['shipping_updated_at'];
+      shipping.deletedAt = raw['shipping_deleted_at'];
+      return shipping;
+    });
 
-      const profiles = await Promise.all(
-        shopIds.map((id) => this.djangoService.fetchShopProfile(id)),
-      );
+    console.log('transformedShippings', transformedShippings);
 
-      const profileMap = new Map<string, any>();
-      shopIds.forEach((id, idx) => profileMap.set(id, profiles[idx]));
+    // Get order IDs and fetch orders
+    const orderIds = transformedShippings.map((s) => s.order['id']);
+    console.log('orderIds', orderIds);
+    const orders = await this.orderService.findManyByIds(orderIds);
+    console.log('orders', orders);
 
-      for (const it of items) {
-        const shopId = it.order?.shopId;
-        if (shopId) {
-          // attach non-persistent shopProfile
-          (it.order as any).shopProfile = profileMap.get(shopId) || null;
-        }
+    // Map orders back to shippings
+    const ordersMap = new Map(orders.map((order) => [order.id, order]));
+    const items = transformedShippings.map((shipping) => {
+      const order = ordersMap.get(shipping.order['id']);
+      if (order) {
+        shipping.order = order;
       }
-    } catch (err) {
-      // don't fail the entire request if external call fails
-      console.warn('Failed to attach shop profiles', err);
-    }
+      return shipping;
+    });
+
+    console.log('items', items);
 
     return new PaginatedResponseDto<Shipping>(items, total, page, limit);
   }

@@ -221,6 +221,16 @@ export class OrderService {
     return order;
   }
 
+  async findManyByIds(ids: number[]): Promise<Order[]> {
+    if (!ids || ids.length === 0) return [];
+
+    return await this.orderRepository.find({
+      where: { id: In(ids) },
+      relations: ['products', 'transitions', 'orderPostOffices', 'shipping'],
+      withDeleted: false,
+    });
+  }
+
   async findByCode(code: string): Promise<Order> {
     const order = await this.orderRepository.findOne({
       where: { code },
