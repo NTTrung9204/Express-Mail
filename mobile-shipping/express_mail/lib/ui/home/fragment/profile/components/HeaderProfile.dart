@@ -1,3 +1,4 @@
+import 'package:express_mail/constants/Constants.dart';
 import 'package:express_mail/data/model/LoginResponse.dart';
 import 'package:express_mail/data/model/Profile.dart';
 import 'package:express_mail/ui/home/fragment/profile/ProfileViewModel.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:express_mail/resources/colors.dart';
 import 'package:express_mail/resources/strings.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 
 class HeaderProfile extends StatelessWidget {
@@ -126,6 +128,10 @@ class HeaderProfile extends StatelessWidget {
 
                           if (success) {
                             if (pageContext.mounted) {
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.remove(Constants.username);
+                              await prefs.remove(Constants.password);
+
                               Navigator.pushAndRemoveUntil(
                                 pageContext,
                                 MaterialPageRoute(
