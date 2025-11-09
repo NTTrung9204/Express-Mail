@@ -1,8 +1,7 @@
-import React from "react";
-import SearchBar from "../components/users/SearchBar";
+import React, { useState, useEffect } from "react";
 import UserModal from "../components/users/UserModal";
 import ConfirmDeleteModal from "../components/users/ConfirmDeleteModal";
-import { Add, Edit, Delete, Visibility } from "@mui/icons-material";
+import { Add, Edit, Delete, Visibility, Search } from "@mui/icons-material";
 import { getPageNumbers } from "../utils/pagination";
 import { roleOptions, useUserStore } from "../store/userStore";
 
@@ -10,7 +9,6 @@ const Users = () => {
   const {
     users,
     loading,
-    search,
     page,
     pageSize,
     totalCount,
@@ -22,7 +20,7 @@ const Users = () => {
     openDeleteModal,
     userToDelete,
 
-    setSearch,
+    fetchUsers,
     setPage,
     setOpen,
     setOpenDeleteModal,
@@ -34,12 +32,36 @@ const Users = () => {
     confirmDelete,
   } = useUserStore();
 
+  const [searchInput, setSearchInput] = useState("");
+  const { search, setSearch } = useUserStore(); 
+
   const totalPages = Math.ceil(totalCount / pageSize);
 
   const getRoleLabel = (roleValue) => {
     const found = roleOptions.find((r) => r.value === roleValue);
     return found ? found.label : "Không có vai trò";
   };
+
+  const handleSearch = () => {
+    const trimmed = searchInput.trim();
+    if (trimmed !== search) {
+      setSearch(trimmed);
+      setPage(1);
+      fetchUsers(1, trimmed); 
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
+  useEffect(() => {
+    if (search === "") {
+      setSearchInput("");
+    }
+  }, [search]);
 
   return (
     <div className="p-6 space-y-6 bg-orange-50 min-h-screen">
@@ -49,7 +71,22 @@ const Users = () => {
       </div>
 
       <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-        <SearchBar value={search} onChange={setSearch} />
+        <div className="flex w-full md:w-auto gap-2">
+          <input
+            type="text"
+            placeholder="Nhập tên người dùng"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyPress={handleKeyPress}
+            className="w-full md:w-96 px-4 py-2.5 border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-gray-700"
+          />
+          <button
+            onClick={handleSearch}
+            className="flex items-center gap-2 bg-orange-500 text-white px-4 py-2.5 rounded-lg hover:bg-orange-600 transition shadow-md font-medium cursor-pointer"
+          >
+            <Search fontSize="small" /> Tìm kiếm
+          </button>
+        </div>
         <button
           onClick={() => handleOpen("add")}
           className="flex items-center gap-1 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 cursor-pointer"
@@ -60,7 +97,10 @@ const Users = () => {
 
       <div className="overflow-x-auto bg-white rounded-xl shadow-lg border border-orange-100">
         {loading ? (
-          <div className="text-center p-6 text-gray-500">Đang tải...</div>
+          <div className="flex flex-col justify-center items-center py-16 text-gray-500">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>
+            <p className="mt-3 text-base">Đang tải dữ liệu...</p>
+          </div>
         ) : (
           <>
             <table className="min-w-full text-sm text-gray-700 table-fixed border-separate border-spacing-0">
@@ -121,66 +161,68 @@ const Users = () => {
                 ) : (
                   <tr>
                     <td colSpan="4" className="text-center text-gray-500 p-4">
-                      Không tìm thấy người dùng
+                      {search
+                        ? `Không tìm thấy người dùng với từ khóa "${search}"`
+                        : "Không có người dùng nào"}
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
-
-            {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-2 p-4">
-                <button
-                  onClick={() => setPage((p) => Math.max(p - 1, 1))}
-                  disabled={page === 1}
-                  className={`px-3 py-1.5 rounded-lg border ${
-                    page === 1
-                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      : "bg-white hover:bg-orange-100 text-orange-600 border-orange-300 cursor-pointer"
-                  }`}
-                >
-                  «
-                </button>
-
-                {getPageNumbers(page, totalPages).map((num, index) =>
-                  num === "..." ? (
-                    <span
-                      key={index}
-                      className="px-3 py-1 text-gray-500 select-none"
-                    >
-                      ...
-                    </span>
-                  ) : (
-                    <button
-                      key={index}
-                      onClick={() => setPage(num)}
-                      className={`px-3 py-1.5 rounded-lg border transition ${
-                        num === page
-                          ? "bg-orange-500 text-white border-orange-500 cursor-pointer"
-                          : "bg-white hover:bg-orange-100 text-orange-600 border-orange-300 cursor-pointer"
-                      }`}
-                    >
-                      {num}
-                    </button>
-                  )
-                )}
-
-                <button
-                  onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-                  disabled={page === totalPages}
-                  className={`px-3 py-1.5 rounded-lg border ${
-                    page === totalPages
-                      ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      : "bg-white hover:bg-orange-100 text-orange-600 border-orange-300 cursor-pointer"
-                  }`}
-                >
-                  »
-                </button>
-              </div>
-            )}
           </>
         )}
       </div>
+
+       {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 p-4">
+          <button
+            onClick={() => setPage((p) => Math.max(p - 1, 1))}
+            disabled={page === 1}
+            className={`px-3 py-1.5 rounded-lg border ${
+              page === 1
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-white hover:bg-orange-100 text-orange-600 border-orange-300 cursor-pointer"
+            }`}
+          >
+            «
+          </button>
+
+          {getPageNumbers(page, totalPages).map((num, index) =>
+            num === "..." ? (
+              <span
+                key={index}
+                className="px-3 py-1 text-gray-500 select-none"
+              >
+                ...
+              </span>
+            ) : (
+              <button
+                key={index}
+                onClick={() => setPage(num)}
+                className={`px-3 py-1.5 rounded-lg border transition ${
+                  num === page
+                    ? "bg-orange-500 text-white border-orange-500 cursor-pointer"
+                    : "bg-white hover:bg-orange-100 text-orange-600 border-orange-300 cursor-pointer"
+                }`}
+              >
+                {num}
+              </button>
+            )
+          )}
+
+          <button
+            onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+            disabled={page === totalPages}
+            className={`px-3 py-1.5 rounded-lg border ${
+              page === totalPages
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-white hover:bg-orange-100 text-orange-600 border-orange-300 cursor-pointer"
+            }`}
+          >
+            »
+          </button>
+        </div>
+      )}
 
       <UserModal
         open={open}

@@ -46,9 +46,9 @@ const LoginPage = () => {
       if (user.role === "superadmin" || user.role === "admin") {
         navigate("/admin/home");
       } else if (user.role === "post_office_manager") {
-        navigate("/post-office/home");
-      } else {
-        navigate("/home");
+          window.location.href = "http://localhost:5174/post-office/home";
+      } else if (user.role === "shop") {
+          window.location.href = "http://localhost:5175/order-draft";
       }
     } catch (err) {
       console.error("Login failed:", err);

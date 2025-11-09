@@ -23,12 +23,16 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
 
   const [excludePermissions, setExcludePermissions] = useState([]);
   const [errors, setErrors] = useState({});
+  const [currentRole, setCurrentRole] = useState(user?.role || "");
+  const [editableUser, setEditableUser] = useState(user);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
 
   const isView = mode === "view";
 
   useEffect(() => {
     const safeUser = user || {}; 
+    setEditableUser(safeUser);
+    setCurrentRole(safeUser.role || "");
 
     if (mode === "edit" || mode === "view") {
       setForm({
@@ -58,6 +62,11 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  const handleRoleChange = (newRole) => {
+    setCurrentRole(newRole);
+    setEditableUser(prev => ({ ...prev, role: newRole })); 
   };
 
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -114,7 +123,7 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
     onClose();
   };
 
-  const userGroupId = ROLE_GROUP_MAP[user?.role] || 1;
+  const userGroupId = ROLE_GROUP_MAP[currentRole] || 1;
 
   if (!open) return null;
 
@@ -128,7 +137,6 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
           className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto p-8 rounded-2xl shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
           <div className="flex justify-between mb-6 border-b pb-3 sticky top-0 bg-white z-10">
             <h2 className="text-2xl font-semibold text-orange-600">
               {mode === "add"
@@ -155,13 +163,18 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
                 disabled={isView}
                 placeholder="Nhập họ"
                 className={`w-full p-2 border rounded-lg outline-none ${
-                  errors.firstName ? "border-red-500" : "focus:border-orange-500"
+                  isView
+                    ? "bg-gray-100 cursor-not-allowed text-gray-700"
+                    : errors.firstName
+                    ? "border-red-500"
+                    : "focus:border-orange-500"
                 }`}
               />
               {errors.firstName && (
                 <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
               )}
             </div>
+
             <div>
               <label className="block mb-1 font-medium">Tên</label>
               <input
@@ -171,7 +184,11 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
                 disabled={isView}
                 placeholder="Nhập tên"
                 className={`w-full p-2 border rounded-lg outline-none ${
-                  errors.lastName ? "border-red-500" : "focus:border-orange-500"
+                  isView
+                    ? "bg-gray-100 cursor-not-allowed text-gray-700"
+                    : errors.lastName
+                    ? "border-red-500"
+                    : "focus:border-orange-500"
                 }`}
               />
               {errors.lastName && (
@@ -190,13 +207,18 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
                 disabled={isView}
                 placeholder="Nhập tên đăng nhập"
                 className={`w-full p-2 border rounded-lg outline-none ${
-                  errors.username ? "border-red-500" : "focus:border-orange-500"
+                  isView
+                    ? "bg-gray-100 cursor-not-allowed text-gray-700"
+                    : errors.username
+                    ? "border-red-500"
+                    : "focus:border-orange-500"
                 }`}
               />
               {errors.username && (
                 <p className="text-red-500 text-xs mt-1">{errors.username}</p>
               )}
             </div>
+
             <div>
               <label className="block mb-1 font-medium">Email</label>
               <input
@@ -207,7 +229,11 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
                 disabled={isView}
                 placeholder="Nhập email"
                 className={`w-full p-2 border rounded-lg outline-none ${
-                  errors.email ? "border-red-500" : "focus:border-orange-500"
+                  isView
+                    ? "bg-gray-100 cursor-not-allowed text-gray-700"
+                    : errors.email
+                    ? "border-red-500"
+                    : "focus:border-orange-500"
                 }`}
               />
               {errors.email && (
@@ -240,10 +266,9 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
                   <p className="text-red-500 text-xs mt-1">{errors.password}</p>
                 )}
               </div>
+
               <div>
-                <label className="block mb-1 font-medium">
-                  Xác nhận mật khẩu
-                </label>
+                <label className="block mb-1 font-medium">Xác nhận mật khẩu</label>
                 <input
                   name="confirmPassword"
                   type="password"
@@ -271,8 +296,8 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
                 onClick={() => setShowPermissionModal(true)}
                 className={`px-5 py-2 rounded-lg ${
                   isView
-                    ? "bg-orange-100 text-orange-700 hover:bg-orange-200"
-                    : "bg-orange-500 text-white hover:bg-orange-600"
+                    ? "bg-orange-100 text-orange-700 hover:bg-orange-200 cursor-pointer"
+                    : "bg-orange-500 text-white hover:bg-orange-600 cursor-pointer"
                 }`}
               >
                 {isView ? "Xem hồ sơ" : "Chỉnh sửa hồ sơ"}
@@ -307,7 +332,8 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
           setExcludePermissions={setExcludePermissions}
           targetGroupId={userGroupId}
           isView={isView}
-          user={user}
+          user={editableUser}
+          onRoleChange={handleRoleChange} 
         />
       )}
     </>

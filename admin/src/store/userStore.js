@@ -11,9 +11,7 @@ export const roleOptions = [
   { value: "shipper", label: "Shipper" },
 ];
 
-
 export const useUserStore = (initialPage = 1, pageSize = 10) => {
-
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -30,10 +28,10 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (currentPage = page, currentSearch = search) => {
     try {
       setLoading(true);
-      const data = await userService.getUsers(page, pageSize);
+      const data = await userService.getUsers(currentPage, pageSize, currentSearch);
       setUsers(data.results || []);
       setTotalCount(data.count || 0);
     } catch (error) {
@@ -44,7 +42,7 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
   };
 
   useEffect(() => {
-    fetchUsers();
+    fetchUsers(page, search);
   }, [page, pageSize]);
 
   const handleOpen = (m, user = null) => {
@@ -57,7 +55,10 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
     try {
       if (mode === "add") {
         const newUser = await userService.createUser(data);
-        setUsers((prev) => [...prev, newUser]);
+        if (page === 1 && !search) {
+          setUsers((prev) => [...prev, newUser]);
+        }
+        await fetchUsers();
         return { success: true, message: "Thêm người dùng thành công!" };
       } else if (mode === "edit" && selected) {
         const updated = await userService.patchUser(selected.id, data);
@@ -112,12 +113,14 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
     const roleToSend = selectedUser.newRole === "" ? null : selectedUser.newRole;
 
     try {
-      await userService.updateUser(selectedUser.id, { role: roleToSend });
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === selectedUser.id ? { ...u, role: roleToSend } : u
-        )
-      );
+      const result = await userService.updateUser(selectedUser.id, { role: roleToSend });
+      if (result.success) {
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === selectedUser.id ? { ...u, role: roleToSend } : u
+          )
+        );
+      }
       return { success: true };
     } catch (error) {
       console.error("Lỗi khi đổi vai trò:", error);
@@ -139,6 +142,11 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
     try {
       await userService.deleteUser(userToDelete.id);
       setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
+      if (users.length === 1 && page > 1) {
+        setPage(page - 1);
+      } else {
+        await fetchUsers();
+      }
       return { success: true, message: "Xóa người dùng thành công!" };
     } catch (error) {
       console.error("Lỗi khi xoá user:", error);
@@ -148,13 +156,9 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
       setUserToDelete(null);
     }
   };
-  
-  const filteredUsers = users.filter((u) =>
-    u.email?.toLowerCase().includes(search.toLowerCase())
-  );
 
   return {
-    users: filteredUsers,
+    users, 
     loading,
     search,
     page,
