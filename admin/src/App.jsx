@@ -8,7 +8,6 @@ import LoginPage from "./pages/LoginPage";
 import { ToastContainer } from "react-toastify";
 import ShippingRate from "./pages/ShippingRate";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import PostOfficeMainLayout from "../../system-post-office/src/pages/MainLayout"
 import ShopRegisterPage from "./pages/ShopRegisterPage";
 
 function App() {
