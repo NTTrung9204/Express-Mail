@@ -1,31 +1,12 @@
 import 'package:express_mail/ui/forgot/ForgotActivity.dart';
 import 'package:express_mail/ui/home/HomeActivity.dart';
 import 'package:express_mail/ui/login/LoginViewModel.dart';
-import 'package:express_mail/ui/register/RegisterActivity.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
-
 import '../../resources/strings.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../resources/colors.dart';
 import 'package:flutter/services.dart';
-
-Future<void> main() async {
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
-  try {
-    await dotenv.load(fileName: ".env");
-  } catch (e) {
-    print("Error loading .env: ${e.toString()}");
-  }
-
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => LoginViewModel(),
-      child: LoginActivity(),
-    ),
-  );
-}
 
 class LoginActivity extends StatelessWidget {
   const LoginActivity({super.key});
