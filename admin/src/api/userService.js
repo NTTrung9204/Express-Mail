@@ -1,4 +1,3 @@
-// userService.js
 import baseAPI from './axiosConfig';
 
 export const userService = {
@@ -50,5 +49,28 @@ export const userService = {
 
   deleteUser: async (id) => {
     await baseAPI.delete(`/users/${id}`);
+  },
+
+  /**
+   * @param {Object} payload
+   * @param {Object} payload.user      
+   * @param {Object} payload.profile   
+   * @returns {Promise<Object>}        
+   */
+  shopRegister: async (payload) => {
+    try {
+      const response = await baseAPI.post('/users/shop-register', payload);
+      return {
+        success: true,
+        data: response.data,
+        message: response.data?.message || 'Đăng ký shop thành công!',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Đăng ký shop thất bại',
+        errors: error.response?.data?.errors || {},
+      };
+    }
   },
 };

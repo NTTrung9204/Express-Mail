@@ -157,11 +157,18 @@ const LoginPage = () => {
             >
               {isLoading ? "Đang xử lý..." : "Đăng nhập"}
             </button>
-          </form>
 
-          <p className="text-center text-xs text-gray-400 mt-4">
-            © 2025 Bản quyền thuộc về Giao Hàng Nhanh
-          </p>
+            <p className="text-center text-sm text-gray-600 mt-3">
+              Bạn là chủ shop?{" "}
+              <button
+                type="button"
+                onClick={() => navigate("/shop-register")}
+                className="font-medium text-orange-500 hover:underline cursor-pointer"
+              >
+                Đăng ký ngay
+              </button>
+            </p>
+          </form>
         </div>
       </div>
     </div>
