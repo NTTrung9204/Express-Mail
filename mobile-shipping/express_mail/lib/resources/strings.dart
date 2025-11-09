@@ -129,4 +129,5 @@ class AppStrings {
   static const history_delivery = "Lịch sử vận chuyển";
   static const view_all = "Xem tất cả";
   static const order_history = "Lịch sử đơn hàng";
+static const app_name = "Express Mail";
 }
