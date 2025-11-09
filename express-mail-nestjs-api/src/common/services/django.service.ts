@@ -189,9 +189,6 @@ export class DjangoService {
         receiverLatitude,
         receiverLongitude: receiverLongitude,
       });
-      console.log(
-        `Received shipping cost information: ${JSON.stringify(res.data)}`,
-      );
       return res.data;
     } catch (error) {
       this.logger.error('Failed to fetch shipping rates from Django:', error);

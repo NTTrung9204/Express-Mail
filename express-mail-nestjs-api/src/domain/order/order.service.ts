@@ -7,8 +7,9 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeepPartial, Repository } from 'typeorm';
+import { DeepPartial, Repository, In } from 'typeorm';
 import { Order } from './entities/order.entity';
+import { PostOfficeOrderStatus } from './dto/post-office-orders-query.dto';
 import { OrderTransition } from './entities/order-transition.entity';
 import { OrderPostOffice } from './entities/post-office-order.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -22,9 +23,10 @@ import { ProductService } from '../product/product.service';
 import { JwtPayload } from 'src/common/@type/jwt-payload.type';
 import { DjangoService } from 'src/common/services/django.service';
 import { ShippingCostInformationDto } from '../shipping/dto/shipping-cost-information.dto';
-import { TransitionOrderDto } from './dto/transition-order.deo';
+import { TransitionOrderDto } from './dto/transition-order.dto';
 import { OrderPostOfficeDto } from './dto/order-post-office.dto';
 import { Shipping } from '../shipping/entities/shipping.entity';
+import { OrderResponseDto } from './dto/order-response.dto';
 
 @Injectable()
 export class OrderService {
@@ -42,11 +44,26 @@ export class OrderService {
     private readonly djangoService: DjangoService,
   ) {}
 
+  transformToOrderResponseDto(order: Order): OrderResponseDto {
+    return {
+      ...order,
+      shipping: order.shipping?.map((ship: Shipping) => ({
+        id: ship.id,
+        shipperId: ship.shipperId,
+        orderId: order.id,
+        status: ship.status,
+        createdAt: ship.createdAt,
+        updatedAt: ship.updatedAt,
+      })),
+      deleted_at: order.deleted_at ?? undefined,
+    } as OrderResponseDto;
+  }
+
   async create(
     createOrderDto: CreateOrderDto,
     jwtPayload: JwtPayload,
   ): Promise<Order> {
-    const officeId = '17';
+    console.log('jwtPayload', jwtPayload);
     try {
       // Generate unique order code
       let orderCode: string;
@@ -80,7 +97,7 @@ export class OrderService {
           createOrderDto.width,
           createOrderDto.height,
           createOrderDto.weight,
-          officeId,
+          jwtPayload?.postOfficeId || '',
           receiverLatitude,
           receiverLongitude,
         );
@@ -93,7 +110,7 @@ export class OrderService {
       // Create order
       const orderData: DeepPartial<Order> = {
         code: orderCode,
-        shopId: '4',
+        shopId: String(jwtPayload.userId),
         shippingFeeId: shippingCostInformation.shippingRateId,
         receiver_phone: createOrderDto.receiver_phone,
         receiver_province_city: createOrderDto.receiver_province_city,
@@ -119,7 +136,7 @@ export class OrderService {
       orderTransition.order = savedOrder;
       orderTransition.currentPostOfficeId = null;
       orderTransition.nextPostOfficeId =
-        jwtPayload?.shopId?.toString() || officeId;
+        jwtPayload?.postOfficeId?.toString() || null;
       orderTransition.status = OrderTransitionStatus.PENDING;
 
       await this.orderTransitionRepository.save(orderTransition);
@@ -127,10 +144,7 @@ export class OrderService {
       // Create order post office
       const orderPostOffice = this.orderPostOfficeRepository.create({
         order: savedOrder,
-        postOfficeId:
-          jwtPayload?.shopId?.toString() ||
-          jwtPayload?.userId.toString() ||
-          officeId,
+        postOfficeId: jwtPayload?.postOfficeId?.toString(),
         status: OrderPostOfficeStatus.PICKUP_REQUESTED,
       });
 
@@ -418,5 +432,95 @@ export class OrderService {
         'Failed to create order-post-office association',
       );
     }
+  }
+
+  async findOrdersByPostOffice(
+    postOfficeId: number,
+    status?: PostOfficeOrderStatus,
+    options: { page?: number; limit?: number } = {},
+  ): Promise<PaginatedResponseDto<OrderResponseDto>> {
+    const page = options.page || 1;
+    const limit = options.limit || 10;
+    let orderIds: number[] = [];
+
+    if (status === PostOfficeOrderStatus.TRANSITING) {
+      // Handle TRANSITING status
+      const transitingOrders = await this.orderTransitionRepository
+        .createQueryBuilder('ot')
+        .select('DISTINCT ot.order_id', 'order_id')
+        .where('ot.next_post_office = :postOfficeId', { postOfficeId })
+        .andWhere('ot.status = :status', {
+          status: OrderTransitionStatus.TRANSITING,
+        })
+        .getRawMany();
+
+      if (transitingOrders.length > 0) {
+        const orderIdsToCheck = transitingOrders.map((t) => t.order_id);
+
+        // Get all DONE transitions for these orders
+        const doneTransitions = await this.orderTransitionRepository
+          .createQueryBuilder('ot')
+          .select('ot.order_id', 'order_id')
+          .where('ot.order_id IN (:...orderIds)', { orderIds: orderIdsToCheck })
+          .andWhere('ot.next_post_office = :postOfficeId', { postOfficeId })
+          .andWhere('ot.status = :status', {
+            status: OrderTransitionStatus.DONE,
+          })
+          .getRawMany();
+
+        // Filter out orders that have DONE status
+        const doneOrderIds = new Set(doneTransitions.map((t) => t.order_id));
+        orderIds = orderIdsToCheck.filter(
+          (orderId) => !doneOrderIds.has(orderId),
+        );
+      }
+    } else {
+      // Handle other statuses (IN_WAREHOUSE, PICKUP_REQUESTED, CLASSIFIED)
+      const latestRecords = await this.orderPostOfficeRepository
+        .createQueryBuilder('opo')
+        .innerJoin(
+          (qb) =>
+            qb
+              .select('sub.order_id', 'order_id')
+              .addSelect('MAX(sub.created_at)', 'max_created_at')
+              .from(OrderPostOffice, 'sub')
+              .where('sub.postOfficeId = :postOfficeId', { postOfficeId })
+              .groupBy('sub.order_id'),
+          'latest',
+          'latest.order_id = opo.order_id AND latest.max_created_at = opo.created_at',
+        )
+        .where('opo.postOfficeId = :postOfficeId', { postOfficeId })
+        .andWhere('opo.status = :status', { status })
+        .getRawMany();
+
+      orderIds = latestRecords.map((record) => record.opo_order_id);
+    }
+
+    // Count total records
+    const total = orderIds.length;
+
+    // Apply pagination
+    const paginatedOrderIds = orderIds.slice((page - 1) * limit, page * limit);
+
+    // Fetch full order details for paginated IDs
+    const orders =
+      paginatedOrderIds.length > 0
+        ? await this.orderRepository.find({
+            where: { id: In(paginatedOrderIds) },
+            relations: ['products', 'shipping', 'orderPostOffices'],
+          })
+        : [];
+
+    // Transform orders and return paginated response
+    const items = orders.map((order) =>
+      this.transformToOrderResponseDto(order),
+    );
+
+    return new PaginatedResponseDto<OrderResponseDto>(
+      items,
+      total,
+      page,
+      limit,
+    );
   }
 }

@@ -10,7 +10,7 @@ import {
   HttpStatus,
   HttpCode,
   Query,
-  // UseGuards,
+  UseGuards,
   Req,
 } from '@nestjs/common';
 import {
@@ -29,33 +29,19 @@ import { OrderResponseDto } from './dto/order-response.dto';
 import { OrderQueryDto } from './dto/order-query.dto';
 import { ShipperOrderQueryDto } from './dto/shipper-order-query.dto';
 import { ApiResponseDto } from 'src/common/dto/api-response.dto';
-// import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { AuthJwtRequest } from 'src/common/@type/jwt-payload.type';
 import { PaginatedResponseDto } from 'src/common/dto/paginated-response.dto';
-import { TransitionOrderDto } from './dto/transition-order.deo';
+import { TransitionOrderDto } from './dto/transition-order.dto';
 import { OrderPostOfficeDto } from './dto/order-post-office.dto';
+import { PostOfficeOrderStatus } from './dto/post-office-orders-query.dto';
 
 @ApiTags('Orders')
 @Controller('orders')
-// @UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth('JWT-auth')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
-
-  private transformToOrderResponseDto(order: any): OrderResponseDto {
-    return {
-      ...order,
-      shipping: order.shipping?.map((ship: any) => ({
-        id: ship.id,
-        shipperId: ship.shipperId,
-        orderId: order.id,
-        status: ship.status,
-        createdAt: ship.createdAt,
-        updatedAt: ship.updatedAt,
-      })),
-      deleted_at: order.deleted_at ?? undefined,
-    } as OrderResponseDto;
-  }
 
   @Post()
   @ApiOperation({ summary: 'Create a new order with products' })
@@ -74,7 +60,7 @@ export class OrderController {
     return new ApiResponseDto<OrderResponseDto>(
       true,
       'Order created successfully',
-      this.transformToOrderResponseDto(order),
+      this.orderService.transformToOrderResponseDto(order),
       undefined,
       201,
     );
@@ -116,7 +102,7 @@ export class OrderController {
 
     // Transform each order using helper function
     const transformedItems = paginated.data.map((order) =>
-      this.transformToOrderResponseDto(order),
+      this.orderService.transformToOrderResponseDto(order),
     );
 
     const transformedPaginated = {
@@ -147,7 +133,7 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Order retrieved successfully',
-      this.transformToOrderResponseDto(order),
+      this.orderService.transformToOrderResponseDto(order),
     );
   }
 
@@ -166,7 +152,9 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Orders retrieved successfully',
-      orders.map((order) => this.transformToOrderResponseDto(order)),
+      orders.map((order) =>
+        this.orderService.transformToOrderResponseDto(order),
+      ),
     );
   }
 
@@ -203,7 +191,9 @@ export class OrderController {
 
     const transformed = {
       ...paginated,
-      data: paginated.data.map((o) => this.transformToOrderResponseDto(o)),
+      data: paginated.data.map((o) =>
+        this.orderService.transformToOrderResponseDto(o),
+      ),
     } as PaginatedResponseDto<OrderResponseDto>;
 
     return new ApiResponseDto(
@@ -233,7 +223,9 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Orders retrieved successfully',
-      orders.map((order) => this.transformToOrderResponseDto(order)),
+      orders.map((order) =>
+        this.orderService.transformToOrderResponseDto(order),
+      ),
     );
   }
 
@@ -263,7 +255,9 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Orders retrieved successfully',
-      orders.map((order) => this.transformToOrderResponseDto(order)),
+      orders.map((order) =>
+        this.orderService.transformToOrderResponseDto(order),
+      ),
     );
   }
 
@@ -283,7 +277,7 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Order retrieved successfully',
-      this.transformToOrderResponseDto(order),
+      this.orderService.transformToOrderResponseDto(order),
     );
   }
 
@@ -306,7 +300,7 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Order updated successfully',
-      this.transformToOrderResponseDto(order),
+      this.orderService.transformToOrderResponseDto(order),
     );
   }
 
@@ -342,7 +336,7 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Order transitioned successfully',
-      this.transformToOrderResponseDto(order),
+      this.orderService.transformToOrderResponseDto(order),
     );
   }
 
@@ -363,7 +357,50 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Order-PostOffice association created successfully',
-      this.transformToOrderResponseDto(order),
+      this.orderService.transformToOrderResponseDto(order),
     );
+  }
+
+  @Get('post-office/:postOfficeId')
+  @ApiOperation({
+    summary:
+      'Get orders by post office ID with optional status filter and pagination',
+  })
+  @ApiParam({
+    name: 'postOfficeId',
+    description: 'Post Office ID',
+    type: 'number',
+  })
+  @ApiQuery({
+    name: 'status',
+    description: 'Filter orders by status',
+    required: false,
+    enum: PostOfficeOrderStatus,
+  })
+  @ApiQuery({
+    name: 'page',
+    description: 'Page number',
+    required: false,
+    type: 'number',
+  })
+  @ApiQuery({
+    name: 'limit',
+    description: 'Number of items per page',
+    required: false,
+    type: 'number',
+  })
+  async findByPostOffice(
+    @Param('postOfficeId', ParseIntPipe) postOfficeId: number,
+    @Query('status') status?: PostOfficeOrderStatus,
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+  ): Promise<ApiResponseDto<PaginatedResponseDto<OrderResponseDto>>> {
+    const paginated = await this.orderService.findOrdersByPostOffice(
+      postOfficeId,
+      status,
+      { page, limit },
+    );
+
+    return new ApiResponseDto(true, 'Orders retrieved successfully', paginated);
   }
 }
