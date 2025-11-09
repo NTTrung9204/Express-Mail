@@ -1,10 +1,12 @@
+import 'package:express_mail/ui/launch/LaunchViewModel.dart';
 import 'package:flutter/material.dart';
 import 'package:express_mail/resources/colors.dart';
 import 'package:express_mail/resources/strings.dart';
 import 'package:express_mail/ui/login/LoginActivity.dart';
-import 'package:provider/provider.dart';
-import 'package:express_mail/ui/login/LoginViewModel.dart';
+import 'package:express_mail/constants/Constants.dart';
 import 'package:lottie/lottie.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:express_mail/ui/home/HomeActivity.dart';
 
 class LaunchActivity extends StatefulWidget {
   const LaunchActivity({super.key});
@@ -15,25 +17,49 @@ class LaunchActivity extends StatefulWidget {
 
 class _LaunchActivityState extends State<LaunchActivity>
     with SingleTickerProviderStateMixin {
+  late LaunchViewModel _viewModel;
+
   @override
   void initState() {
     super.initState();
-    _navigateToLogin();
+    _viewModel = LaunchViewModel();
+    _checkLogin();
   }
 
-  Future<void> _navigateToLogin() async {
+  Future<void> _checkLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedUsername = prefs.getString(Constants.username) ?? '';
+    final savedPassword = prefs.getString(Constants.password) ?? '';
+
     await Future.delayed(const Duration(seconds: 5));
+
     if (!mounted) return;
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ChangeNotifierProvider(
-          create: (_) => LoginViewModel(),
-          child: const LoginActivity(),
-        ),
-      ),
-    );
+    print("SSSS ${savedPassword} ${savedUsername}");
+    if (savedUsername.isNotEmpty && savedPassword.isNotEmpty) {
+      bool success = await _viewModel.login(savedUsername, savedPassword);
+      if (!mounted) return;
+
+      if (success) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                HomeActivity(loginResponse: _viewModel.loginResponse!),
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => LoginActivity()),
+        );
+      }
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => LoginActivity()),
+      );
+    }
   }
 
   @override

@@ -1,8 +1,10 @@
+import 'package:express_mail/constants/Constants.dart';
 import 'package:express_mail/ui/forgot/ForgotActivity.dart';
 import 'package:express_mail/ui/home/HomeActivity.dart';
 import 'package:express_mail/ui/login/LoginViewModel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../resources/strings.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../resources/colors.dart';
@@ -15,7 +17,10 @@ class LoginActivity extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const LoginScreen(),
+      home: ChangeNotifierProvider(
+        create: (_) => LoginViewModel(),
+        child: const LoginScreen(),
+      ),
     );
   }
 }
@@ -67,6 +72,10 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     if (success) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(Constants.username, username);
+      await prefs.setString(Constants.password, password);
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
