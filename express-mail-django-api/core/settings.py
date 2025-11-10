@@ -218,6 +218,17 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "shared.jwt_authentication.WhitelistJWTAuthentication",
     ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "200/minute",
+        "user": "200/minute",
+        "otp_request": "1/minute",
+        "otp_verify": "5/minute",
+        "otp_confirm": "5/minute",
+    },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "DEFAULT_PAGINATION_CLASS": "shared.pagination.BasePagination",
@@ -263,9 +274,12 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True,
 }
 
+# Auth User Model
+
 AUTH_USER_MODEL = "users.User"
 
 # AWS S3 config
+
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
 AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
@@ -302,3 +316,21 @@ MAP_ROUTE_URL = os.getenv("MAP_ROUTE_URL")
 MAP_VRP_URL = os.getenv("MAP_VRP_URL")
 MAP_API_VERSION = os.getenv("MAP_API_VERSION")
 MAP_API_TIMEOUT = 10
+
+# Redis
+REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/1")
+
+# Caches
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL,
+        "TIMEOUT": 300,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "SOCKET_CONNECT_TIMEOUT": 5,
+            "SOCKET_TIMEOUT": 5,
+            "CONNECTION_POOL_KWARGS": {"max_connections": 15},
+        },
+    },
+}
