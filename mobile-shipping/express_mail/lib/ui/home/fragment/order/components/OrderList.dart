@@ -1,15 +1,18 @@
-import 'package:express_mail/ui/home/fragment/order/components/OrderItem.dart';
+import 'package:express_mail/data/model/LoginResponse.dart';
+import 'package:express_mail/resources/strings.dart';
 import 'package:flutter/material.dart';
 import 'package:express_mail/data/model/DetailOrder.dart';
-import 'package:lottie/lottie.dart';
+import 'package:express_mail/ui/home/fragment/order/components/OrderItem.dart';
 
 class OrderList extends StatelessWidget {
+  final LoginResponse loginResponse;
   final List<DetailOrder> orders;
   final bool isLoading;
   final Function(int orderId)? onOrderFinished;
 
   const OrderList({
     super.key,
+    required this.loginResponse,
     required this.orders,
     required this.isLoading,
     this.onOrderFinished,
@@ -17,35 +20,45 @@ class OrderList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) return _buildLoading();
+    if (isLoading) return _buildShimmerLoading();
     if (orders.isEmpty) return _buildEmpty();
     return _buildList(orders);
   }
 
-  Widget _buildLoading() {
-    return Center(
-      key: const ValueKey("loading"),
-      child: Padding(
-        padding: const EdgeInsets.all(80.0),
-        child: Lottie.asset(
-          "assets/animation/ani_loading_order.json",
-          fit: BoxFit.contain,
-          repeat: true,
-        ),
-      ),
+  Widget _buildShimmerLoading() {
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 0.0),
+      itemCount: 5,
+      itemBuilder: (context, index) {
+        return const OrderItem(isShimmer: true);
+      },
     );
   }
 
   Widget _buildEmpty() {
     return Center(
-      key: const ValueKey("empty"),
-      child: Padding(
-        padding: const EdgeInsets.all(80.0),
-        child: Lottie.asset(
-          "assets/animation/ani_empty.json",
-          fit: BoxFit.contain,
-          repeat: true,
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 30),
+            child: Padding(
+              padding: EdgeInsetsGeometry.all(30),
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: Image.asset(
+                  "assets/images/img_no_data.webp",
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          ),
+          const Text(
+            AppStrings.no_order_data,
+            style: TextStyle(color: Colors.black54, fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
@@ -56,13 +69,12 @@ class OrderList extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 0.0),
       itemCount: orders.length,
       itemBuilder: (context, index) {
+        final order = orders[index];
         return OrderItem(
-          detailOrder: orders[index],
-          onFinish: () {
-            if (onOrderFinished != null) {
-              onOrderFinished!(orders[index].id);
-            }
-          },
+          isShimmer: false,
+          loginResponse: loginResponse,
+          detailOrder: order,
+          onFinish: () => onOrderFinished?.call(order.order.id),
         );
       },
     );

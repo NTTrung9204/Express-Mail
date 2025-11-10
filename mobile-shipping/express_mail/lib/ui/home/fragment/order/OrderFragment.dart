@@ -55,20 +55,38 @@ class _OrderFragmentState extends State<OrderFragment>
     return Scaffold(
       backgroundColor: AppColors.white_F8F7FC,
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            _buildHeader(),
-            _buildTabBar(),
-            Expanded(
-              child: Column(
-                children: [
-                  Expanded(child: _buildTabBarView()),
-                  AnimatedBuilder(
-                    animation: viewModel,
-                    builder: (context, _) => _buildPaginationBar(),
+            Column(
+              children: [
+                _buildHeader(),
+                _buildTabBar(),
+                Expanded(
+                  child: Column(
+                    children: [
+                      Expanded(child: _buildTabBarView()),
+                      AnimatedBuilder(
+                        animation: viewModel,
+                        builder: (context, _) => _buildPaginationBar(),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
+            AnimatedBuilder(
+              animation: viewModel,
+              builder: (context, _) {
+                if (!viewModel.isCompletingOrder)
+                  return const SizedBox.shrink();
+                return Container(
+                  color: Colors.black.withValues(alpha: 0.3),
+                  alignment: Alignment.center,
+                  child: const CircularProgressIndicator(
+                    strokeWidth: 3,
+                    color: AppColors.blue_127AE2,),
+                );
+              },
             ),
           ],
         ),
@@ -179,6 +197,7 @@ class _OrderFragmentState extends State<OrderFragment>
               onRefresh: () async =>
                   _fetchPageForCurrentTab(page: currentPageAll),
               child: OrderList(
+                loginResponse: widget.loginResponse,
                 orders: viewModel.allOrders,
                 isLoading: viewModel.isLoadingAll,
                 onOrderFinished: (orderId) {
@@ -198,6 +217,7 @@ class _OrderFragmentState extends State<OrderFragment>
               onRefresh: () async =>
                   _fetchPageForCurrentTab(page: currentPagePickup),
               child: OrderList(
+                loginResponse: widget.loginResponse,
                 orders: viewModel.pickupRequestOrders,
                 isLoading: viewModel.isLoadingPickupRequest,
                 onOrderFinished: (orderId) {
@@ -217,6 +237,7 @@ class _OrderFragmentState extends State<OrderFragment>
               onRefresh: () async =>
                   _fetchPageForCurrentTab(page: currentPageShipping),
               child: OrderList(
+                loginResponse: widget.loginResponse,
                 orders: viewModel.shippingOrders,
                 isLoading: viewModel.isLoadingShipping,
                 onOrderFinished: (orderId) {
@@ -236,6 +257,7 @@ class _OrderFragmentState extends State<OrderFragment>
               onRefresh: () async =>
                   _fetchPageForCurrentTab(page: currentPageReturning),
               child: OrderList(
+                loginResponse: widget.loginResponse,
                 orders: viewModel.returningOrders,
                 isLoading: viewModel.isLoadingReturning,
                 onOrderFinished: (orderId) {
@@ -441,14 +463,37 @@ class _OrderFragmentState extends State<OrderFragment>
     }
   }
 
-  void _finishOrder(int orderId, {required int page, required int totalPages}) {
+  void _finishOrder(
+    int orderId, {
+    required int page,
+    required int totalPages,
+  }) async {
     int currentPage = page;
-
-    int newTotalPages = ((totalPages - 1) / Constants.limit).ceil();
-    totalPages = newTotalPages;
-    if (currentPage > totalPages) {
-      currentPage = totalPages;
+    bool success = await viewModel.completeOrderById(
+      widget.loginResponse,
+      orderId,
+      currentPageAll,
+      currentPagePickup,
+      currentPageShipping,
+      currentPageReturning,
+    );
+    if (success) {
+      int newTotalPages = ((totalPages - 1) / Constants.limit).ceil();
+      if (currentPage > newTotalPages) currentPage = newTotalPages;
+      _fetchPageForCurrentTab(page: currentPage);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            AppStrings.order_completion_failed,
+            style: TextStyle(
+              fontFamily: "Inter_regular",
+              fontSize: 14,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      );
     }
-    _fetchPageForCurrentTab(page: currentPage);
   }
 }

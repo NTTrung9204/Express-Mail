@@ -5,17 +5,31 @@ import 'package:express_mail/resources/colors.dart';
 import 'package:express_mail/resources/strings.dart';
 import 'package:express_mail/data/model/DetailOrder.dart';
 import 'package:express_mail/data/enum/ShippingStatus.dart';
+import 'package:express_mail/data/model/LoginResponse.dart';
 import 'package:express_mail/ui/detailorder/DetailOrderActivity.dart';
+import 'package:shimmer/shimmer.dart';
 
 class OrderItem extends StatelessWidget {
-  final DetailOrder detailOrder;
-
+  final LoginResponse? loginResponse;
+  final DetailOrder? detailOrder;
+  final bool isShimmer;
   final VoidCallback? onFinish;
 
-  const OrderItem({super.key, required this.detailOrder, this.onFinish});
+  const OrderItem({
+    super.key,
+    this.loginResponse,
+    this.detailOrder,
+    this.onFinish,
+    this.isShimmer = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    if (isShimmer) return _buildShimmer();
+
+    // Item thật
+    if (detailOrder == null) return const SizedBox();
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(13),
@@ -39,7 +53,7 @@ class OrderItem extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                detailOrder.order.code,
+                detailOrder!.order.code,
                 style: const TextStyle(
                   fontFamily: "Inter_bold",
                   fontSize: 13,
@@ -49,28 +63,23 @@ class OrderItem extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: detailOrder.status.color,
+                  color: detailOrder!.status.color,
                   borderRadius: BorderRadius.circular(9999),
                 ),
                 child: Text(
-                  detailOrder.status.name,
+                  detailOrder!.status.name,
                   style: const TextStyle(fontSize: 12, color: AppColors.white),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 10),
-
-          // Address & phone number
           _buildAddressInfo(),
-
           const SizedBox(height: 6),
-
-          // Total amount
           Align(
             alignment: Alignment.centerRight,
             child: Text(
-              "${AppStrings.total_amount}: ${NumberFormat.decimalPattern('vi').format(detailOrder.order.cod + detailOrder.order.shippingCost)}đ",
+              "${AppStrings.total_amount}: ${NumberFormat.decimalPattern('vi').format(detailOrder!.order.cod + detailOrder!.order.shippingCost)}đ",
               style: const TextStyle(
                 fontSize: 14,
                 color: AppColors.green_22C35D,
@@ -79,8 +88,6 @@ class OrderItem extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 15),
-
-          // Buttons
           Row(
             children: [
               Expanded(
@@ -93,13 +100,15 @@ class OrderItem extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 11),
                   ),
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            DetailOrderActivity(detailOrder: detailOrder),
-                      ),
-                    );
+                    if (loginResponse != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => DetailOrderActivity(
+                              loginResponse: loginResponse!, detailOrder: detailOrder!),
+                        ),
+                      );
+                    }
                   },
                   child: const Text(
                     AppStrings.see_details,
@@ -115,8 +124,7 @@ class OrderItem extends StatelessWidget {
               Expanded(
                 child: TextButton(
                   style: TextButton.styleFrom(
-                    backgroundColor:
-                        (detailOrder.status == ShippingStatus.SHIPPING)
+                    backgroundColor: (detailOrder!.status == ShippingStatus.SHIPPING)
                         ? AppColors.green_22C35D
                         : AppColors.orange_FA832E,
                     shape: RoundedRectangleBorder(
@@ -124,13 +132,9 @@ class OrderItem extends StatelessWidget {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 11),
                   ),
-                  onPressed: () {
-                    if (onFinish != null) {
-                      onFinish!();
-                    }
-                  },
+                  onPressed: onFinish,
                   child: Text(
-                    (detailOrder.status == ShippingStatus.SHIPPING)
+                    (detailOrder!.status == ShippingStatus.SHIPPING)
                         ? AppStrings.finish
                         : AppStrings.application_received,
                     style: const TextStyle(
@@ -149,14 +153,11 @@ class OrderItem extends StatelessWidget {
   }
 
   Widget _buildAddressInfo() {
-    final isShipping = detailOrder.status == ShippingStatus.SHIPPING;
+    final isShipping = detailOrder!.status == ShippingStatus.SHIPPING;
     final title = isShipping ? AppStrings.delivery : AppStrings.get_goods;
-    final address = isShipping
-        ? "${detailOrder.order.receiverAddress}, ${detailOrder.order.receiverWardCommune}, ${detailOrder.order.receiverProvinceCity}"
-        : detailOrder.shopOwner.address;
-    final phone = isShipping
-        ? detailOrder.order.receiverPhone
-        : detailOrder.shopOwner.phoneNumber;
+    final address =
+        "${detailOrder!.order.receiverAddress}, ${detailOrder!.order.receiverWardCommune}, ${detailOrder!.order.receiverProvinceCity}";
+    final phone = detailOrder!.order.receiverPhone;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,10 +166,7 @@ class OrderItem extends StatelessWidget {
           children: [
             SvgPicture.asset(
               "assets/images/ic_address.svg",
-              colorFilter: const ColorFilter.mode(
-                AppColors.gray_7B899D,
-                BlendMode.srcIn,
-              ),
+              colorFilter: const ColorFilter.mode(AppColors.gray_7B899D, BlendMode.srcIn),
               width: 13,
               height: 13,
             ),
@@ -176,10 +174,7 @@ class OrderItem extends StatelessWidget {
             Expanded(
               child: Text(
                 "$title: $address",
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: AppColors.gray_7B899D,
-                ),
+                style: const TextStyle(fontSize: 13, color: AppColors.gray_7B899D),
               ),
             ),
           ],
@@ -189,24 +184,75 @@ class OrderItem extends StatelessWidget {
           children: [
             SvgPicture.asset(
               "assets/images/ic_phone.svg",
-              colorFilter: const ColorFilter.mode(
-                AppColors.gray_7B899D,
-                BlendMode.srcIn,
-              ),
+              colorFilter: const ColorFilter.mode(AppColors.gray_7B899D, BlendMode.srcIn),
               width: 13,
               height: 13,
             ),
             const SizedBox(width: 5),
             Text(
               "${AppStrings.phone_number}: $phone",
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.gray_7B899D,
-              ),
+              style: const TextStyle(fontSize: 13, color: AppColors.gray_7B899D),
             ),
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildShimmer() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(13),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300, width: 1),
+        boxShadow: [
+          BoxShadow(color: Colors.grey.shade300, blurRadius: 2, offset: const Offset(0, 2))
+        ],
+      ),
+      child: Shimmer.fromColors(
+        baseColor: Colors.grey.shade300,
+        highlightColor: Colors.grey.shade100,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(width: 80, height: 14, color: Colors.white),
+                Container(width: 60, height: 20, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(999))),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Container(width: 13, height: 13, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
+                const SizedBox(width: 5),
+                Expanded(child: Container(height: 12, color: Colors.white)),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Container(width: 13, height: 13, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
+                const SizedBox(width: 5),
+                Container(width: 100, height: 12, color: Colors.white),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Align(alignment: Alignment.centerRight, child: Container(width: 100, height: 14, color: Colors.white)),
+            const SizedBox(height: 15),
+            Row(
+              children: [
+                Expanded(child: Container(height: 36, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)))),
+                const SizedBox(width: 6),
+                Expanded(child: Container(height: 36, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)))),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
