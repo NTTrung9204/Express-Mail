@@ -90,15 +90,15 @@ class _HistoryActivityState extends State<HistoryActivity> {
             borderRadius: BorderRadius.circular(24),
             child: const Padding(
               padding: EdgeInsets.all(8.0),
-              child: Icon(Icons.arrow_back, color: AppColors.blue_344256),
+              child: Icon(Icons.arrow_back, color: AppColors.blue_344256, size: 20,),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 8),
           const Text(
             AppStrings.order_history,
             style: TextStyle(
               fontFamily: "Inter_bold",
-              fontSize: 23,
+              fontSize: 18,
               color: AppColors.blue_344256,
             ),
           ),
@@ -146,6 +146,8 @@ class _HistoryActivityState extends State<HistoryActivity> {
         return RefreshIndicator(
           color: Colors.blue,
           backgroundColor: Colors.white,
+          strokeWidth: 2,
+          displacement: 5,
           onRefresh: () async => _fetchHistory(),
           child: ListView.builder(
             controller: _scrollController,
@@ -192,7 +194,7 @@ class _HistoryActivityState extends State<HistoryActivity> {
           borderRadius: BorderRadius.circular(12),
           side: BorderSide(color: AppColors.white_E2E8F0),
         ),
-        elevation: 1,
+        elevation: 0.5,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 19),
           child: Column(
@@ -237,7 +239,7 @@ class _HistoryActivityState extends State<HistoryActivity> {
                       style: TextStyle(
                         color: AppColors.white,
                         fontSize: 12,
-                        fontFamily: "Inter_bold",
+                        fontFamily: "Inter_regular",
                       ),
                     ),
                   ),
@@ -291,7 +293,7 @@ class _HistoryActivityState extends State<HistoryActivity> {
               Row(
                 children: [
                   Text(
-                    "${order.products.length} items",
+                    "${order.products.length} ${AppStrings.items}",
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.gray_7B899D,

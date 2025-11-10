@@ -27,27 +27,25 @@ class EarningViewModel extends ChangeNotifier {
 
     if (rangeType == "day") {
       from = DateTime(now.year, now.month, now.day, 0, 0, 0);
-      to = DateTime(now.year, now.month, now.day, 23, 59, 59);
+      to = DateTime(now.year, now.month, now.day, 23, 59, 59).add(const Duration(days: 1));
     } else if (rangeType == "week") {
       final monday = now.subtract(Duration(days: now.weekday - 1));
       final sunday = monday.add(const Duration(days: 6));
       from = DateTime(monday.year, monday.month, monday.day, 0, 0, 0);
-      to = DateTime(sunday.year, sunday.month, sunday.day, 23, 59, 59);
+      to = DateTime(sunday.year, sunday.month, sunday.day, 23, 59, 59).add(const Duration(days: 1));
     } else if (rangeType == "month") {
       from = DateTime(now.year, now.month, 1, 0, 0, 0);
       final nextMonth = (now.month == 12)
           ? DateTime(now.year + 1, 1, 1)
           : DateTime(now.year, now.month + 1, 1);
-      to = nextMonth.subtract(const Duration(seconds: 1));
+      to = nextMonth.subtract(const Duration(seconds: 1)).add(const Duration(days: 1));
     }
 
     final fromStr = DateFormat('yyyy-MM-dd').format(from);
     final toStr = DateFormat('yyyy-MM-dd').format(to);
 
-    // final url =
-    //     "${Constants.shipperOrderUrl}${loginResponse.user.id}?status=FINISHED&from=$fromStr&to=$toStr&page=1&limit=100";
     final url =
-        "${Constants.shipperOrderUrl}${loginResponse.user.id}?page=1&limit=5";
+        "${Constants.shipperOrderUrl}${loginResponse.user.id}?status=FINISHED&from=$fromStr&to=$toStr&page=1&limit=${Constants.maxLimit}";
     try {
       final response = await http.get(
         Uri.parse(url),
@@ -91,6 +89,6 @@ class EarningViewModel extends ChangeNotifier {
   }
 
   String formatCurrency(double value) {
-    return "${NumberFormat.decimalPattern('vi').format(value)} VND";
+    return "${NumberFormat.decimalPattern('vi').format(value)}đ";
   }
 }
