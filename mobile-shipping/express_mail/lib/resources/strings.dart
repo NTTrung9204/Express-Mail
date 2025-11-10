@@ -129,5 +129,15 @@ class AppStrings {
   static const history_delivery = "Lịch sử vận chuyển";
   static const view_all = "Xem tất cả";
   static const order_history = "Lịch sử đơn hàng";
-static const app_name = "Express Mail";
+  static const directions_map = "Bản đồ chỉ đường";
+  static const estimated_time_remaining = "Thời gian dự kiến còn";
+  static const date = "ngày";
+  static const location_access_denied = "Quyền truy cập vị trí bị từ chối.";
+  static const location_access_is_not_enabled_on_the_device = "Quyền truy cập vị trí chưa bật trên thiết bị.";
+  static const no_route_data = "Không có dữ liệu tuyến đường.";
+  static const error_getting_coordinates = "Lỗi khi lấy tọa độ.";
+  static const app_name = "Express Mail";
+  static const error_loading_order_list = "Lỗi khi tải danh sách đơn hàng";
+  static const order_completion_failed = "Hoàn thành đơn hàng thất bại";
+  static const order_completed_successfully = "Đơn hàng đã hoàn tất thành công";
 }
