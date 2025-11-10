@@ -13,6 +13,7 @@ services:
       - "${MAPPING_API_PORT}:8000"
     depends_on:
       - db
+      - redis
 
   db:
     image: postgres:15
@@ -28,5 +29,16 @@ services:
     volumes:
       - data_express_mail:/var/lib/postgresql/data
 
+  redis:
+    image: redis:7-alpine
+    container_name: express_mail_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 25mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
 volumes:
   data_express_mail:
+  redis_data:

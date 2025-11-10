@@ -24,6 +24,11 @@ from apps.users.serializers import (
     GetNameListResponseSerializer,
     ShopRegisterSerializer,
 )
+from apps.users.throttling import (
+    OTPRequestThrottle,
+    OTPVerifyThrottle,
+    OTPConfirmThrottle,
+)
 from services.groups.group_services import GroupService
 from services.permissions.permission_services import PermissionService
 from services.profiles.profile_services import ProfileService
@@ -185,6 +190,7 @@ class ResetPasswordViewSet(BaseAPIViewSet):
         url_path="request",
         serializer_class=ResetPasswordRequestSerializer,
         permission_classes=[],
+        throttle_classes=[OTPRequestThrottle],
     )
     def request_reset_password(self, request):
         """
@@ -210,6 +216,7 @@ class ResetPasswordViewSet(BaseAPIViewSet):
         url_path="verify",
         serializer_class=VerifyResetPasswordOTPSerializer,
         permission_classes=[],
+        throttle_classes=[OTPVerifyThrottle],
     )
     def verify_reset_password_otp(self, request):
         """
@@ -230,14 +237,9 @@ class ResetPasswordViewSet(BaseAPIViewSet):
             )
             if latest_password_reset_otp and latest_password_reset_otp.check_otp(otp):
                 return self.response_ok()
-            else:
-                return self.response_error(
-                    "invalid_reset_password_otp",
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                )
 
         return self.response_error(
-            "invalid_email", status_code=status.HTTP_400_BAD_REQUEST
+            "invalid_credentials", status_code=status.HTTP_400_BAD_REQUEST
         )
 
     @action(
@@ -246,6 +248,7 @@ class ResetPasswordViewSet(BaseAPIViewSet):
         url_path="confirm",
         serializer_class=ResetPasswordConfirmSerializer,
         permission_classes=[],
+        throttle_classes=[OTPConfirmThrottle],
     )
     def confirm_reset_password(self, request):
         """
@@ -269,14 +272,9 @@ class ResetPasswordViewSet(BaseAPIViewSet):
                 UserService.update_password(user, new_password)
                 latest_password_reset_otp.mark_used()
                 return self.response_ok()
-            else:
-                return self.response_error(
-                    "invalid_reset_password_otp",
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                )
 
         return self.response_error(
-            "invalid_email", status_code=status.HTTP_400_BAD_REQUEST
+            "invalid_credentials", status_code=status.HTTP_400_BAD_REQUEST
         )
 
 

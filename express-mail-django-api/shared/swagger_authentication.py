@@ -42,6 +42,7 @@ class SwaggerBasicAuthentication(BaseAuthentication):
                 "User",
                 (object,),
                 {
+                    "pk": 0,
                     "username": username,
                     "is_authenticated": True,
                 },  # The User model has used `username` to authenticated
