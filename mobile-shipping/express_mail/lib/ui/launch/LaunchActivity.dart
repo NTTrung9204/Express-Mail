@@ -35,7 +35,6 @@ class _LaunchActivityState extends State<LaunchActivity>
 
     if (!mounted) return;
 
-    print("SSSS ${savedPassword} ${savedUsername}");
     if (savedUsername.isNotEmpty && savedPassword.isNotEmpty) {
       bool success = await _viewModel.login(savedUsername, savedPassword);
       if (!mounted) return;
