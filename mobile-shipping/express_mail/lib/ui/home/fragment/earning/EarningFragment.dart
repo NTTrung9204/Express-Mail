@@ -203,8 +203,8 @@ class _EarningFragmentState extends State<EarningFragment> {
                     : Text(
                         key: ValueKey("content"),
                         viewModel.totalIncome > 0
-                            ? "${NumberFormat.decimalPattern('vi').format(viewModel.totalIncome)} VND"
-                            : "0 VND",
+                            ? "${NumberFormat.decimalPattern('vi').format(viewModel.totalIncome)}đ"
+                            : "0đ",
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 20,
@@ -360,10 +360,10 @@ class _EarningFragmentState extends State<EarningFragment> {
                       itemBuilder: (context, index) {
                         final order = finishOrders[index];
                         return _transactionItem(
-                          "${order.status.name} #${order.id}",
+                          "#${order.order.code}",
                           "+${NumberFormat.decimalPattern('vi').format(order.order.shippingCost)}đ",
                           AppStrings.finish,
-                          ShippingStatus.FINISH.color,
+                          ShippingStatus.FINISHED.color,
                         );
                       },
                     ),
