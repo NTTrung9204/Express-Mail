@@ -8,9 +8,11 @@ import { OrderController } from './order.controller';
 import { ProductModule } from '../product/product.module';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { DjangoService } from 'src/common/services/django.service';
-import { RedisService } from 'src/common/services/redis.service';
 import { Shipping } from '../shipping/entities/shipping.entity';
+import { ProductService } from '../product/product.service';
+import { Product } from '../product/entities/product.entity';
+import { DjangoService } from 'src/common/services/django.service';
+import { CommonModule } from 'src/common/module/common.module';
 
 @Module({
   imports: [
@@ -19,15 +21,17 @@ import { Shipping } from '../shipping/entities/shipping.entity';
       OrderTransition,
       OrderPostOffice,
       Shipping,
+      Product,
     ]),
     forwardRef(() => ProductModule),
     JwtModule.register({
       secret: process.env.JWT_ACCESS_SECRET,
       signOptions: { expiresIn: '1h' },
     }),
+    CommonModule,
   ],
   controllers: [OrderController],
-  providers: [OrderService, JwtAuthGuard, RedisService, DjangoService],
-  exports: [OrderService],
+  providers: [OrderService, JwtAuthGuard, ProductService, DjangoService],
+  exports: [OrderService, TypeOrmModule, ProductService, DjangoService],
 })
 export class OrderModule {}

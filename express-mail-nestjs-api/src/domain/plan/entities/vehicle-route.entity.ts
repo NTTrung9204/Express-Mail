@@ -15,8 +15,8 @@ export class VehicleRoute {
   @PrimaryGeneratedColumn({ type: 'bigint' })
   id: number;
 
-  @Column({ name: 'vehicle_id', length: 50 })
-  vehicleId: string;
+  @Column({ name: 'vehicle_id', type: 'varchar', length: 50, nullable: true })
+  vehicleId: string | null;
 
   @Column({ type: 'double' })
   cost: number;
@@ -30,7 +30,7 @@ export class VehicleRoute {
   @Column({ name: 'service_time', type: 'double' })
   serviceTime: number;
 
-  @Column({ type: 'text' })
+  @Column({ type: 'longtext' })
   geometry: string;
 
   @CreateDateColumn({ name: 'created_at' })

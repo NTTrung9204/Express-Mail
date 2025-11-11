@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { VehicleRoute } from './vehicle-route.entity';
 import { Order } from '../../order/entities/order.entity';
+import { Shipping } from 'src/domain/shipping/entities/shipping.entity';
 
 export enum RouteStepType {
   START = 'start',
@@ -66,4 +67,7 @@ export class RouteStep {
 
   @OneToOne(() => Order, (order) => order.routeStep)
   order: Order;
+
+  @OneToOne(() => Shipping, (shipping) => shipping.routeStep)
+  shipping: Shipping;
 }

@@ -32,4 +32,13 @@ export class CreateShippingDto {
   @IsString()
   @IsNotEmpty()
   shipperId?: string;
+
+  @ApiProperty({
+    description: 'Route step ID',
+    example: 1,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  routeStepId?: number;
 }

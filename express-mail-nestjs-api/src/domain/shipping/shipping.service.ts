@@ -4,8 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { DjangoService } from 'src/common/services/django.service';
+import { In, Repository } from 'typeorm';
 import { Shipping } from './entities/shipping.entity';
 import { AssignShipperDto, CreateShippingDto, UpdateShippingDto } from './dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
@@ -21,7 +20,6 @@ export class ShippingService {
   constructor(
     @InjectRepository(Shipping)
     private readonly shippingRepository: Repository<Shipping>,
-    private readonly djangoService: DjangoService,
     private readonly orderService: OrderService,
   ) {}
 
@@ -46,7 +44,10 @@ export class ShippingService {
       const shipping = this.shippingRepository.create({
         shipperId: createShippingDto.shipperId,
         status: createShippingDto.status,
-        order: { id: createShippingDto.orderId } as any,
+        order: { id: createShippingDto.orderId },
+        routeStep: createShippingDto.routeStepId
+          ? { id: createShippingDto.routeStepId }
+          : undefined,
       });
       const savedShipping = await this.shippingRepository.save(shipping);
 
@@ -251,5 +252,12 @@ export class ShippingService {
       console.error(error);
       throw new BadRequestException('Failed to update status');
     }
+  }
+
+  async findManyByIds(ids: number[]): Promise<Shipping[]> {
+    return this.shippingRepository.find({
+      where: { id: In(ids) },
+      relations: ['order', 'routeStep'],
+    });
   }
 }
