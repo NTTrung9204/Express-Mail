@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PlanService } from './plan.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { RoutePlan } from './entities/route-plan.entity';
 import { VehicleRoute } from './entities/vehicle-route.entity';
 import { RouteStep } from './entities/route-step.entity';
