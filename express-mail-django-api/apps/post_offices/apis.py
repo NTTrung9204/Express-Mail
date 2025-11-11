@@ -14,7 +14,7 @@ class PostOfficeViewSet(ModelViewSet, BaseAPIViewSet):
     API endpoint for PostOffice model.
     """
 
-    queryset = PostOffice.objects.all()
+    queryset = PostOffice.objects.all().order_by("id")
     serializer_class = PostOfficeSerializer
     permission_classes = [FullDjangoModelPermissions]
     filterset_class = PostOfficeFilter
