@@ -51,6 +51,14 @@ export const useWarehouseStore = (initialPage = 1, pageSize = 10) => {
       setTotal(data.count || data.total || 0);
     } catch (error) {
       console.error("Lỗi tải kho:", error);
+      
+      if (error.response?.status === 403) {
+        const errorMessage = error.response?.data?.message || error.response?.data?.detail || "Bạn không có quyền truy cập danh sách kho!";
+        setWarehouses([]);
+        setTotal(0);
+        return { success: false, message: errorMessage };
+      }
+      
       setWarehouses([]);
       setTotal(0);
     } finally {
@@ -129,10 +137,17 @@ export const useWarehouseStore = (initialPage = 1, pageSize = 10) => {
 
       await fetchWarehouses();
       setOpenWarehouseModal(false);
-      return { success: true };
+      return { success: true, message: modalMode === "add" ? "Thêm kho thành công!" : "Cập nhật kho thành công!" };
     } catch (error) {
       console.error("Lỗi lưu kho:", error);
-      return { success: false };
+      
+      if (error.response?.status === 403) {
+        const errorMessage = error.response?.data?.message || error.response?.data?.detail || "Bạn không có quyền thực hiện hành động này!";
+        return { success: false, message: errorMessage };
+      }
+      
+      const errorMessage = error.response?.data?.message || error.response?.data?.detail || "Không thể lưu kho. Vui lòng thử lại!";
+      return { success: false, message: errorMessage };
     }
   };
 
@@ -153,10 +168,17 @@ export const useWarehouseStore = (initialPage = 1, pageSize = 10) => {
       }
       setOpenDeleteModal(false);
       setWarehouseToDelete(null);
-      return { success: true };
+      return { success: true, message: "Xóa kho thành công!" };
     } catch (error) {
       console.error("Lỗi xóa kho:", error);
-      return { success: false };
+      
+      if (error.response?.status === 403) {
+        const errorMessage = error.response?.data?.message || error.response?.data?.detail || "Bạn không có quyền xóa kho này!";
+        return { success: false, message: errorMessage };
+      }
+      
+      const errorMessage = error.response?.data?.message || error.response?.data?.detail || "Không thể xóa kho. Vui lòng thử lại!";
+      return { success: false, message: errorMessage };
     }
   };
 

@@ -6,7 +6,8 @@ export const useShippingRateStore = (initialPage = 1, pageSize = 10) => {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(initialPage);
   const [totalCount, setTotalCount] = useState(0);
-  
+
+  const [error, setError] = useState(null);
 
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState("add");
@@ -15,11 +16,21 @@ export const useShippingRateStore = (initialPage = 1, pageSize = 10) => {
   const fetchShippingRates = async () => {
     try {
       setLoading(true);
+      setError(null); 
+
       const data = await shippingRateService.getShippingRates(page, pageSize);
+
       setShippingRates(data.results || data || []);
       setTotalCount(data.count || data.length || 0);
-    } catch (error) {
-      console.error("Lỗi tải danh sách phí ship:", error);
+    } catch (err) {
+      console.error("Lỗi tải danh sách phí ship:", err);
+
+      if (err.response?.status === 403) {
+        setError("Bạn không có quyền xem danh sách phí ship.");
+      } else {
+        setError("Không thể tải danh sách phí ship.");
+      }
+
       setShippingRates([]);
       setTotalCount(0);
     } finally {
@@ -56,40 +67,42 @@ export const useShippingRateStore = (initialPage = 1, pageSize = 10) => {
   const handleSave = async (data) => {
     try {
       await shippingRateService.createShippingRate(data);
-      await fetchShippingRates(); 
+      await fetchShippingRates();
       handleClose();
       return { success: true, message: "Thêm phí ship thành công!" };
     } catch (error) {
       console.error("Lỗi khi thêm phí ship:", error);
-      return { success: false, message: "Không thể thêm phí ship." };
+      
+      return { 
+        success: false, 
+        message: error.response?.data?.message || "Không thể thêm phí ship.",
+        status: error.response?.status 
+      };
     }
   };
 
-    const handleToggleActive = async (id, currentStatus) => {
-    if (currentStatus) return; // Đang active → không cho tắt thủ công
+  const handleToggleActive = async (id, currentStatus) => {
+    if (currentStatus) return;
 
     try {
-        // 1. Gọi API bật cái được chọn
-        await shippingRateService.updateShippingRateActive(id, true);
+      await shippingRateService.updateShippingRateActive(id, true);
 
-        // 2. Cập nhật UI: bật cái này, tắt tất cả cái khác
-        setShippingRates((prev) =>
+      setShippingRates((prev) =>
         prev.map((r) => ({
-            ...r,
-            isActive: r.id === id ? true : false,
+          ...r,
+          isActive: r.id === id,
         }))
-        );
-
-        // 3. Tải lại dữ liệu để đảm bảo đồng bộ (nếu cần)
-        // fetchShippingRates(); // Không cần nếu API đã đảm bảo
+      );
     } catch (error) {
-        console.error("Lỗi cập nhật trạng thái:", error);
+      console.error("Lỗi cập nhật trạng thái:", error);
+      throw error;
     }
-    };
+  };
 
   return {
     shippingRates,
     loading,
+    error,
     page,
     totalCount,
     pageSize,
@@ -98,7 +111,7 @@ export const useShippingRateStore = (initialPage = 1, pageSize = 10) => {
     selected,
 
     setPage,
-    setOpen: handleClose, 
+    setOpen: handleClose,
 
     handleOpen,
     handleSave,

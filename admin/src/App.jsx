@@ -13,21 +13,21 @@ import ShopRegisterPage from "./pages/ShopRegisterPage";
 function App() {
   return (
     <div>
-      <ToastContainer/>
+      <ToastContainer />
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/reset-password" element={<ForgotPasswordPage/>} />
-        <Route path="/shop-register" element={<ShopRegisterPage />} />
-        
-        <Route path="/admin" element={<MainLayout />}>
+        <Route path="/" element={<Navigate to="login" replace />} />
+        <Route path="login" element={<LoginPage />} />
+        <Route path="reset-password" element={<ForgotPasswordPage />} />
+        <Route path="shop-register" element={<ShopRegisterPage />} />
+
+        <Route path="/" element={<MainLayout />}>
           <Route path="home" element={<Dashboard />} />
           <Route path="users" element={<Users />} />
           <Route path="warehouses" element={<Warehouses />} />
-          <Route path="shipping-rate" element={<ShippingRate/>} />
+          <Route path="shipping-rate" element={<ShippingRate />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="login" replace />} />
       </Routes>
     </div>
   );

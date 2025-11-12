@@ -6,7 +6,7 @@ import WarehouseModal from "../components/warehouses/WarehouseModal";
 import ConfirmDeleteModal from "../components/warehouses/ConfirmDeleteModal";
 
 export default function Warehouses() {
- const {
+  const {
     warehouses,
     total,
     page,
@@ -28,17 +28,35 @@ export default function Warehouses() {
     handleDeleteWarehouse,
     confirmDeleteWarehouse,
     searchWarehouses,
+    fetchWarehouses,
   } = useWarehouseStore();
 
-const [searchInput, setSearchInput] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const totalPages = Math.ceil(total / pageSize) || 1;
 
   useEffect(() => {
     setSearchInput(search);
   }, [search]);
 
-  const handleSearch = () => {
+  useEffect(() => {
+    const loadInitialData = async () => {
+      setErrorMessage("");
+      const result = await fetchWarehouses(page, search);
+      if (result && !result.success) {
+        setErrorMessage(result.message);
+      }
+    };
+    loadInitialData();
+  }, [page]);
+
+  const handleSearch = async () => {
+    setErrorMessage("");
     searchWarehouses(searchInput);
+    const result = await fetchWarehouses(1, searchInput);
+    if (result && !result.success) {
+      setErrorMessage(result.message);
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -48,14 +66,14 @@ const [searchInput, setSearchInput] = useState("");
   return (
     <div className="p-6 space-y-6 bg-orange-50 min-h-screen">
       <div className="bg-gradient-to-r from-orange-200 to-orange-100 rounded-xl p-4">
-        <h1 className="text-2xl font-bold mb-2">Quản lý Người dùng</h1>
+        <h1 className="text-2xl font-bold mb-2">Quản lý Kho</h1>
         <p>Thêm, sửa, xóa và quản lý kho bưu cục.</p>
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="flex w-full md:w-auto gap-2">
           <input
-           type="text"
+            type="text"
             placeholder="Nhập tên kho"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -89,7 +107,7 @@ const [searchInput, setSearchInput] = useState("");
               </tr>
             </thead>
             <tbody>
-              {loading ? (
+              {loading && !errorMessage ? (
                 <tr>
                   <td colSpan="4" className="text-center py-12 text-gray-500">
                     <div className="flex justify-center">
@@ -98,9 +116,15 @@ const [searchInput, setSearchInput] = useState("");
                     <p className="mt-2">Đang tải dữ liệu...</p>
                   </td>
                 </tr>
+              ) : errorMessage ? (
+                <tr>
+                  <td colSpan="4" className="text-center text-red-600 font-medium py-12">
+                    {errorMessage}
+                  </td>
+                </tr>
               ) : warehouses.length > 0 ? (
                 warehouses.map((w) => (
-                  <tr key={w.id} className="hover:bg-orange-50 border-b border-orange-100 transitio text-center">
+                  <tr key={w.id} className="hover:bg-orange-50 border-b border-orange-100 transition text-center">
                     <td className="py-4 px-6 font-medium">{w.name}</td>
                     <td className="py-4 px-6 text-gray-600">{w.address}</td>
                     <td className="py-4 px-6">{w.displayProvince || "-"}</td>
@@ -134,7 +158,11 @@ const [searchInput, setSearchInput] = useState("");
               ) : (
                 <tr>
                   <td colSpan="4" className="text-center py-12 text-gray-500">
-                    <p className="text-lg">Không tìm thấy kho nào phù hợp.</p>
+                    <p>
+                      {search
+                        ? `Không tìm thấy kho nào với từ khóa "${search}"`
+                        : "Không có kho nào"}
+                    </p>
                   </td>
                 </tr>
               )}
@@ -143,7 +171,7 @@ const [searchInput, setSearchInput] = useState("");
         </div>
       </div>
 
-      {totalPages > 1 && (
+      {totalPages > 1 && !errorMessage && (
         <div className="flex justify-center items-center gap-2 p-4">
           <button
             onClick={() => setPage((p) => Math.max(p - 1, 1))}

@@ -12,10 +12,27 @@ const ForgotPasswordPage = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [resendTimer, setResendTimer] = useState(0);
+  const [otpAttempts, setOtpAttempts] = useState(0); 
+
+  const startResendTimer = (seconds) => {
+    setResendTimer(seconds);
+    const interval = setInterval(() => {
+      setResendTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   const handleSendEmail = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     if (!email) return toast.error("Vui lòng nhập email");
+
+    if (resendTimer > 0) return; 
 
     setIsLoading(true);
     try {
@@ -23,7 +40,13 @@ const ForgotPasswordPage = () => {
       toast.success("Mã OTP đã được gửi đến email của bạn");
       setStep(2);
     } catch (err) {
-      toast.error("Không thể gửi OTP, vui lòng thử lại");
+      if (err?.response?.status === 429) {
+        const waitSeconds = err.response.data?.message?.match(/\d+/)?.[0] || 60;
+        toast.error(`Bạn đã gửi quá nhiều lần, vui lòng thử lại sau ${waitSeconds} giây`);
+        startResendTimer(Number(waitSeconds));
+      } else {
+        toast.error("Không thể gửi OTP, vui lòng thử lại");
+      }
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -46,14 +69,33 @@ const ForgotPasswordPage = () => {
     const code = otp.join("");
     if (code.length < 6) return toast.error("Vui lòng nhập đủ 6 chữ số OTP");
 
+    if (resendTimer > 0) return; 
+
     setIsLoading(true);
     try {
       await resetPasswordService.verifyOTP(email, code);
       toast.success("Xác thực OTP thành công!");
       setStep(3);
+      setOtpAttempts(0); 
     } catch (err) {
-      toast.error("OTP không chính xác hoặc đã hết hạn");
-      setOtp(["","","","","",""])
+      let attempts = otpAttempts + 1;
+      setOtpAttempts(attempts);
+
+      if (attempts >= 5) {
+        toast.error(`Bạn đã nhập sai quá nhiều lần, vui lòng thử lại sau 60 giây`);
+        startResendTimer(60); 
+        setOtpAttempts(0); 
+      } else if (err?.response?.status === 429) {
+        const waitSeconds = err.response.data?.message?.match(/\d+/)?.[0] || 60;
+        toast.error(`Bạn đã thử quá nhiều lần, vui lòng thử lại sau ${waitSeconds} giây`);
+        startResendTimer(Number(waitSeconds));
+      } else if (err?.response?.status === 400) {
+        toast.error("Mã OTP không hợp lệ");
+      } else {
+        toast.error("OTP không chính xác hoặc đã hết hạn");
+      }
+
+      setOtp(["", "", "", "", "", ""]);
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -75,7 +117,14 @@ const ForgotPasswordPage = () => {
       toast.success("Đặt lại mật khẩu thành công!");
       navigate("/login");
     } catch (err) {
-      toast.error("Không thể đặt lại mật khẩu, vui lòng thử lại");
+      if (err?.response?.status === 429) {
+        const waitSeconds = err.response.data?.message?.match(/\d+/)?.[0] || 60;
+        toast.error(`Bạn đã thử quá nhiều lần, vui lòng thử lại sau ${waitSeconds} giây`);
+      } else if (err?.response?.status === 400) {
+        toast.error("Mã OTP không hợp lệ");
+      } else {
+        toast.error("Không thể đặt lại mật khẩu, vui lòng thử lại");
+      }
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -158,14 +207,18 @@ const ForgotPasswordPage = () => {
 
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || resendTimer > 0} 
                 className={`w-full font-medium py-3 rounded-md transition ${
-                  isLoading
+                  isLoading || resendTimer > 0
                     ? "bg-orange-400/70 cursor-not-allowed text-white"
                     : "bg-orange-500 text-white hover:bg-orange-600"
                 }`}
               >
-                {isLoading ? "Đang xác thực..." : "Xác nhận OTP"}
+                {resendTimer > 0
+                  ? `Thử lại sau ${resendTimer}s`
+                  : isLoading
+                  ? "Đang xác thực..."
+                  : "Xác nhận OTP"}
               </button>
             </form>
 
@@ -174,9 +227,14 @@ const ForgotPasswordPage = () => {
               <button
                 type="button"
                 onClick={handleSendEmail}
-                className="text-orange-500 hover:underline"
+                disabled={resendTimer > 0 || isLoading}
+                className={`text-orange-500 hover:underline ${
+                  resendTimer > 0
+                    ? "cursor-not-allowed text-gray-400 hover:underline-none"
+                    : ""
+                }`}
               >
-                Gửi lại
+                {resendTimer > 0 ? `Gửi lại sau ${resendTimer}s` : "Gửi lại"}
               </button>
             </p>
           </>
