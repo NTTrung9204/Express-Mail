@@ -31,6 +31,7 @@ class _VerifyCodeActivityState extends State<VerifyCodeActivity> {
     super.initState();
     _controllers = List.generate(6, (_) => TextEditingController());
     _focusNodes = List.generate(6, (_) => FocusNode());
+    _startCountdown();
   }
 
   @override
