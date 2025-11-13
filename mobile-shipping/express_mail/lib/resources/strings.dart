@@ -110,9 +110,9 @@ class AppStrings {
   static const confirm_password  = "Xác nhận mật khẩu";
   static const confirm_new_password = "Xác nhận mật khẩu mới";
   static const password_requirements = "Yêu cầu về mật khẩu:";
-  static const at_least_8_characters = "Ít nhất 8 ký tự";
+  static const at_least_6_characters = "Ít nhất 6 ký tự";
   static const passwords_match = "Mật khẩu trùng khớp";
-  static const password_must_be_at_least_8_characters = "Mật khẩu phải có ít nhất 8 ký tự.";
+  static const password_must_be_at_least_6_characters = "Mật khẩu phải có ít nhất 6 ký tự.";
   static const passwords_do_not_match = "Mật khẩu không khớp";
   static const no_profile_data = "Không có dữ liệu hồ sơ";
   static const loading_data = "Đang tải dữ liệu...";
@@ -140,4 +140,8 @@ class AppStrings {
   static const error_loading_order_list = "Lỗi khi tải danh sách đơn hàng";
   static const order_completion_failed = "Hoàn thành đơn hàng thất bại";
   static const order_completed_successfully = "Đơn hàng đã hoàn tất thành công";
+  static const items = "món hàng";
+  static const please_try_again_later = "Vui lòng thử lại sau";
+  static const second = "giây";
+  static const invalid_opt_code = "Mã OTP không hợp lệ";
 }

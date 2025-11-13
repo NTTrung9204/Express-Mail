@@ -27,7 +27,7 @@ class _ResetPasswordActivityState extends State<ResetPasswordActivity> {
   bool _isNewPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
 
-  bool get _isLengthValid => _newPasswordController.text.length >= 8;
+  bool get _isLengthValid => _newPasswordController.text.length >= 6;
 
   bool get _isMatchValid =>
       _newPasswordController.text == _confirmPasswordController.text &&
@@ -40,7 +40,7 @@ class _ResetPasswordActivityState extends State<ResetPasswordActivity> {
     if (!_isLengthValid || !_isMatchValid) {
       String message = '';
       if (!_isLengthValid) {
-        message = AppStrings.password_must_be_at_least_8_characters;
+        message = AppStrings.password_must_be_at_least_6_characters;
       } else if (!_isMatchValid) {
         message = AppStrings.passwords_do_not_match;
       }
@@ -368,7 +368,7 @@ class _ResetPasswordActivityState extends State<ResetPasswordActivity> {
                                     ),
                                     const SizedBox(width: 9),
                                     const Text(
-                                      AppStrings.at_least_8_characters,
+                                      AppStrings.at_least_6_characters,
                                       style: TextStyle(
                                         fontSize: 11,
                                         fontFamily: "Inter_regular",

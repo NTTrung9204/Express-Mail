@@ -153,7 +153,7 @@ class _ForgotActivityState extends State<ForgotActivity> {
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.black.withOpacity(0.05),
+                                    color: AppColors.black.withValues(alpha: 0.05),
                                     blurRadius: 8,
                                     spreadRadius: 5,
                                   ),
@@ -264,20 +264,20 @@ class _ForgotActivityState extends State<ForgotActivity> {
                                           : () => _onSendCodePressed(context),
                                       style: ButtonStyle(
                                         backgroundColor:
-                                            MaterialStateProperty.all(
+                                        WidgetStateProperty.all(
                                               buttonColor,
                                             ),
-                                        shape: MaterialStateProperty.all(
+                                        shape: WidgetStateProperty.all(
                                           RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
                                               10,
                                             ),
                                           ),
                                         ),
-                                        padding: MaterialStateProperty.all(
+                                        padding: WidgetStateProperty.all(
                                           const EdgeInsets.all(16),
                                         ),
-                                        elevation: MaterialStateProperty.all(2),
+                                        elevation: WidgetStateProperty.all(2),
                                       ),
                                       child: SizedBox(
                                         child: Stack(

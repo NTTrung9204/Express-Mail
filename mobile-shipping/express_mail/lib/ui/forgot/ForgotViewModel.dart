@@ -60,11 +60,25 @@ class ForgotViewModel extends ChangeNotifier {
         _errorMessage = null;
         return true;
       } else {
-        final errorData = jsonDecode(response.body);
-        _errorMessage =
-            errorData['message'] ??
-            AppStrings.an_error_occurred_please_try_again;
-        return false;
+        if (response.statusCode == 429) {
+          final decoded = json.decode(response.body);
+          final detail = decoded['detail'] as String;
+
+          final regex = RegExp(r'(\d+)\s*seconds');
+          final match = regex.firstMatch(detail);
+
+          if (match != null) {
+            final seconds = int.parse(match.group(1)!);
+            _errorMessage =  '${AppStrings.please_try_again_later} $seconds ${AppStrings.second}';
+          }
+          return false;
+        } else {
+          final errorData = jsonDecode(response.body);
+          _errorMessage =
+              errorData['message'] ??
+                  AppStrings.an_error_occurred_please_try_again;
+          return false;
+        }
       }
     } catch (e) {
       _errorMessage = AppStrings.connection_error;
@@ -89,11 +103,31 @@ class ForgotViewModel extends ChangeNotifier {
         _errorMessageConfirm = null;
         return true;
       } else {
-        final errorData = jsonDecode(response.body);
-        _errorMessageConfirm =
-            errorData['message'] ??
-            AppStrings.an_error_occurred_please_try_again;
-        return false;
+        if (response.statusCode == 400) {
+          _errorMessageConfirm = AppStrings.invalid_opt_code;
+          return false;
+        } else {
+          if (response.statusCode == 429) {
+            final decoded = json.decode(response.body);
+            final detail = decoded['detail'] as String;
+
+            final regex = RegExp(r'(\d+)\s*seconds');
+            final match = regex.firstMatch(detail);
+            if (match != null) {
+              final seconds = int.parse(match.group(1)!);
+              _errorMessageConfirm =
+              '${AppStrings.please_try_again_later} $seconds ${AppStrings
+                  .second}';
+            }
+            return false;
+          } else {
+            final errorData = jsonDecode(response.body);
+            _errorMessageConfirm =
+                errorData['message'] ??
+                    AppStrings.an_error_occurred_please_try_again;
+            return false;
+          }
+        }
       }
     } catch (e) {
       _errorMessageConfirm = AppStrings.connection_error;
