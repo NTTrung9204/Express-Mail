@@ -3,8 +3,9 @@ import baseAPI from './axiosConfig';
 export const authService = {
   login: async (credentials) => {
     const response = await baseAPI.post('/auth/login', credentials);
-    const { access } = response.data; 
+    const { access, user } = response.data; 
     localStorage.setItem('accessToken', access);
+    localStorage.setItem('user', JSON.stringify(user));
     return response.data;
   },
 
@@ -18,6 +19,7 @@ export const authService = {
       console.error('Logout failed:', error);
     } finally {
       localStorage.removeItem('accessToken');
+      localStorage.removeItem('user');
     }
   }
 };

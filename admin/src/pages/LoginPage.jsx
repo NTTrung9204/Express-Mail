@@ -48,7 +48,7 @@ const LoginPage = () => {
       } else if (user.role === "post_office_manager" || user.role === "post_office_staff") {
           window.location.href = "http://localhost:3000/post-office/home";
       } else if (user.role === "shop") {
-          window.location.href = "http://localhost:3000/shop";
+          window.location.href = "http://localhost:3000/shop/orders/order-draft";
       }
     } catch (err) {
       console.error("Login failed:", err);
