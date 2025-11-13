@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import TopNav from '../components/TopNav';
-import Tabs from '../components/Tabs'; // ✅ import đúng Tabs của bạn
-import FilterBar from '../components/FilterBar';
+import Tabs from '../components/Tabs';
 import EmptyState from '../components/EmptyState';
 
 const OrderDraftPage = () => {
@@ -12,7 +11,6 @@ const OrderDraftPage = () => {
      <div className="flex-1 flex flex-col">
         <TopNav />
         <Tabs active={activeTab} counts={tabCounts} onTabChange={setActiveTab} />
-        <FilterBar />
         <div className="flex-1 flex items-center justify-center bg-gray-50">
           <EmptyState />
         </div>

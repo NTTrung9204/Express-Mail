@@ -7,8 +7,6 @@ const CreateOrderPage = () => {
   const [open, setOpen] = useState(true);
 
   return (
-   
-    
     <div className="bg-gray-50 min-h-screen p-6">
       <AddressModal open={open} onClose={()=>setOpen(false)}/>
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
