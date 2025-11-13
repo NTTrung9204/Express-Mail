@@ -32,4 +32,6 @@ class Constants {
 
   // API Keys from .env
   static String get keyMap => dotenv.env['KEY_MAP'] ?? '';
+
+  static String role = "shipper";
 }

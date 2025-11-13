@@ -45,7 +45,12 @@ class LoginViewModel extends ChangeNotifier {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         _loginResponse = LoginResponse.fromJson(data);
-        return true;
+        if (_loginResponse?.user.role == Constants.role) {
+          return true;
+        } else {
+          _errorMessage = AppStrings.wrong_information;
+          return false;
+        }
       } else {
         try {
           final errorData = jsonDecode(response.body);
