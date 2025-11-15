@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:express_mail/ui/launch/LaunchActivity.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +32,15 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
         fontFamily: "Inter_regular",
       ),
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: [
+        Locale('vi'),
+        Locale('en'),
+      ],
       home: const LaunchActivity(),
     );
   }

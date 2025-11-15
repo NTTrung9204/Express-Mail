@@ -1,12 +1,12 @@
-import 'package:express_mail/ui/detailorder/DetailOrderActivity.dart';
 import 'package:flutter/material.dart';
-import 'package:express_mail/data/model/LoginResponse.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:express_mail/data/model/LoginResponse.dart';
 import 'HistoryViewModel.dart';
 import 'package:express_mail/resources/colors.dart';
 import 'package:express_mail/resources/strings.dart';
 import 'package:express_mail/data/model/DetailOrder.dart';
-import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 
 class HistoryActivity extends StatefulWidget {
@@ -27,28 +27,121 @@ class _HistoryActivityState extends State<HistoryActivity> {
   late final HistoryViewModel viewModel;
   final ScrollController _scrollController = ScrollController();
 
+  DateTime? _fromDate;
+  DateTime? _toDate;
+
   @override
   void initState() {
     super.initState();
-    viewModel = HistoryViewModel();
-    _fetchHistory();
 
-    _scrollController.addListener(() {
-      if (_scrollController.position.pixels >=
-              _scrollController.position.maxScrollExtent - 100 &&
-          !viewModel.isLoadingMore &&
-          viewModel.hasMoreData) {
-        _fetchHistory(loadMore: true);
-      }
-    });
+    initializeDateFormatting('vi', null);
+
+    viewModel = HistoryViewModel();
+
+    _initDateRange();
+    _fetchHistory();
   }
 
-  void _fetchHistory({bool loadMore = false}) {
-    viewModel.fetchHistory(
+  void _initDateRange() {
+    final now = DateTime.now();
+    switch (widget.rangeType) {
+      case "day":
+        _fromDate = now;
+        _toDate = now;
+        break;
+      case "week":
+        _fromDate = now.subtract(Duration(days: now.weekday - 1));
+        _toDate = now;
+        break;
+      case "month":
+        _fromDate = DateTime(now.year, now.month, 1);
+        _toDate = now;
+        break;
+    }
+  }
+
+  Future<void> _fetchHistory() async {
+    await viewModel.fetchHistory(
       widget.loginResponse,
-      loadMore: loadMore,
       rangeType: widget.rangeType,
+      fromDate: _fromDate,
+      toDate: _toDate,
     );
+  }
+
+  void _showDateRangeDialog(BuildContext context) async {
+    DateTime firstDay;
+    DateTime lastDay = DateTime.now();
+
+    if (widget.rangeType == "week") {
+      final now = DateTime.now();
+      firstDay = now.subtract(Duration(days: now.weekday - 1));
+      lastDay = firstDay.add(const Duration(days: 6));
+    } else if (widget.rangeType == "month") {
+      final now = DateTime.now();
+      firstDay = DateTime(now.year, now.month, 1);
+      lastDay = DateTime(now.year, now.month + 1, 0);
+    } else {
+      firstDay = DateTime(2020, 1, 1);
+    }
+
+    final DateTimeRange? picked = await showDateRangePicker(
+      context: context,
+      firstDate: firstDay,
+      lastDate: lastDay,
+      locale: const Locale('vi'),
+      initialDateRange: (_fromDate != null && _toDate != null)
+          ? DateTimeRange(start: _fromDate!, end: _toDate!)
+          : null,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppColors.green_22C35D,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black87,
+              secondary: AppColors.green_22C35D.withValues(
+                alpha: 0.2,
+              ), // highlight range
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.black,
+                textStyle: const TextStyle(
+                  fontFamily: "Inter_medium",
+                  color: AppColors.black,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+            cardColor: Colors.white,
+            textTheme: const TextTheme(
+              titleLarge: TextStyle(
+                color: Colors.black,
+                fontFamily: "Inter_medium",
+                fontSize: 18,
+              ),
+              bodyLarge: TextStyle(
+                color: Colors.black,
+                fontFamily: "Inter_medium",
+              ),
+              bodyMedium: TextStyle(color: Colors.black),
+            ),
+            highlightColor: AppColors.blue_127AE2.withValues(alpha: 0.2),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _fromDate = picked.start;
+        _toDate = picked.end;
+        _fetchHistory();
+      });
+    }
   }
 
   @override
@@ -65,7 +158,7 @@ class _HistoryActivityState extends State<HistoryActivity> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context),
+            _buildHeader(),
             Expanded(child: _buildHistoryList()),
           ],
         ),
@@ -73,7 +166,7 @@ class _HistoryActivityState extends State<HistoryActivity> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -90,7 +183,11 @@ class _HistoryActivityState extends State<HistoryActivity> {
             borderRadius: BorderRadius.circular(24),
             child: const Padding(
               padding: EdgeInsets.all(8.0),
-              child: Icon(Icons.arrow_back, color: AppColors.blue_344256, size: 20,),
+              child: Icon(
+                Icons.arrow_back,
+                color: AppColors.blue_344256,
+                size: 20,
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -102,6 +199,15 @@ class _HistoryActivityState extends State<HistoryActivity> {
               color: AppColors.blue_344256,
             ),
           ),
+          const Spacer(),
+          if (widget.rangeType != "day")
+            IconButton(
+              icon: const Icon(
+                Icons.calendar_today,
+                color: AppColors.blue_344256,
+              ),
+              onPressed: () => _showDateRangeDialog(context),
+            ),
         ],
       ),
     );
@@ -113,34 +219,8 @@ class _HistoryActivityState extends State<HistoryActivity> {
       builder: (context, _) {
         final histories = viewModel.histories;
 
-        if (viewModel.isLoading && histories.isEmpty) {
+        if (viewModel.isLoading) {
           return _buildShimmer();
-        }
-
-        if (histories.isEmpty) {
-          return  Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 30),
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: Image.asset(
-                      "assets/images/img_no_data.webp",
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  AppStrings.no_order_data,
-                  style: TextStyle(color: Colors.black54, fontSize: 14),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          );
         }
 
         return RefreshIndicator(
@@ -152,7 +232,7 @@ class _HistoryActivityState extends State<HistoryActivity> {
           child: ListView.builder(
             controller: _scrollController,
             padding: const EdgeInsets.all(16),
-            itemCount: histories.length + (viewModel.hasMoreData ? 1 : 0),
+            itemCount: histories.length,
             itemBuilder: (context, index) {
               if (index >= histories.length) {
                 return const Padding(
@@ -165,8 +245,7 @@ class _HistoryActivityState extends State<HistoryActivity> {
                   ),
                 );
               }
-              final item = histories[index];
-              return _buildOrderCard(item);
+              return _buildOrderCard(histories[index]);
             },
           ),
         );
@@ -189,12 +268,12 @@ class _HistoryActivityState extends State<HistoryActivity> {
       },
       child: Card(
         color: AppColors.white,
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: const EdgeInsets.only(bottom: 12),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           side: BorderSide(color: AppColors.white_E2E8F0),
         ),
-        elevation: 0.5,
+        elevation: 0,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 19),
           child: Column(
@@ -231,12 +310,15 @@ class _HistoryActivityState extends State<HistoryActivity> {
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: order.status.color,
+                      color:
+                          order.order.lastShipping?.status.color ??
+                          AppColors.green_22C35D,
                       borderRadius: BorderRadius.circular(9999),
                     ),
                     child: Text(
-                      order.status.name,
-                      style: TextStyle(
+                      order.order.lastShipping?.status.name ??
+                          AppStrings.delivered,
+                      style: const TextStyle(
                         color: AppColors.white,
                         fontSize: 12,
                         fontFamily: "Inter_regular",
@@ -246,31 +328,32 @@ class _HistoryActivityState extends State<HistoryActivity> {
                 ],
               ),
               const SizedBox(height: 8),
-
-              //Date
-              // Row(
-              //   children: [
-              //     const Icon(
-              //       Icons.calendar_today_outlined,
-              //       size: 14,
-              //       color: Colors.grey,
-              //     ),
-              //     const SizedBox(width: 4),
-              //     Text(
-              //       "123123",
-              //       style: const TextStyle(fontSize: 12, color: Colors.grey),
-              //     ),
-              //   ],
-              // ),
-              // const SizedBox(height: 8),
-
-              //Total
+              // Date
+              Row(
+                children: [
+                  const Icon(
+                    Icons.calendar_today_outlined,
+                    size: 14,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    order.createdAt,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.gray_7B899D,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              // Total
               Row(
                 children: [
                   SvgPicture.asset(
                     "assets/images/ic_earning.svg",
                     colorFilter: ColorFilter.mode(
-                      AppColors.blue_344256,
+                      AppColors.green_22C35D,
                       BlendMode.srcIn,
                     ),
                     width: 16,
@@ -280,20 +363,20 @@ class _HistoryActivityState extends State<HistoryActivity> {
                   Text(
                     "${NumberFormat.decimalPattern('vi').format(order.order.shippingCost)}đ",
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontFamily: "Inter_medium",
-                      color: AppColors.blue_344256,
+                      color: AppColors.green_22C35D,
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 4),
-
-              //Items
+              // Items
               Row(
                 children: [
+                  const SizedBox(width: 4),
                   Text(
-                    "${order.products.length} ${AppStrings.items}",
+                    "${order.order.products.length} ${AppStrings.items}",
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.gray_7B899D,
@@ -313,13 +396,12 @@ class _HistoryActivityState extends State<HistoryActivity> {
       padding: const EdgeInsets.all(16),
       itemCount: 10,
       itemBuilder: (_, __) => Card(
-        color: AppColors.white,
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: const EdgeInsets.only(bottom: 12),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           side: BorderSide(color: AppColors.white_E2E8F0),
         ),
-        elevation: 1,
+        elevation: 0,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 19),
           child: Shimmer.fromColors(
@@ -336,10 +418,7 @@ class _HistoryActivityState extends State<HistoryActivity> {
                         Container(
                           width: 20,
                           height: 20,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade400,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
+                          color: Colors.grey.shade400,
                         ),
                         const SizedBox(width: 8),
                         Container(
@@ -352,34 +431,56 @@ class _HistoryActivityState extends State<HistoryActivity> {
                     Container(
                       width: 60,
                       height: 20,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade400,
-                        borderRadius: BorderRadius.circular(9999),
-                      ),
+                      color: Colors.grey.shade400,
                     ),
                   ],
                 ),
                 const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Container(
-                      width: 16,
-                      height: 16,
-                      color: Colors.grey.shade400,
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 110,
-                      height: 14,
-                      color: Colors.grey.shade400,
-                    ),
-                  ],
+                Container(
+                  width: double.infinity,
+                  height: 14,
+                  color: Colors.grey.shade400,
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  height: 14,
+                  color: Colors.grey.shade400,
                 ),
                 const SizedBox(height: 8),
                 Container(width: 70, height: 12, color: Colors.grey.shade400),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyView() {
+    return Center(
+      child: Padding(
+        padding: EdgeInsetsGeometry.all(45),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 30),
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: Image.asset(
+                  "assets/images/img_no_data.webp",
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              AppStrings.no_order_data,
+              style: TextStyle(color: Colors.black54, fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );

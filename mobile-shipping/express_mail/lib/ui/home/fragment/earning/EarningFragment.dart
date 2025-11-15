@@ -1,13 +1,18 @@
-import 'package:express_mail/data/enum/ShippingStatus.dart';
-import 'package:express_mail/data/model/LoginResponse.dart';
-import 'package:express_mail/ui/history/HistoryActivity.dart';
-import 'package:express_mail/ui/home/fragment/earning/EarningViewModel.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:express_mail/resources/colors.dart';
-import 'package:express_mail/resources/strings.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shimmer/shimmer.dart';
+
+import 'package:express_mail/data/model/LoginResponse.dart';
+import 'package:express_mail/data/enum/ShippingStatus.dart';
+import 'package:express_mail/ui/home/fragment/earning/EarningViewModel.dart';
+import 'package:express_mail/ui/history/HistoryActivity.dart';
+import 'package:express_mail/resources/colors.dart';
+import 'package:express_mail/resources/strings.dart';
+import 'package:path_provider/path_provider.dart';
 
 class EarningFragment extends StatefulWidget {
   final LoginResponse loginResponse;
@@ -42,6 +47,126 @@ class _EarningFragmentState extends State<EarningFragment> {
     super.dispose();
   }
 
+  Future<bool> _requestStoragePermission() async {
+    if (Platform.isAndroid) {
+      final sdk = (await _getAndroidSdkInt()) ?? 0;
+
+      if (sdk >= 30) {
+        return await Permission.manageExternalStorage.isGranted;
+      } else {
+        return await Permission.storage.isGranted;
+      }
+    }
+    if (Platform.isIOS) {
+      final status = await Permission.photosAddOnly.status;
+      if (!status.isGranted) {
+        final result = await Permission.photosAddOnly.request();
+        return result.isGranted;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  Future<int?> _getAndroidSdkInt() async {
+    try {
+      final String sdkStr = await MethodChannel(
+        'android_sdk',
+      ).invokeMethod('getSdkInt');
+      return int.tryParse(sdkStr);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String?> _saveFileToDownloads(File file, String fileName) async {
+    try {
+      Directory directory;
+      if (Platform.isAndroid) {
+        final sdk = (await _getAndroidSdkInt()) ?? 0;
+        if (sdk >= 30) {
+          directory = Directory('/storage/emulated/0/Download');
+        } else {
+          directory = (await getExternalStorageDirectory())!;
+        }
+      } else {
+        directory = await getApplicationDocumentsDirectory();
+      }
+      final path = '${directory.path}/$fileName';
+      await file.copy(path);
+      return path;
+    } catch (e) {
+      debugPrint("Error saving file: $e");
+      return null;
+    }
+  }
+
+  Future<void> _openAllFilesAccessSettings() async {
+    if (Platform.isAndroid) {
+      const platform = MethodChannel('android_sdk');
+      try {
+        await platform.invokeMethod('openAllFilesAccessSettings');
+      } on PlatformException catch (e) {
+        debugPrint("Failed to open settings: $e");
+      }
+    }
+  }
+
+  void _showPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppColors.white,
+          title: const Text(
+            AppStrings.request_access,
+            style: TextStyle(
+              fontFamily: "Inter_bold",
+              fontSize: 16,
+              color: AppColors.black,
+            ),
+          ),
+          content: const Text(
+            AppStrings
+                .the_application_needs_storage_access_permission_to_save_files,
+            style: TextStyle(
+              fontFamily: "Inter_medium",
+              fontSize: 14,
+              color: AppColors.black,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                AppStrings.cancel,
+                style: TextStyle(
+                  fontFamily: "Inter_regular",
+                  fontSize: 14,
+                  color: AppColors.black,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _openAllFilesAccessSettings();
+              },
+              child: Text(
+                AppStrings.ok,
+                style: TextStyle(
+                  fontFamily: "Inter_regular",
+                  fontSize: 14,
+                  color: AppColors.blue_4591FF,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -60,7 +185,6 @@ class _EarningFragmentState extends State<EarningFragment> {
                       horizontal: 16,
                       vertical: 16,
                     ),
-                    // 🔹 padding trong Column
                     child: _buildTransactions(),
                   ),
                 ),
@@ -72,7 +196,6 @@ class _EarningFragmentState extends State<EarningFragment> {
     );
   }
 
-  ///HEADER
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -112,7 +235,48 @@ class _EarningFragmentState extends State<EarningFragment> {
                 ],
               ),
               ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () async {
+                  final granted = await _requestStoragePermission();
+                  if (!granted) {
+                    _showPermissionDialog();
+                    return;
+                  }
+
+                  final file = await viewModel.exportToExcel();
+                  if (file != null) {
+                    final path = await _saveFileToDownloads(
+                      file,
+                      'Earning.xlsx',
+                    );
+                    if (path != null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            AppStrings.save_the_file_successfully,
+                            style: TextStyle(
+                              fontFamily: "Inter_regular",
+                              fontSize: 14,
+                              color: AppColors.white,
+                            ),
+                          ),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            AppStrings.unable_to_save_file,
+                            style: TextStyle(
+                              fontFamily: "Inter_regular",
+                              fontSize: 14,
+                              color: AppColors.white,
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                  }
+                },
                 icon: const Icon(Icons.download_outlined, size: 20),
                 label: const Text(
                   AppStrings.export,
@@ -134,11 +298,11 @@ class _EarningFragmentState extends State<EarningFragment> {
               ),
             ],
           ),
+
           const SizedBox(height: 8),
 
           // Tabs
           Row(
-            mainAxisAlignment: MainAxisAlignment.start,
             children: [AppStrings.today, AppStrings.week, AppStrings.month].map(
               (label) {
                 final isSelected = selectedTab == label;
@@ -166,9 +330,11 @@ class _EarningFragmentState extends State<EarningFragment> {
                     ),
                     onPressed: () {
                       setState(() => selectedTab = label);
-                      String rangeType = "day";
-                      if (label == AppStrings.week) rangeType = "week";
-                      if (label == AppStrings.month) rangeType = "month";
+                      String rangeType = label == AppStrings.week
+                          ? "week"
+                          : label == AppStrings.month
+                          ? "month"
+                          : "day";
                       _fetchData(rangeType);
                     },
                     child: Text(
@@ -192,7 +358,6 @@ class _EarningFragmentState extends State<EarningFragment> {
               children: [
                 viewModel.isLoading
                     ? SizedBox(
-                        key: const ValueKey("loading"),
                         height: 31,
                         child: Lottie.asset(
                           'assets/animation/ani_load.json',
@@ -201,7 +366,6 @@ class _EarningFragmentState extends State<EarningFragment> {
                         ),
                       )
                     : Text(
-                        key: ValueKey("content"),
                         viewModel.totalIncome > 0
                             ? "${NumberFormat.decimalPattern('vi').format(viewModel.totalIncome)}đ"
                             : "0đ",
@@ -214,7 +378,6 @@ class _EarningFragmentState extends State<EarningFragment> {
                 const SizedBox(height: 6),
                 viewModel.isLoading
                     ? SizedBox(
-                        key: const ValueKey("loading order"),
                         height: 20,
                         child: Lottie.asset(
                           'assets/animation/ani_load.json',
@@ -223,7 +386,6 @@ class _EarningFragmentState extends State<EarningFragment> {
                         ),
                       )
                     : Text(
-                        key: ValueKey("content order"),
                         "${viewModel.totalOrders} ${AppStrings.delivery_order}",
                         style: const TextStyle(
                           color: AppColors.white_80,
@@ -248,9 +410,11 @@ class _EarningFragmentState extends State<EarningFragment> {
       strokeWidth: 2,
       displacement: 5,
       onRefresh: () async {
-        String rangeType = "day";
-        if (selectedTab == AppStrings.week) rangeType = "week";
-        if (selectedTab == AppStrings.month) rangeType = "month";
+        String rangeType = selectedTab == AppStrings.week
+            ? "week"
+            : selectedTab == AppStrings.month
+            ? "month"
+            : "day";
         _fetchData(rangeType);
       },
       child: Container(
@@ -260,7 +424,7 @@ class _EarningFragmentState extends State<EarningFragment> {
           border: Border.all(color: AppColors.gray_DADFE7, width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: Colors.black.withOpacity(0.1),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -268,165 +432,140 @@ class _EarningFragmentState extends State<EarningFragment> {
         ),
         padding: const EdgeInsets.all(25),
         child: viewModel.isLoading
-            ? Shimmer.fromColors(
-                baseColor: AppColors.gray_DADFE7,
-                highlightColor: AppColors.white_F8F7FC,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(width: 30, height: 30, color: Colors.white),
-                        const SizedBox(width: 8),
-                        Container(width: 220, height: 30, color: Colors.white),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: ListView.separated(
-                        itemCount: 5,
-                        separatorBuilder: (_, __) => const Divider(height: 8),
-                        itemBuilder: (_, __) => _transactionItemShimmer(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  ],
-                ),
-              )
+            ? _buildShimmerList()
             : finishOrders.isEmpty
-            ? ListView(
-                children: [
-                  Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 30),
-                          child: AspectRatio(
-                            aspectRatio: 1,
-                            child: Image.asset(
-                              "assets/images/img_no_data.webp",
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          AppStrings.no_order_data,
-                          style: TextStyle(color: Colors.black54, fontSize: 14),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.history_outlined,
-                        size: 30,
-                        color: AppColors.blue_127AE2,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        AppStrings.history_delivery,
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontFamily: "Inter_bold",
-                          color: AppColors.blue_344256,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // List
-                  Expanded(
-                    child: ListView.separated(
-                      itemCount: finishOrders.length,
-                      separatorBuilder: (_, __) => const Divider(height: 8),
-                      itemBuilder: (context, index) {
-                        final order = finishOrders[index];
-                        return _transactionItem(
-                          "#${order.order.code}",
-                          "+${NumberFormat.decimalPattern('vi').format(order.order.shippingCost)}đ",
-                          AppStrings.finish,
-                          ShippingStatus.FINISHED.color,
-                        );
-                      },
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // View All Button
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextButton(
-                          style: TextButton.styleFrom(
-                            backgroundColor: AppColors.white_F8F7FC,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              side: BorderSide(
-                                color: AppColors.gray_EDEFF3,
-                                width: 1,
-                              ),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 11),
-                          ),
-                          onPressed: () {
-                            String rangeType = "day";
-                            if (selectedTab == AppStrings.week) {
-                              rangeType = "week";
-                            }
-                            if (selectedTab == AppStrings.month) {
-                              rangeType = "month";
-                            }
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => HistoryActivity(
-                                  loginResponse: widget.loginResponse,
-                                  rangeType: rangeType,
-                                ),
-                              ),
-                            );
-                          },
-                          child: const Text(
-                            AppStrings.view_all,
-                            style: TextStyle(
-                              fontFamily: "Inter_regular",
-                              fontSize: 13,
-                              color: AppColors.blue_344256,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+            ? _buildNoData()
+            : _buildOrderList(finishOrders),
       ),
     );
   }
 
-  ///SHIMMER ITEM
+  Widget _buildShimmerList() {
+    return Shimmer.fromColors(
+      baseColor: AppColors.gray_DADFE7,
+      highlightColor: AppColors.white_F8F7FC,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: List.generate(5, (_) => _transactionItemShimmer()),
+      ),
+    );
+  }
+
+  Widget _buildNoData() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 30),
+            child: AspectRatio(
+              aspectRatio: 1,
+              child: Image.asset(
+                "assets/images/img_no_data.webp",
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            AppStrings.no_order_data,
+            style: TextStyle(color: Colors.black54, fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrderList(List finishOrders) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.history_outlined,
+              size: 30,
+              color: AppColors.blue_127AE2,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              AppStrings.history_delivery,
+              style: TextStyle(
+                fontSize: 24,
+                fontFamily: "Inter_bold",
+                color: AppColors.blue_344256,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: ListView.separated(
+            itemCount: finishOrders.length,
+            separatorBuilder: (_, __) => const Divider(height: 8),
+            itemBuilder: (_, index) {
+              final order = finishOrders[index];
+              return _transactionItem(
+                "#${order.order.code}",
+                "+${NumberFormat.decimalPattern('vi').format(order.order.shippingCost)}đ",
+                order.order.lastShipping?.status.name ??
+                    ShippingStatus.FINISHED.name,
+                order.createdAt,
+                order.order.lastShipping?.status.color ??
+                    ShippingStatus.FINISHED.color,
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  backgroundColor: AppColors.white_F8F7FC,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: BorderSide(color: AppColors.gray_EDEFF3, width: 1),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 11),
+                ),
+                onPressed: () {
+                  String rangeType = selectedTab == AppStrings.week
+                      ? "week"
+                      : selectedTab == AppStrings.month
+                      ? "month"
+                      : "day";
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => HistoryActivity(
+                        loginResponse: widget.loginResponse,
+                        rangeType: rangeType,
+                      ),
+                    ),
+                  );
+                },
+                child: const Text(
+                  AppStrings.view_all,
+                  style: TextStyle(
+                    fontFamily: "Inter_regular",
+                    fontSize: 13,
+                    color: AppColors.blue_344256,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _transactionItemShimmer() {
     return Padding(
-      padding: const EdgeInsets.only(top: 20.0, bottom: 24.0),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -465,11 +604,11 @@ class _EarningFragmentState extends State<EarningFragment> {
     );
   }
 
-  ///TRANSACTION ITEM
   Widget _transactionItem(
     String title,
     String amount,
     String status,
+    String date,
     Color color,
   ) {
     return Padding(
@@ -484,18 +623,32 @@ class _EarningFragmentState extends State<EarningFragment> {
             color: AppColors.blue_344256,
           ),
         ),
-        subtitle: Text(
-          status,
-          style: TextStyle(
-            color: color,
-            fontSize: 11,
-            fontFamily: "Inter_bold",
-          ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              status,
+              style: TextStyle(
+                color: color,
+                fontSize: 12,
+                fontFamily: "Inter_bold",
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              date,
+              style: TextStyle(
+                color: AppColors.gray_7B899D,
+                fontSize: 11,
+                fontFamily: "Inter_regular",
+              ),
+            ),
+          ],
         ),
         trailing: Text(
           amount,
           style: TextStyle(
-            color: color,
+            color: AppColors.green_22C35D,
             fontFamily: "Inter_bold",
             fontSize: 14,
           ),

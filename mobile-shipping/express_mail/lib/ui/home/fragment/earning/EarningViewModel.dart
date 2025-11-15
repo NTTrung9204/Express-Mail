@@ -1,10 +1,14 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:excel/excel.dart';
 import 'package:express_mail/constants/Constants.dart';
+import 'package:express_mail/resources/strings.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:express_mail/data/model/DetailOrder.dart';
 import 'package:express_mail/data/model/LoginResponse.dart';
+import 'package:path_provider/path_provider.dart';
 
 class EarningViewModel extends ChangeNotifier {
   bool isLoading = false;
@@ -90,5 +94,45 @@ class EarningViewModel extends ChangeNotifier {
 
   String formatCurrency(double value) {
     return "${NumberFormat.decimalPattern('vi').format(value)}đ";
+  }
+
+  Future<File?> exportToExcel() async {
+    if (finishOrders.isEmpty) return null;
+
+    try {
+      var excel = Excel.createExcel();
+      final sheet = excel[AppStrings.order_history];
+      sheet.appendRow([
+        TextCellValue(AppStrings.order_code),
+        TextCellValue(AppStrings.status),
+        TextCellValue(AppStrings.completion_date),
+        TextCellValue(AppStrings.shipping_fee),
+        TextCellValue(AppStrings.product_number),
+      ]);
+
+      for (var order in finishOrders) {
+        sheet.appendRow([
+          TextCellValue(order.order.code.toString()),
+          TextCellValue(order.order.lastShipping?.status.name ?? AppStrings.finish),
+          TextCellValue(order.createdAt),
+          DoubleCellValue(order.order.shippingCost.toDouble()),
+          IntCellValue(order.order.products.length),
+        ]);
+      }
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File("${directory.path}/earning_${DateTime
+          .now()
+          .millisecondsSinceEpoch}.xlsx");
+
+      final fileBytes = excel.encode();
+      if (fileBytes != null) {
+        await file.writeAsBytes(fileBytes, flush: true);
+        return file;
+      }
+      return null;
+    } catch (e) {
+      debugPrint("Export Excel error: $e");
+      return null;
+    }
   }
 }

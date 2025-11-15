@@ -1,5 +1,8 @@
 import 'package:express_mail/data/enum/OrderStatus.dart';
 import 'package:express_mail/data/enum/ShippingStatus.dart';
+import 'package:express_mail/data/model/Product.dart';
+import 'package:express_mail/data/model/Shipping.dart';
+import 'package:express_mail/data/model/ShopOwner.dart';
 
 class Order {
   final int id;
@@ -19,6 +22,9 @@ class Order {
   final double shippingCostPayPer;
   final ShippingStatus shippingStatus;
   final OrderStatus orderStatus;
+  final ShopOwner shopOwner;
+  final List<Product> products;
+  final Shipping? lastShipping;
 
   Order({
     required this.id,
@@ -38,9 +44,22 @@ class Order {
     required this.shippingCostPayPer,
     required this.shippingStatus,
     required this.orderStatus,
+    required this.shopOwner,
+    required this.products,
+    required this.lastShipping,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
+    List<dynamic> shipListRaw =
+        json['shipping'] ?? [];
+    Shipping? lastShipping = _extractLastShipping(shipListRaw);
+
+    List<Product> products = (json['products'] as List<dynamic>? ?? [])
+        .map((e) => Product.fromJson(e))
+        .toList();
+
+    ShopOwner shopOwner = ShopOwner.fromJson(json['shopProfile'] ?? {});
+
     return Order(
       id: json['id'] ?? 0,
       code: json['code'] ?? '',
@@ -63,6 +82,9 @@ class Order {
       orderStatus: OrderStatus.values.firstWhere(
               (e) => e.toString().split('.').last == json['order_status'],
           orElse: () => OrderStatus.PENDING),
+      shopOwner: shopOwner,
+      products: products,
+      lastShipping: lastShipping,
     );
   }
 
@@ -85,6 +107,20 @@ class Order {
       'shipping_cost_payper': shippingCostPayPer,
       'shipping_status': shippingStatus.toString().split('.').last,
       'order_status': orderStatus.toString().split('.').last,
+      'shopProfile': shopOwner.toJson(),
+      'products': products.map((e) => e.toJson()).toList(),
+      'lastShipping': lastShipping?.toJson(),
     };
+  }
+  static Shipping? _extractLastShipping(List<dynamic> raw) {
+    if (raw.isEmpty) return null;
+
+    List<Shipping> ships = raw.map((e) => Shipping.fromJson(e)).toList();
+
+    if (ships.length >= 2) {
+      return ships[ships.length - 2];
+    } else {
+      return ships.last;
+    }
   }
 }
