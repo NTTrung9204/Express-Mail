@@ -46,6 +46,6 @@ class CalculateShippingFeeResponseSerializer(serializers.Serializer):
     Serializer for calculating shipping fee response.
     """
 
-    total_fee = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
+    total_fee = serializers.DecimalField(max_digits=11, decimal_places=2, min_value=0)
     shipping_rate_id = serializers.IntegerField()
-    distance_km = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
+    distance_km = serializers.DecimalField(max_digits=20, decimal_places=9)
