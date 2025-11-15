@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsOptional, IsDateString, Min } from 'class-validator';
+import {
+  IsInt,
+  IsOptional,
+  IsDateString,
+  Min,
+  IsString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 
@@ -9,6 +15,11 @@ export class GetRoutePlansDto extends PaginationDto {
   @Min(1)
   @Type(() => Number)
   post_office_id: number;
+
+  @ApiPropertyOptional({ description: 'Mode of the route', example: 'pickup' })
+  @IsOptional()
+  @IsString()
+  mode?: string;
 
   @ApiPropertyOptional({
     description: 'Start date (ISO 8601 format)',

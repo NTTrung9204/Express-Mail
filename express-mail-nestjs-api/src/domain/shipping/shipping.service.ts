@@ -71,6 +71,19 @@ export class ShippingService {
       take: limit,
     });
 
+    // Enrich orders with shop profiles
+    const orders = items.map((item) => item.order).filter((o) => !!o);
+    const enrichedOrders =
+      await this.orderService.enrichOrdersWithShopProfiles(orders);
+    const ordersMap = new Map(enrichedOrders.map((o) => [o.id, o]));
+
+    // Attach enriched orders back to shipping items
+    items.forEach((item) => {
+      if (item.order?.id) {
+        item.order = ordersMap.get(item.order.id) || item.order;
+      }
+    });
+
     return new PaginatedResponseDto<Shipping>(items, total, page, limit);
   }
 
@@ -83,6 +96,14 @@ export class ShippingService {
     if (!shipping) {
       throw new NotFoundException(`Shipping with ID ${id} not found`);
     }
+
+    // Enrich order with shop profile
+    if (shipping.order) {
+      const enrichedOrders =
+        await this.orderService.enrichOrdersWithShopProfiles([shipping.order]);
+      shipping.order = enrichedOrders[0];
+    }
+
     return shipping;
   }
 
@@ -214,8 +235,12 @@ export class ShippingService {
     const orders = await this.orderService.findManyByIds(orderIds);
     console.log('orders', orders);
 
+    // Enrich orders with shop profiles
+    const enrichedOrders =
+      await this.orderService.enrichOrdersWithShopProfiles(orders);
+
     // Map orders back to shippings
-    const ordersMap = new Map(orders.map((order) => [order.id, order]));
+    const ordersMap = new Map(enrichedOrders.map((order) => [order.id, order]));
     const items = transformedShippings.map((shipping) => {
       const order = ordersMap.get(shipping.order['id']);
       if (order) {

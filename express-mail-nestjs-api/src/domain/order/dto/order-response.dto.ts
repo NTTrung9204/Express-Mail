@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OrderStatus } from '../enums/order-status.enum';
 import { ShippingStatus } from '../enums/shipping-status.enum';
 import { ProductResponseDto } from 'src/domain/product/dto/product-response.dto';
-import { ShippingResponseDto } from 'src/domain/shipping/dto/shipping-response.dto';
+import { ShopProfileDto } from 'src/domain/shop/dto/shop-profile.dto';
 
 export class OrderTransitionResponseDto {
   @ApiProperty({ description: 'Transition ID', example: 1 })
@@ -164,10 +164,9 @@ export class OrderResponseDto {
   })
   orderPostOffices: OrderPostOfficeResponseDto[];
 
-  @ApiProperty({
-    description: 'Shipping information',
-    type: [ShippingResponseDto],
+  @ApiPropertyOptional({
+    description: 'Shop profile information',
+    type: ShopProfileDto,
   })
-  @ApiProperty({ type: () => [ShippingResponseDto] })
-  shipping: ShippingResponseDto[];
+  shopProfile?: ShopProfileDto;
 }

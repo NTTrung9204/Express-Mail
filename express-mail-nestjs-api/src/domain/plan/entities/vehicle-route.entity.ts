@@ -9,6 +9,8 @@ import {
 } from 'typeorm';
 import { RoutePlan } from './route-plan.entity';
 import { RouteStep } from './route-step.entity';
+import { IsEnum } from 'class-validator';
+import { RouteMode } from '../dto/calculate-route.dto';
 
 @Entity('vehicle_route')
 export class VehicleRoute {
@@ -32,6 +34,10 @@ export class VehicleRoute {
 
   @Column({ type: 'longtext' })
   geometry: string;
+
+  @Column({ name: 'mode' })
+  @IsEnum(RouteMode)
+  mode: RouteMode;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

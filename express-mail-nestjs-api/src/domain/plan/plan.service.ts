@@ -147,6 +147,7 @@ export class PlanService {
           duration: route.duration || 0,
           serviceTime: route.service || 0,
           geometry: route.geometry || '',
+          mode: dto.mode,
         });
 
         const savedVehicleRoute =
@@ -243,6 +244,10 @@ export class PlanService {
     } else if (dto.to) {
       queryBuilder.andWhere('routePlan.createdAt <= :to', {
         to: new Date(dto.to),
+      });
+    } else if (dto.mode) {
+      queryBuilder.andWhere('vehicleRoute.mode = :mode', {
+        mode: dto.mode,
       });
     }
 
@@ -397,6 +402,7 @@ export class PlanService {
       where: {
         vehicleId: dto.shipper_id,
         createdAt: Between(new Date(dto.start_date), new Date(dto.end_date)),
+        mode: dto.mode,
       },
       relations: ['routeSteps'],
     });
@@ -411,9 +417,13 @@ export class PlanService {
     );
     const orders = await this.orderService.findManyByIds(validOrderIds);
 
+    // Enrich orders with shop profiles
+    const enrichedOrders =
+      await this.orderService.enrichOrdersWithShopProfiles(orders);
+
     const shippingPlan: ResShippingPlanDto[] = vehicleRoutes.map(
       (vehicleRoute): ResShippingPlanDto => {
-        const filteredOrders = orders.filter((order) =>
+        const filteredOrders = enrichedOrders.filter((order) =>
           vehicleRoute.routeSteps?.some(
             (routeStep) => routeStep.jobId === order.id,
           ),
@@ -429,8 +439,9 @@ export class PlanService {
             )?.stepOrder || 0),
         );
         return {
-          orders: filteredOrders,
+          orders: filteredOrders as any,
           geometry: vehicleRoute.geometry,
+          mode: vehicleRoute.mode,
         };
       },
     );

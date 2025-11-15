@@ -78,6 +78,12 @@ export class CreateOrderDto {
   @MaxLength(100)
   receiver_coordinate: string;
 
+  @ApiProperty({ description: 'Receiver district', example: 'District 1' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  receiver_district: string;
+
   @ApiProperty({ description: 'Package length in cm', example: 30 })
   @IsNumber()
   @Min(0.1)

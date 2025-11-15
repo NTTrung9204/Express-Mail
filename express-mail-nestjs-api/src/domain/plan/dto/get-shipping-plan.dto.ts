@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsDateString,
+  IsOptional,
+} from 'class-validator';
+import { RouteMode } from './calculate-route.dto';
 
 export class GetShippingPlanDto {
   @ApiProperty({
@@ -9,6 +15,14 @@ export class GetShippingPlanDto {
   @IsString()
   @IsNotEmpty()
   shipper_id: string;
+
+  @ApiProperty({
+    description: 'Mode of the route',
+    example: 'pickup',
+  })
+  @IsString()
+  @IsOptional()
+  mode: RouteMode;
 
   @ApiProperty({
     description: 'Start date (ISO 8601 format)',

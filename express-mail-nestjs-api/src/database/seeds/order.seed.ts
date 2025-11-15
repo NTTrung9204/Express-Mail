@@ -78,6 +78,7 @@ export default class OrderSeeder implements Seeder {
           receiver_ward_commune: faker.location.street(),
           receiver_address: faker.location.streetAddress(),
           receiver_coordinate: `${lat},${lng}`,
+          receiver_district: faker.location.county(),
           length,
           width,
           height,

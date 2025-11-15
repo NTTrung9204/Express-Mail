@@ -27,6 +27,7 @@ import { TransitionOrderDto } from './dto/transition-order.dto';
 import { OrderPostOfficeDto } from './dto/order-post-office.dto';
 import { Shipping } from '../shipping/entities/shipping.entity';
 import { OrderResponseDto } from './dto/order-response.dto';
+import { ShopProfileDto } from '../shop/dto/shop-profile.dto';
 
 @Injectable()
 export class OrderService {
@@ -45,6 +46,7 @@ export class OrderService {
   ) {}
 
   transformToOrderResponseDto(order: Order): OrderResponseDto {
+    console.log('fetched shop profile for order', (order as any).shopProfile);
     return {
       ...order,
       shipping: order.shipping?.map((ship: Shipping) => ({
@@ -56,6 +58,7 @@ export class OrderService {
         updatedAt: ship.updatedAt,
       })),
       deleted_at: order.deleted_at ?? undefined,
+      shopProfile: (order as any).shopProfile,
     } as OrderResponseDto;
   }
 
@@ -117,6 +120,7 @@ export class OrderService {
         receiver_ward_commune: createOrderDto.receiver_ward_commune,
         receiver_address: createOrderDto.receiver_address,
         receiver_coordinate: createOrderDto.receiver_coordinate,
+        receiver_district: createOrderDto.receiver_district,
         length: createOrderDto.length,
         width: createOrderDto.width,
         height: createOrderDto.height,
@@ -204,7 +208,10 @@ export class OrderService {
 
     const [items, total] = await queryBuilder.getManyAndCount();
 
-    return new PaginatedResponseDto<Order>(items, total, page, limit);
+    // Enrich orders with shop profiles
+    const enrichedItems = await this.enrichOrdersWithShopProfiles(items);
+
+    return new PaginatedResponseDto<Order>(enrichedItems, total, page, limit);
   }
 
   async findOne(id: number): Promise<Order> {
@@ -218,7 +225,9 @@ export class OrderService {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
 
-    return order;
+    // Enrich with shop profile
+    const enriched = await this.enrichOrdersWithShopProfiles([order]);
+    return enriched[0];
   }
 
   async findManyByIds(ids: number[]): Promise<Order[]> {
@@ -229,6 +238,59 @@ export class OrderService {
       relations: ['products', 'transitions', 'orderPostOffices', 'shipping'],
       withDeleted: false,
     });
+  }
+
+  /**
+   * Enrich orders with shop profile information from Django API
+   */
+  async enrichOrdersWithShopProfiles(orders: Order[]): Promise<Order[]> {
+    if (!orders || orders.length === 0) return [];
+
+    try {
+      // Get unique shop IDs
+      const shopIds = Array.from(
+        new Set(
+          orders
+            .map((o) => o.shopId)
+            .filter((id) => id !== undefined && id !== null),
+        ),
+      );
+
+      console.log('shopIds', shopIds);
+
+      if (shopIds.length === 0) return orders;
+
+      // Fetch shop profiles in parallel
+      const profiles = await Promise.all(
+        shopIds.map((shopId) =>
+          this.djangoService.fetchShopProfile(shopId).catch((err) => {
+            console.warn(`Failed to fetch shop profile for ${shopId}:`, err);
+            return null;
+          }),
+        ),
+      );
+
+      console.log('profiles', profiles);
+
+      // Map profiles by shop ID
+      const profileMap = new Map<string, ShopProfileDto>();
+      shopIds.forEach((id, idx) => {
+        if (profiles[idx]) {
+          profileMap.set(id, profiles[idx]);
+        }
+      });
+
+      console.log('profileMap', profileMap);
+
+      // Attach shop profile to each order
+      return orders.map((order) => ({
+        ...order,
+        shopProfile: profileMap.get(order.shopId) || null,
+      }));
+    } catch (err) {
+      console.warn('Failed to enrich orders with shop profiles:', err);
+      return orders;
+    }
   }
 
   async findByCode(code: string): Promise<Order> {
@@ -242,31 +304,42 @@ export class OrderService {
       throw new NotFoundException(`Order with code ${code} not found`);
     }
 
-    return order;
+    // Enrich with shop profile
+    const enriched = await this.enrichOrdersWithShopProfiles([order]);
+    return enriched[0];
   }
 
   async findByShopId(shopId: string): Promise<Order[]> {
-    return await this.orderRepository.find({
+    const orders = await this.orderRepository.find({
       where: { shopId },
       relations: ['products', 'transitions', 'orderPostOffices', 'shipping'],
       withDeleted: false,
     });
+
+    // Enrich with shop profiles
+    return this.enrichOrdersWithShopProfiles(orders);
   }
 
   async findByOrderStatus(orderStatus: string): Promise<Order[]> {
-    return await this.orderRepository.find({
+    const orders = await this.orderRepository.find({
       where: { order_status: orderStatus as any },
       relations: ['products', 'transitions', 'orderPostOffices', 'shipping'],
       withDeleted: false,
     });
+
+    // Enrich with shop profiles
+    return this.enrichOrdersWithShopProfiles(orders);
   }
 
   async findByShippingStatus(shippingStatus: string): Promise<Order[]> {
-    return await this.orderRepository.find({
+    const orders = await this.orderRepository.find({
       where: { shipping_status: shippingStatus as any },
       relations: ['products', 'transitions', 'orderPostOffices'],
       withDeleted: false,
     });
+
+    // Enrich with shop profiles
+    return this.enrichOrdersWithShopProfiles(orders);
   }
 
   /**
@@ -307,7 +380,10 @@ export class OrderService {
 
     const [items, total] = await qb.getManyAndCount();
 
-    return new PaginatedResponseDto<Order>(items, total, page, limit);
+    // Enrich with shop profiles
+    const enrichedItems = await this.enrichOrdersWithShopProfiles(items);
+
+    return new PaginatedResponseDto<Order>(enrichedItems, total, page, limit);
   }
 
   async update(id: number, updateOrderDto: UpdateOrderDto): Promise<Order> {
@@ -521,8 +597,11 @@ export class OrderService {
           })
         : [];
 
+    // Enrich orders with shop profiles
+    const enrichedOrders = await this.enrichOrdersWithShopProfiles(orders);
+
     // Transform orders and return paginated response
-    const items = orders.map((order) =>
+    const items = enrichedOrders.map((order) =>
       this.transformToOrderResponseDto(order),
     );
 
