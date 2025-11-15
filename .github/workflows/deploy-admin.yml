@@ -1,0 +1,31 @@
+name: Deploy Admin Frontend
+
+on:
+  push:
+    paths:
+      - 'admin/**'
+    branches:
+      - develop
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: SSH and deploy Admin Frontend
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.FE_EC2_HOST }}
+          username: ${{ secrets.FE_EC2_USER }}
+          key: ${{ secrets.FE_EC2_KEY }}
+          script: |
+            cd /home/ec2-user/Express-Mail/admin
+            git pull origin develop
+            docker compose up -d --build
+
