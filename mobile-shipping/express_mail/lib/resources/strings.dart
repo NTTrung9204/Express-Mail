@@ -144,4 +144,13 @@ class AppStrings {
   static const please_try_again_later = "Vui lòng thử lại sau";
   static const second = "giây";
   static const invalid_opt_code = "Mã OTP không hợp lệ";
+  static const request_access = "Yêu cầu quyền truy cập";
+  static const the_application_needs_storage_access_permission_to_save_files = "Ứng dụng cần quyền truy cập bộ nhớ để có thể lưu file";
+  static const order_code = "Mã đơn hàng";
+  static const status = "Trạng thái";
+  static const completion_date = "Ngày hoàn thành";
+  static const shipping_fee = "Phí vận chuyển";
+  static const product_number = "Số sản phẩm";
+  static const save_the_file_successfully = "Lưu file thành công";
+  static const unable_to_save_file = "Không thể lưu file";
 }

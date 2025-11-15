@@ -1,38 +1,35 @@
 import 'package:express_mail/data/enum/ShippingStatus.dart';
 import 'package:express_mail/data/model/Order.dart';
-import 'package:express_mail/data/model/Product.dart';
-import 'package:express_mail/data/model/ShopOwner.dart';
+import 'package:intl/intl.dart';
 
 class DetailOrder {
   final int id;
   final ShippingStatus status;
   final Order order;
-  final ShopOwner shopOwner;
-  final List<Product> products;
+  final String createdAt;
 
   DetailOrder({
     required this.id,
     required this.status,
     required this.order,
-    required this.shopOwner,
-    required this.products,
+    required this.createdAt,
   });
 
   factory DetailOrder.fromJson(Map<String, dynamic> json) {
     final orderData = json['order'] ?? {};
-
-    List<Product> products = (orderData['products'] as List<dynamic>? ?? [])
-        .map((e) => Product.fromJson(e))
-        .toList();
-
-    ShopOwner shopOwner = ShopOwner.fromJson(orderData['shopProfile'] ?? {});
+    String dtStr = '';
+    if (json['createdAt'] != null) {
+      DateTime? dt = DateTime.tryParse(json['createdAt'])?.toLocal();
+      if (dt != null) {
+        dtStr = DateFormat('HH:mm dd/MM/yyyy').format(dt);
+      }
+    }
 
     return DetailOrder(
       id: json['id'] ?? 0,
       status: DetailOrder.parseShippingStatus(json['status']),
       order: Order.fromJson(orderData),
-      shopOwner: shopOwner,
-      products: products,
+      createdAt: dtStr,
     );
   }
 
@@ -41,8 +38,7 @@ class DetailOrder {
       'id': id,
       'status': status.name,
       'order': order.toJson(),
-      'shopProfile': shopOwner.toJson(),
-      'products': products.map((e) => e.toJson()).toList(),
+      'createdAt': createdAt,
     };
   }
 
@@ -54,7 +50,7 @@ class DetailOrder {
         return ShippingStatus.SHIPPING;
       case 'RETURNING':
         return ShippingStatus.RETURNING;
-      case "FINISHED":
+      case 'FINISHED':
         return ShippingStatus.FINISHED;
       default:
         return ShippingStatus.PICKUP_REQUESTED;
