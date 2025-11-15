@@ -2,14 +2,14 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 
 const tabs = [
-  { name: "Đơn nháp", path: "/order-draft" },
-  { name: "Chờ bàn giao", path: "/waiting-delivery" },
-  { name: "Đã bàn giao - Đang giao", path: "/order-delivery" },
-  { name: "Đã bàn giao - Đang hoàn hàng", path: "/returning" },
-  { name: "Chờ xác nhận", path: "/waiting-confirm" },
-  { name: "Hoàn tất", path: "/completed" },
-  { name: "Đơn huỷ", path: "/cancelled" },
-  { name: "Hàng thất lạc/Hư hỏng", path: "/lost-damaged" },
+  { name: "Đơn nháp", path: "/orders/order-draft" },
+  { name: "Chờ bàn giao", path: "/orders/waiting-delivery" },
+  { name: "Đã bàn giao - Đang giao", path: "/orders/order-delivery" },
+  { name: "Đã bàn giao - Đang hoàn hàng", path: "/orders/returning" },
+  { name: "Chờ xác nhận", path: "/orders/waiting-confirm" },
+  { name: "Hoàn tất", path: "/orders/completed" },
+  { name: "Đơn huỷ", path: "/orders/cancelled" },
+  { name: "Hàng thất lạc/Hư hỏng", path: "/orders/lost-damaged" },
 ];
 
 const Tabs = ({ counts = Array(tabs.length).fill(0) }) => {
@@ -26,6 +26,7 @@ const Tabs = ({ counts = Array(tabs.length).fill(0) }) => {
                 : "border-transparent text-gray-600 hover:bg-gray-100"
             }`
           }
+          end
         >
           {tab.name}
           <span className="ml-1 bg-gray-200 text-xs px-2 py-0.5 font-semibold">

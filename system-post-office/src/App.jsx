@@ -17,11 +17,9 @@ export default function App() {
     <div>
       <ToastContainer/>
       <Routes>
-        <Route path="/" element={<Navigate to="/post-office/login" replace />} />
 
-        <Route path="/post-office/login" element={<LoginPage />} />
 
-        <Route path="/post-office" element={<MainLayout />}>
+        <Route path="/" element={<MainLayout />}>
           <Route path="home" element={<Dashboard />} />
           <Route path="shippers" element={<Shippers />} />
 
