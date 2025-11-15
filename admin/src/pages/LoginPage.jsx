@@ -44,11 +44,11 @@ const LoginPage = () => {
       toast.success("Đăng nhập thành công");
 
       if (user.role === "superadmin" || user.role === "admin") {
-        navigate("/admin/home");
-      } else if (user.role === "post_office_manager") {
-          window.location.href = "http://localhost:5174/post-office/home";
+        navigate("/home");
+      } else if (user.role === "post_office_manager" || user.role === "post_office_staff") {
+          window.location.href = "http://localhost:3000/post-office/home";
       } else if (user.role === "shop") {
-          window.location.href = "http://localhost:5175/order-draft";
+          window.location.href = "http://localhost:3000/shop";
       }
     } catch (err) {
       console.error("Login failed:", err);
@@ -117,7 +117,7 @@ const LoginPage = () => {
                   Mật khẩu
                 </label>
                 <a
-                  href="/reset-password"
+                  href="/admin/reset-password"
                   className="text-sm text-orange-500 hover:underline"
                   tabIndex={-1}
                 >

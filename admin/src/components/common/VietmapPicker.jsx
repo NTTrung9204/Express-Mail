@@ -35,7 +35,7 @@ const VietmapPicker = forwardRef(
       address = "",
       onChange,
       disabled = false,
-      placeholder = "Nhập địa chỉ rồi nhấn Enter...",
+      placeholder = "Nhập địa chỉ để tìm kiếm...",
       hideSearch = false, 
     },
     ref
@@ -44,10 +44,15 @@ const VietmapPicker = forwardRef(
     const mapInstance = useRef(null);
     const markerInstance = useRef(null);
     const [searchQuery, setSearchQuery] = useState("");
+    const [suggestions, setSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
     const [isLoadingScripts, setIsLoadingScripts] = useState(false);
+    const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
     const [mapError, setMapError] = useState(false);
     const [mapReady, setMapReady] = useState(false);
     const hasInitialized = useRef(false);
+    const debounceTimer = useRef(null);
+    const searchInputRef = useRef(null);
 
     const apiKey = import.meta.env.VITE_VIETMAP_API_KEY;
 
@@ -124,20 +129,114 @@ const VietmapPicker = forwardRef(
       marker.on("dragend", () => update(marker.getLngLat()));
     }, [mapReady, latitude, longitude, disabled, apiKey, onChange]);
 
-    const searchAddress = async (query) => {
-      if (!query.trim()) return;
+    const fetchSuggestions = async (query) => {
+      if (!query.trim()) {
+        setSuggestions([]);
+        setShowSuggestions(false);
+        return;
+      }
+
+      setIsLoadingSuggestions(true);
+      
       try {
+        const focusLat = latitude || 21.0285;
+        const focusLng = longitude || 105.8542;
+        
         const res = await fetch(
-          `https://maps.vietmap.vn/api/search?text=${encodeURIComponent(query)}&apikey=${apiKey}`
+          `https://maps.vietmap.vn/api/autocomplete/v4?apikey=${apiKey}&text=${encodeURIComponent(query)}&focus=${focusLat},${focusLng}`
         );
         const data = await res.json();
-        const features = data?.data?.features || data?.features || [];
-        if (features.length > 0) {
-          const [lng, lat] = features[0].geometry.coordinates;
-          const placeName = features[0].place_name || query;
+                
+        if (data && Array.isArray(data)) {
+          setSuggestions(data);
+          setShowSuggestions(data.length > 0);
+        } else {
+          setSuggestions([]);
+          setShowSuggestions(false);
+        }
+      } catch (error) {
+        console.error("Lỗi tải gợi ý:", error);
+        toast.error("Lỗi tải gợi ý địa điểm");
+        setSuggestions([]);
+        setShowSuggestions(false);
+      } finally {
+        setIsLoadingSuggestions(false);
+      }
+    };
 
-          const newLat = lat.toFixed(6);
-          const newLng = lng.toFixed(6);
+    const handleSearchChange = (e) => {
+      const value = e.target.value;
+      setSearchQuery(value);
+
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+
+      if (value.trim()) {
+        debounceTimer.current = setTimeout(() => {
+          fetchSuggestions(value);
+        }, 1000);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    };
+
+    const handleSelectSuggestion = (suggestion) => {
+
+      let lat, lng, placeName;
+      
+      if (suggestion.lat !== undefined && suggestion.lng !== undefined) {
+        lat = suggestion.lat;
+        lng = suggestion.lng;
+      } else if (suggestion.geometry?.coordinates) {
+        lng = suggestion.geometry.coordinates[0];
+        lat = suggestion.geometry.coordinates[1];
+      } else if (suggestion.ref_id) {
+        fetchPlaceDetail(suggestion.ref_id);
+        return;
+      } else {
+        toast.error("Không tìm thấy tọa độ địa điểm");
+        return;
+      }
+
+      placeName = suggestion.display || suggestion.name || suggestion.address || searchQuery;
+
+      const newLat = parseFloat(lat).toFixed(6);
+      const newLng = parseFloat(lng).toFixed(6);
+
+      onChange({
+        latitude: newLat,
+        longitude: newLng,
+        address: placeName,
+      });
+
+      if (markerInstance.current && mapInstance.current) {
+        const pos = [parseFloat(lng), parseFloat(lat)];
+        markerInstance.current.setLngLat(pos);
+        mapInstance.current.flyTo({
+          center: pos,
+          zoom: 16,
+          essential: true,
+        });
+      }
+
+      setSearchQuery(placeName);
+      setSuggestions([]);
+      setShowSuggestions(false);
+    };
+
+    const fetchPlaceDetail = async (refId) => {
+      try {
+        const res = await fetch(
+          `https://maps.vietmap.vn/api/place/v3?apikey=${apiKey}&refid=${refId}`
+        );
+        const data = await res.json();
+        
+        if (data && data.lat && data.lng) {
+          const newLat = parseFloat(data.lat).toFixed(6);
+          const newLng = parseFloat(data.lng).toFixed(6);
+          const placeName = data.display || data.name || data.address;
 
           onChange({
             latitude: newLat,
@@ -146,7 +245,7 @@ const VietmapPicker = forwardRef(
           });
 
           if (markerInstance.current && mapInstance.current) {
-            const pos = [lng, lat];
+            const pos = [parseFloat(data.lng), parseFloat(data.lat)];
             markerInstance.current.setLngLat(pos);
             mapInstance.current.flyTo({
               center: pos,
@@ -155,17 +254,35 @@ const VietmapPicker = forwardRef(
             });
           }
 
-          setSearchQuery("");
-        } else {
-          toast.warn("Không tìm thấy địa chỉ.");
+          setSearchQuery(placeName);
         }
-      } catch {
-        toast.error("Lỗi tìm kiếm.");
+      } catch (error) {
+        console.error("Lỗi tải chi tiết:", error);
+        toast.error("Không thể tải thông tin địa điểm");
+      } finally {
+        setSuggestions([]);
+        setShowSuggestions(false);
       }
     };
 
     useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (searchInputRef.current && !searchInputRef.current.contains(event.target)) {
+          setShowSuggestions(false);
+        }
+      };
+
+      document.addEventListener("mousedown", handleClickOutside);
       return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }, []);
+
+    useEffect(() => {
+      return () => {
+        if (debounceTimer.current) {
+          clearTimeout(debounceTimer.current);
+        }
         if (mapInstance.current) {
           try {
             mapInstance.current.remove();
@@ -181,69 +298,91 @@ const VietmapPicker = forwardRef(
     return (
       <div className="space-y-3">
         {!disabled && !hideSearch && (
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder={placeholder}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && searchQuery && searchAddress(searchQuery)}
-              className="flex-1 p-2 border rounded-md text-sm"
-            />
-            <button
-              onClick={() => searchQuery && searchAddress(searchQuery)}
-              className="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 text-sm"
-              disabled={!searchQuery}
-            >
-              Tìm
-            </button>
+          <div className="relative" ref={searchInputRef}>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  placeholder={placeholder}
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                  className="w-full p-2.5 pr-10 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                />
+                {isLoadingSuggestions && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                {suggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    onClick={() => handleSelectSuggestion(suggestion)}
+                    className="px-4 py-3 hover:bg-orange-50 cursor-pointer transition-colors border-b border-gray-100 last:border-b-0"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="mt-1 flex-shrink-0">
+                        <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {suggestion.display || suggestion.name}
+                        </p>
+                        {suggestion.address && (
+                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                            {suggestion.address}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
-
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <input
-              value={latitude || ""}
-              readOnly
-              placeholder="Vĩ độ"
-              className="w-full p-2 border rounded-md bg-gray-50"
-            />
-          </div>
-          <div>
-            <input
-              value={longitude || ""}
-              readOnly
-              placeholder="Kinh độ"
-              className="w-full p-2 border rounded-md bg-gray-50"
-            />
-          </div>
-        </div>
 
         <div className="relative">
           <div
             ref={mapRef}
-            className="w-full h-80 border-2 border-orange-300 rounded-lg overflow-hidden"
+            className="w-full h-80 border-2 border-orange-300 rounded-lg overflow-hidden shadow-sm"
             style={{ minHeight: "320px" }}
           >
             {(isLoadingScripts || (!mapReady && !mapError)) && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-50/80">
-                <p className="text-orange-600">Đang tải bản đồ...</p>
+                <div className="text-center">
+                  <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                  <p className="text-orange-600 font-medium">Đang tải bản đồ...</p>
+                </div>
               </div>
             )}
 
             {mapError && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50/90 text-red-600 p-4 text-center">
+                <svg className="w-16 h-16 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
                 <p className="font-bold text-lg">Lỗi tải bản đồ</p>
-                <p className="text-sm">Kiểm tra API key hoặc mạng.</p>
+                <p className="text-sm mt-1">Kiểm tra API key hoặc mạng.</p>
               </div>
             )}
           </div>
         </div>
 
         {address && (
-          <p className="text-sm text-gray-600 mt-1">
-            <strong>Địa chỉ:</strong> {address}
-          </p>
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+            <p className="text-sm text-gray-700">
+              <span className="font-semibold text-orange-700">Địa chỉ:</span> {address}
+            </p>
+          </div>
         )}
       </div>
     );

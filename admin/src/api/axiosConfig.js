@@ -4,8 +4,8 @@ export const baseAPI = axios.create({
   baseURL: import.meta.env.VITE_DJANGO_API_URL + '/api/v1',
   headers: {
     'Accept': 'application/json',
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+  },
 });
 
 baseAPI.interceptors.request.use(
@@ -22,24 +22,9 @@ baseAPI.interceptors.request.use(
 baseAPI.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        const response = await baseAPI.post('/auth/refresh', {
-          refresh: refreshToken,
-        });
-        const { access } = response.data;
-        localStorage.setItem('accessToken', access);
-        originalRequest.headers.Authorization = `Bearer ${access}`;
-        return baseAPI(originalRequest);
-      } catch (refreshError) {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        return Promise.reject(refreshError);
-      }
+    if (error.response?.status === 401) {
+      localStorage.removeItem('accessToken');
+      console.warn('Access token hết hạn hoặc không hợp lệ — đã xoá khỏi localStorage.');
     }
     return Promise.reject(error);
   }

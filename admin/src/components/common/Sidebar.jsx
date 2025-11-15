@@ -17,10 +17,10 @@ const Sidebar = ({ setTitle }) => {
   const handleLogout = async () => {
     try {
       await authService.logout();
-      navigate("/login");
+      navigate("/login"); 
     } catch (error) {
       console.error("Logout failed:", error);
-      navigate("/login");
+      navigate("/login"); 
     }
   };
 
@@ -31,7 +31,7 @@ const Sidebar = ({ setTitle }) => {
         <hr className="border-t border-orange-400 mb-6" />
         <nav className="flex flex-col gap-2">
           <NavLink
-            to="/admin/home"
+            to="home"
             end
             className={({ isActive }) =>
               `${linkStyle} ${isActive ? activeStyle : ""}`
@@ -43,7 +43,7 @@ const Sidebar = ({ setTitle }) => {
           </NavLink>
 
           <NavLink
-            to="/admin/users"
+            to="users"
             className={({ isActive }) =>
               `${linkStyle} ${isActive ? activeStyle : ""}`
             }
@@ -54,7 +54,7 @@ const Sidebar = ({ setTitle }) => {
           </NavLink>
 
           <NavLink
-            to="/admin/warehouses"
+            to="warehouses" 
             className={({ isActive }) =>
               `${linkStyle} ${isActive ? activeStyle : ""}`
             }
@@ -63,15 +63,16 @@ const Sidebar = ({ setTitle }) => {
             <WarehouseIcon className="w-5 h-5 mr-3" />
             Quản lý Kho
           </NavLink>
+
           <NavLink
-            to="/admin/shipping-rate"
+            to="shipping-rate"
             className={({ isActive }) =>
               `${linkStyle} ${isActive ? activeStyle : ""}`
             }
             onClick={() => setTitle && setTitle("Quản lý phí Ship")}
           >
             <LocalShipping className="w-5 h-5 mr-3" />
-            Quản lý Phi ship
+            Quản lý Phí ship
           </NavLink>
         </nav>
       </div>

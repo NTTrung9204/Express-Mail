@@ -315,29 +315,6 @@ export default function PermissionModal({
                   </div>
                 </div>
 
-                {isView && (
-                  <div className="grid grid-cols-2 gap-4 mt-2">
-                    <div>
-                      <input
-                        type="text"
-                        value={userProfile.latitude || ""}
-                        readOnly
-                        placeholder="Vĩ độ (Latitude)"
-                        className="border rounded-md p-2 text-sm w-full bg-gray-50 text-gray-700"
-                      />
-                    </div>
-                    <div>
-                      <input
-                        type="text"
-                        value={userProfile.longtitude || ""}
-                        readOnly
-                        placeholder="Kinh độ (Longitude)"
-                        className="border rounded-md p-2 text-sm w-full bg-gray-50 text-gray-700"
-                      />
-                    </div>
-                  </div>
-                )}
-
                 {!isView && (
                   <div className="mt-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">

@@ -33,6 +33,7 @@ const Users = () => {
   } = useUserStore();
 
   const [searchInput, setSearchInput] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const { search, setSearch } = useUserStore(); 
 
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -42,12 +43,16 @@ const Users = () => {
     return found ? found.label : "Không có vai trò";
   };
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     const trimmed = searchInput.trim();
     if (trimmed !== search) {
       setSearch(trimmed);
       setPage(1);
-      fetchUsers(1, trimmed); 
+      setErrorMessage("");
+      const result = await fetchUsers(1, trimmed);
+      if (result && !result.success) {
+        setErrorMessage(result.message);
+      }
     }
   };
 
@@ -62,6 +67,17 @@ const Users = () => {
       setSearchInput("");
     }
   }, [search]);
+
+  useEffect(() => {
+    const loadInitialData = async () => {
+      setErrorMessage("");
+      const result = await fetchUsers(page, search);
+      if (result && !result.success) {
+        setErrorMessage(result.message);
+      }
+    };
+    loadInitialData();
+  }, [page]);
 
   return (
     <div className="p-6 space-y-6 bg-orange-50 min-h-screen">
@@ -96,7 +112,7 @@ const Users = () => {
       </div>
 
       <div className="overflow-x-auto bg-white rounded-xl shadow-lg border border-orange-100">
-        {loading ? (
+        {loading && !errorMessage ? (
           <div className="flex flex-col justify-center items-center py-16 text-gray-500">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>
             <p className="mt-3 text-base">Đang tải dữ liệu...</p>
@@ -122,7 +138,13 @@ const Users = () => {
               </thead>
 
               <tbody>
-                {users.length > 0 ? (
+                {errorMessage ? (
+                  <tr>
+                    <td colSpan="4" className="text-center text-red-600 font-medium p-6">
+                      {errorMessage}
+                    </td>
+                  </tr>
+                ) : users.length > 0 ? (
                   users.map((user) => (
                     <tr
                       key={user.id}
@@ -173,7 +195,7 @@ const Users = () => {
         )}
       </div>
 
-       {totalPages > 1 && (
+       {totalPages > 1 && !errorMessage && (
         <div className="flex justify-center items-center gap-2 p-4">
           <button
             onClick={() => setPage((p) => Math.max(p - 1, 1))}

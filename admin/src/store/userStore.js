@@ -36,6 +36,10 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
       setTotalCount(data.count || 0);
     } catch (error) {
       console.error("Lỗi khi tải danh sách user:", error);
+      if (error.response?.status === 403) {
+        const errorMessage = error.response?.data?.message || error.response?.data?.detail || "Bạn không có quyền truy cập tài nguyên này!";
+        return { success: false, message: errorMessage };
+      }
     } finally {
       setLoading(false);
     }
@@ -69,6 +73,15 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
       }
     } catch (error) {
       console.error("Lỗi khi lưu user:", error);
+
+      if (error.response?.status === 403) {
+        const errorMessage = error.response?.data?.message || error.response?.data?.detail || "Bạn không có quyền thực hiện hành động này!";
+        return {
+          success: false,
+          message: errorMessage,
+          errors: null,
+        };
+      }
 
       const errorResponse = error.response?.data || {
         message: "Không thể lưu người dùng. Vui lòng thử lại!",
@@ -124,7 +137,13 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
       return { success: true };
     } catch (error) {
       console.error("Lỗi khi đổi vai trò:", error);
-      return { success: false };
+      
+      if (error.response?.status === 403) {
+        const errorMessage = error.response?.data?.message || error.response?.data?.detail || "Bạn không có quyền thay đổi vai trò người dùng!";
+        return { success: false, message: errorMessage };
+      }
+      
+      return { success: false, message: "Không thể thay đổi vai trò. Vui lòng thử lại!" };
     } finally {
       setOpenRoleModal(false);
       setSelectedUser(null);
@@ -150,6 +169,12 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
       return { success: true, message: "Xóa người dùng thành công!" };
     } catch (error) {
       console.error("Lỗi khi xoá user:", error);
+      
+      if (error.response?.status === 403) {
+        const errorMessage = error.response?.data?.message || error.response?.data?.detail || "Bạn không có quyền xóa người dùng này!";
+        return { success: false, message: errorMessage };
+      }
+      
       return { success: false, message: "Không thể xóa người dùng. Vui lòng thử lại!" };
     } finally {
       setOpenDeleteModal(false);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 import {
   Dialog,
   DialogTitle,
@@ -69,8 +70,9 @@ export default function ShippingRateModal({
   };
 
   const handleSave = async () => {
-    if (!validateForm()) return;
+  if (!validateForm()) return;
 
+  try {
     const result = await onSave({
       ...form,
       baseFee: parseFloat(form.baseFee),
@@ -81,10 +83,19 @@ export default function ShippingRateModal({
 
     if (result.success) {
       onClose();
+    } else if (result.status === 403) {
+      toast.error("Bạn không có quyền thực hiện thao tác này.");
     } else {
       setError(result.message || "Lưu thất bại.");
     }
-  };
+  } catch (err) {
+    if (err?.response?.status === 403) {
+      toast.error("Bạn không có quyền thực hiện thao tác này.");
+    } else {
+      toast.error("Đã xảy ra lỗi, vui lòng thử lại sau.");
+    }
+  }
+};
 
   return (
     <Dialog

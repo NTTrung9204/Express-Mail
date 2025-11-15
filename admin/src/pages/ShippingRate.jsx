@@ -1,15 +1,16 @@
 import React, { useEffect } from "react";
 import { IconButton, Switch, CircularProgress } from "@mui/material";
-import { Visibility, Add, LocalShipping } from "@mui/icons-material";
+import { Visibility, Add } from "@mui/icons-material";
 import { useShippingRateStore } from "../store/shippingRateStore";
 import ShippingRateModal from "../components/shipping-rate/ShippingRateModal";
 import { getPageNumbers } from "../utils/pagination";
-
+import { toast } from "react-toastify";
 
 export default function ShippingRate() {
   const {
     shippingRates,
     loading,
+    error, 
     page,
     totalCount,
     pageSize,
@@ -29,6 +30,18 @@ export default function ShippingRate() {
   useEffect(() => {
     fetchShippingRates();
   }, [page]);
+
+  const handleSwitchToggle = async (id, currentStatus) => {
+    try {
+      await handleToggleActive(id, currentStatus);
+    } catch (err) {
+      if (err.response?.status === 403) {
+        toast.error("Bạn không có quyền thay đổi trạng thái phí ship.");
+      } else {
+        toast.error("Không thể thay đổi trạng thái phí ship.");
+      }
+    }
+  };
 
   return (
     <div className="p-6 bg-orange-50 min-h-screen">
@@ -64,7 +77,19 @@ export default function ShippingRate() {
             </tr>
           </thead>
           <tbody>
-            {shippingRates.length === 0 && !loading ? (
+            {error ? (
+              <tr>
+                <td colSpan="7" className="text-center py-6 text-red-500 font-medium">
+                  {error}
+                </td>
+              </tr>
+            ) : loading ? (
+              <tr>
+                <td colSpan="7" className="text-center py-6">
+                  <CircularProgress size={28} />
+                </td>
+              </tr>
+            ) : shippingRates.length === 0 ? (
               <tr>
                 <td colSpan="7" className="text-center py-6 text-gray-500">
                   Chưa có phí ship nào.
@@ -76,15 +101,21 @@ export default function ShippingRate() {
                   key={item.id}
                   className={index % 2 === 0 ? "bg-orange-50" : "bg-white"}
                 >
-                  <td className="py-3 px-4 text-center">{item.baseFee.toLocaleString()}đ</td>
-                  <td className="py-3 px-4 text-center">{item.ratePerKm.toLocaleString()}đ</td>
+                  <td className="py-3 px-4 text-center">
+                    {item.baseFee.toLocaleString()}đ
+                  </td>
+                  <td className="py-3 px-4 text-center">
+                    {item.ratePerKm.toLocaleString()}đ
+                  </td>
                   <td className="py-3 px-4 text-center">{item.volumetricDivisor}</td>
-                  <td className="py-3 px-4 text-center">{item.ratePerKg.toLocaleString()}đ</td>
+                  <td className="py-3 px-4 text-center">
+                    {item.ratePerKg.toLocaleString()}đ
+                  </td>
                   <td className="py-3 px-4 text-center">
                     <div className="flex justify-center items-center gap-2">
                       <Switch
                         checked={item.isActive}
-                        onChange={() => handleToggleActive(item.id, item.isActive)}
+                        onChange={() => handleSwitchToggle(item.id, item.isActive)}
                         color="success"
                       />
                       <span
@@ -115,12 +146,6 @@ export default function ShippingRate() {
             )}
           </tbody>
         </table>
-
-        {loading && (
-          <div className="flex justify-center py-6">
-            <CircularProgress size={28} />
-          </div>
-        )}
       </div>
 
       {totalPages > 1 && (
