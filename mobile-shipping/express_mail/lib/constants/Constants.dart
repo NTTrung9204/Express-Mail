@@ -29,6 +29,7 @@ class Constants {
   static const int maxLimit = 10000;
   static const String username = 'USERNAME';
   static const String password = 'PASSWORD';
+  static const String auto_login = 'AUTO_LOGIN';
 
   // API Keys from .env
   static String get keyMap => dotenv.env['KEY_MAP'] ?? '';
