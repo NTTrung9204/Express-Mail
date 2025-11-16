@@ -153,4 +153,7 @@ class AppStrings {
   static const product_number = "Số sản phẩm";
   static const save_the_file_successfully = "Lưu file thành công";
   static const unable_to_save_file = "Không thể lưu file";
+  static const change_password = "Đổi mật khẩu";
+  static const automatically_login = "Tự động đăng nhập";
+  static const settings = "Cài đặt";
 }

@@ -117,4 +117,173 @@ class ProfileViewModel extends ChangeNotifier {
       return false;
     }
   }
+
+  //Confirm OTP
+  bool _isLoadingReset = false;
+  String? _errorMessageReset;
+
+  bool get isLoadingReset => _isLoadingReset;
+
+  String? get errorMessageReset => _errorMessageReset;
+
+  void _setLoadingReset(bool value) {
+    _isLoadingReset = value;
+    notifyListeners();
+  }
+
+  //Confirm OTP
+  bool _isLoadingConfirm = false;
+  String? _errorMessageConfirm;
+
+  bool get isLoadingConfirm => _isLoadingConfirm;
+
+  String? get errorMessageConfirm => _errorMessageConfirm;
+
+  void _setLoadingConfirm(bool value) {
+    _isLoadingConfirm = value;
+    notifyListeners();
+  }
+
+  //Reset Password
+  bool _isLoadingResetPassword = false;
+  String? _errorMessageResetPassword;
+
+  bool get isLoadingResetPassword => _isLoadingResetPassword;
+
+  String? get errorMessageResetPassword => _errorMessageResetPassword;
+
+  void _setLoadingResetPassword(bool value) {
+    _isLoadingResetPassword = value;
+    notifyListeners();
+  }
+
+  //API Methods
+  Future<bool> reset(String email) async {
+    _setLoadingReset(true);
+    _errorMessageReset = null;
+
+    try {
+      final response = await http.post(
+        Uri.parse(Constants.forgotUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email.trim()}),
+      );
+
+      if (response.statusCode == 200) {
+        _errorMessageReset = null;
+        return true;
+      } else {
+        if (response.statusCode == 429) {
+          final decoded = json.decode(response.body);
+          final detail = decoded['detail'] as String;
+
+          final regex = RegExp(r'(\d+)\s*seconds');
+          final match = regex.firstMatch(detail);
+
+          if (match != null) {
+            final seconds = int.parse(match.group(1)!);
+            _errorMessageReset =  '${AppStrings.please_try_again_later} $seconds ${AppStrings.second}';
+          }
+          return false;
+        } else {
+          final errorData = jsonDecode(response.body);
+          _errorMessageReset =
+              errorData['message'] ??
+                  AppStrings.an_error_occurred_please_try_again;
+          return false;
+        }
+      }
+    } catch (e) {
+      _errorMessageReset = AppStrings.connection_error;
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<bool> confirm(String email, String otp) async {
+    _setLoadingConfirm(true);
+    _errorMessageConfirm = null;
+
+    try {
+      final response = await http.post(
+        Uri.parse(Constants.verifyUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email.trim(), 'otp': otp.trim()}),
+      );
+
+      if (response.statusCode == 200) {
+        _errorMessageConfirm = null;
+        return true;
+      } else {
+        if (response.statusCode == 400) {
+          _errorMessageConfirm = AppStrings.invalid_opt_code;
+          return false;
+        } else {
+          if (response.statusCode == 429) {
+            final decoded = json.decode(response.body);
+            final detail = decoded['detail'] as String;
+
+            final regex = RegExp(r'(\d+)\s*seconds');
+            final match = regex.firstMatch(detail);
+            if (match != null) {
+              final seconds = int.parse(match.group(1)!);
+              _errorMessageConfirm =
+              '${AppStrings.please_try_again_later} $seconds ${AppStrings
+                  .second}';
+            }
+            return false;
+          } else {
+            final errorData = jsonDecode(response.body);
+            _errorMessageConfirm =
+                errorData['message'] ??
+                    AppStrings.an_error_occurred_please_try_again;
+            return false;
+          }
+        }
+      }
+    } catch (e) {
+      _errorMessageConfirm = AppStrings.connection_error;
+      return false;
+    } finally {
+      _setLoadingConfirm(false);
+    }
+  }
+
+  Future<bool> resetPassword(
+      String email,
+      String otp,
+      String newPassword,
+      ) async {
+    _setLoadingResetPassword(true);
+    _errorMessageResetPassword = null;
+
+    try {
+      final response = await http.post(
+        Uri.parse(Constants.resetPasswordUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email.trim(),
+          'otp': otp.trim(),
+          'newPassword': newPassword.trim(),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        _errorMessageResetPassword = null;
+        return true;
+      } else {
+        final errorData = jsonDecode(response.body);
+        _errorMessageResetPassword =
+            errorData['message'] ??
+                AppStrings.an_error_occurred_please_try_again;
+        return false;
+      }
+    } catch (e) {
+      _errorMessageResetPassword = AppStrings.connection_error;
+      return false;
+    } finally {
+      _setLoadingResetPassword(false);
+    }
+  }
 }
