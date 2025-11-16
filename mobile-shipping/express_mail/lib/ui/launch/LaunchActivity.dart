@@ -30,12 +30,13 @@ class _LaunchActivityState extends State<LaunchActivity>
     final prefs = await SharedPreferences.getInstance();
     final savedUsername = prefs.getString(Constants.username) ?? '';
     final savedPassword = prefs.getString(Constants.password) ?? '';
+    final autoLogin = prefs.getBool(Constants.auto_login) ?? false;
 
     await Future.delayed(const Duration(seconds: 5));
 
     if (!mounted) return;
 
-    if (savedUsername.isNotEmpty && savedPassword.isNotEmpty) {
+    if (autoLogin && savedUsername.isNotEmpty && savedPassword.isNotEmpty) {
       bool success = await _viewModel.login(savedUsername, savedPassword);
       if (!mounted) return;
 
