@@ -54,9 +54,15 @@ class _EarningFragmentState extends State<EarningFragment> {
       if (sdk >= 30) {
         return await Permission.manageExternalStorage.isGranted;
       } else {
-        return await Permission.storage.isGranted;
+        final status = await Permission.storage.status;
+        if (!status.isGranted) {
+          final result = await Permission.storage.request();
+          return result.isGranted;
+        }
+        return true;
       }
     }
+
     if (Platform.isIOS) {
       final status = await Permission.photosAddOnly.status;
       if (!status.isGranted) {
@@ -65,6 +71,7 @@ class _EarningFragmentState extends State<EarningFragment> {
       }
       return true;
     }
+
     return false;
   }
 
