@@ -18,6 +18,18 @@ describe('ShippingService', () => {
     findOne: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    findAndCount: jest.fn(),
+    softDelete: jest.fn(),
+    createQueryBuilder: jest.fn(),
+  };
+
+  const mockRouteStepRepository = {
+    create: jest.fn(),
+    save: jest.fn(),
+    find: jest.fn(),
+    findOne: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
   };
 
   const mockDjangoService = {
@@ -39,6 +51,10 @@ describe('ShippingService', () => {
           useValue: mockRepository,
         },
         {
+          provide: getRepositoryToken(RouteStep),
+          useValue: mockRouteStepRepository,
+        },
+        {
           provide: DjangoService,
           useValue: mockDjangoService,
         },
@@ -46,16 +62,11 @@ describe('ShippingService', () => {
           provide: OrderService,
           useValue: mockOrderService,
         },
-        {
-          provide: RouteStep,
-          useValue: {},
-        },
       ],
     }).compile();
 
     service = module.get<ShippingService>(ShippingService);
     repository = module.get<Repository<Shipping>>(getRepositoryToken(Shipping));
-
     jest.clearAllMocks();
   });
 
