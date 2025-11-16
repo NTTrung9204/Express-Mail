@@ -22,6 +22,7 @@ import { OrderPostOfficeStatus } from './enums/order-post-office-status.enum';
 import { ProductService } from '../product/product.service';
 import { JwtPayload } from 'src/common/@type/jwt-payload.type';
 import { DjangoService } from 'src/common/services/django.service';
+import { FileUploadService } from 'src/common/services/file-upload.service';
 import { ShippingCostInformationDto } from '../shipping/dto/shipping-cost-information.dto';
 import { TransitionOrderDto } from './dto/transition-order.dto';
 import { OrderPostOfficeDto } from './dto/order-post-office.dto';
@@ -43,6 +44,7 @@ export class OrderService {
     @Inject(forwardRef(() => ProductService))
     private readonly productService: ProductService,
     private readonly djangoService: DjangoService,
+    private readonly fileUploadService: FileUploadService,
   ) {}
 
   transformToOrderResponseDto(order: Order): OrderResponseDto {
@@ -65,9 +67,23 @@ export class OrderService {
   async create(
     createOrderDto: CreateOrderDto,
     jwtPayload: JwtPayload,
+    files?: Express.Multer.File[],
   ): Promise<Order> {
-    console.log('jwtPayload', jwtPayload);
+    console.log('createOrderDto', createOrderDto.products);
     try {
+      // Process file uploads if provided
+      const fileMap: Map<number, string> = new Map();
+      if (files && files.length > 0) {
+        files.forEach((file, index) => {
+          try {
+            const fileUrl = this.fileUploadService.saveFile(file);
+            fileMap.set(index, fileUrl);
+          } catch (error) {
+            console.warn(`Failed to upload file at index ${index}:`, error);
+          }
+        });
+      }
+
       // Generate unique order code
       let orderCode: string;
       let isUnique = false;
@@ -154,11 +170,14 @@ export class OrderService {
 
       await this.orderPostOfficeRepository.save(orderPostOffice);
 
-      // Create products
-      for (const productData of createOrderDto.products) {
+      // Create products with uploaded images
+      for (let i = 0; i < createOrderDto.products.length; i++) {
+        const productData = createOrderDto.products[i];
+        const imageUrl = fileMap.get(i);
         await this.productService.create({
           ...productData,
           orderId: savedOrder.id,
+          img_url: imageUrl,
         });
       }
 

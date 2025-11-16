@@ -12,7 +12,10 @@ import {
   Query,
   UseGuards,
   Req,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
   ApiOperation,
@@ -21,9 +24,11 @@ import {
   ApiBody,
   ApiQuery,
   ApiBearerAuth,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { CreateOrderWithFilesDto } from './dto/create-order-with-files.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrderResponseDto } from './dto/order-response.dto';
 import { OrderQueryDto } from './dto/order-query.dto';
@@ -44,8 +49,10 @@ export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Create a new order with products' })
-  @ApiBody({ type: CreateOrderDto })
+  @UseInterceptors(FilesInterceptor('product_images', 100))
+  @ApiOperation({ summary: 'Create a new order with products and images' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: CreateOrderWithFilesDto })
   @ApiResponse({
     status: 201,
     description: 'Order created successfully',
@@ -54,9 +61,14 @@ export class OrderController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   async create(
     @Body() createOrderDto: CreateOrderDto,
+    @UploadedFiles() files: Express.Multer.File[],
     @Req() req: AuthJwtRequest,
   ): Promise<ApiResponseDto<OrderResponseDto>> {
-    const order = await this.orderService.create(createOrderDto, req.user);
+    const order = await this.orderService.create(
+      createOrderDto,
+      req.user,
+      files,
+    );
     return new ApiResponseDto<OrderResponseDto>(
       true,
       'Order created successfully',

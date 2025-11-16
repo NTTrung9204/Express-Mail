@@ -13,6 +13,7 @@ import { ProductService } from '../product/product.service';
 import { Product } from '../product/entities/product.entity';
 import { DjangoService } from 'src/common/services/django.service';
 import { CommonModule } from 'src/common/module/common.module';
+import { FileUploadService } from 'src/common/services/file-upload.service';
 
 @Module({
   imports: [
@@ -31,7 +32,19 @@ import { CommonModule } from 'src/common/module/common.module';
     CommonModule,
   ],
   controllers: [OrderController],
-  providers: [OrderService, JwtAuthGuard, ProductService, DjangoService],
-  exports: [OrderService, TypeOrmModule, ProductService, DjangoService],
+  providers: [
+    OrderService,
+    JwtAuthGuard,
+    ProductService,
+    DjangoService,
+    FileUploadService,
+  ],
+  exports: [
+    OrderService,
+    TypeOrmModule,
+    ProductService,
+    DjangoService,
+    FileUploadService,
+  ],
 })
 export class OrderModule {}
