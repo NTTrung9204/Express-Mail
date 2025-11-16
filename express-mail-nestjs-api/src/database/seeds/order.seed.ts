@@ -73,19 +73,17 @@ export default class OrderSeeder implements Seeder {
         );
 
         const orderDto: CreateOrderDto = {
-          shippingFeeId: '1',
           receiver_phone: '09' + faker.string.numeric(8),
           receiver_province_city: faker.location.city(),
           receiver_ward_commune: faker.location.street(),
           receiver_address: faker.location.streetAddress(),
           receiver_coordinate: `${lat},${lng}`,
+          receiver_district: faker.location.county(),
           length,
           width,
           height,
           weight,
           cod: faker.number.int({ min: 50000, max: 2000000 }),
-          shipping_cost: faker.number.int({ min: 20000, max: 100000 }),
-          shipping_cost_payper: faker.number.int({ min: 20000, max: 100000 }),
           is_receiver_pay_shipping: faker.datatype.boolean(),
           products,
         };

@@ -8,18 +8,43 @@ import { OrderController } from './order.controller';
 import { ProductModule } from '../product/product.module';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { Shipping } from '../shipping/entities/shipping.entity';
+import { ProductService } from '../product/product.service';
+import { Product } from '../product/entities/product.entity';
+import { DjangoService } from 'src/common/services/django.service';
+import { CommonModule } from 'src/common/module/common.module';
+import { FileUploadService } from 'src/common/services/file-upload.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Order, OrderTransition, OrderPostOffice]),
+    TypeOrmModule.forFeature([
+      Order,
+      OrderTransition,
+      OrderPostOffice,
+      Shipping,
+      Product,
+    ]),
     forwardRef(() => ProductModule),
     JwtModule.register({
       secret: process.env.JWT_ACCESS_SECRET,
       signOptions: { expiresIn: '1h' },
     }),
+    CommonModule,
   ],
   controllers: [OrderController],
-  providers: [OrderService, JwtAuthGuard],
-  exports: [OrderService],
+  providers: [
+    OrderService,
+    JwtAuthGuard,
+    ProductService,
+    DjangoService,
+    FileUploadService,
+  ],
+  exports: [
+    OrderService,
+    TypeOrmModule,
+    ProductService,
+    DjangoService,
+    FileUploadService,
+  ],
 })
 export class OrderModule {}

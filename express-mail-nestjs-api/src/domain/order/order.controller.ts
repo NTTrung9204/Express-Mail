@@ -10,9 +10,12 @@ import {
   HttpStatus,
   HttpCode,
   Query,
-  // UseGuards,
+  UseGuards,
   Req,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
   ApiOperation,
@@ -21,43 +24,35 @@ import {
   ApiBody,
   ApiQuery,
   ApiBearerAuth,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { CreateOrderWithFilesDto } from './dto/create-order-with-files.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrderResponseDto } from './dto/order-response.dto';
 import { OrderQueryDto } from './dto/order-query.dto';
 import { ShipperOrderQueryDto } from './dto/shipper-order-query.dto';
 import { ApiResponseDto } from 'src/common/dto/api-response.dto';
-// import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { AuthJwtRequest } from 'src/common/@type/jwt-payload.type';
 import { PaginatedResponseDto } from 'src/common/dto/paginated-response.dto';
+import { TransitionOrderDto } from './dto/transition-order.dto';
+import { OrderPostOfficeDto } from './dto/order-post-office.dto';
+import { PostOfficeOrderStatus } from './dto/post-office-orders-query.dto';
 
 @ApiTags('Orders')
 @Controller('orders')
-// @UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth('JWT-auth')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
-  private transformToOrderResponseDto(order: any): OrderResponseDto {
-    return {
-      ...order,
-      shipping: order.shipping?.map((ship: any) => ({
-        id: ship.id,
-        shipperId: ship.shipperId,
-        orderId: order.id,
-        status: ship.status,
-        createdAt: ship.createdAt,
-        updatedAt: ship.updatedAt,
-      })),
-      deleted_at: order.deleted_at ?? undefined,
-    } as OrderResponseDto;
-  }
-
   @Post()
-  @ApiOperation({ summary: 'Create a new order with products' })
-  @ApiBody({ type: CreateOrderDto })
+  @UseInterceptors(FilesInterceptor('product_images', 100))
+  @ApiOperation({ summary: 'Create a new order with products and images' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: CreateOrderWithFilesDto })
   @ApiResponse({
     status: 201,
     description: 'Order created successfully',
@@ -66,13 +61,18 @@ export class OrderController {
   @ApiResponse({ status: 400, description: 'Bad request' })
   async create(
     @Body() createOrderDto: CreateOrderDto,
+    @UploadedFiles() files: Express.Multer.File[],
     @Req() req: AuthJwtRequest,
   ): Promise<ApiResponseDto<OrderResponseDto>> {
-    const order = await this.orderService.create(createOrderDto, req.user);
+    const order = await this.orderService.create(
+      createOrderDto,
+      req.user,
+      files,
+    );
     return new ApiResponseDto<OrderResponseDto>(
       true,
       'Order created successfully',
-      this.transformToOrderResponseDto(order),
+      this.orderService.transformToOrderResponseDto(order),
       undefined,
       201,
     );
@@ -114,7 +114,7 @@ export class OrderController {
 
     // Transform each order using helper function
     const transformedItems = paginated.data.map((order) =>
-      this.transformToOrderResponseDto(order),
+      this.orderService.transformToOrderResponseDto(order),
     );
 
     const transformedPaginated = {
@@ -145,7 +145,7 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Order retrieved successfully',
-      this.transformToOrderResponseDto(order),
+      this.orderService.transformToOrderResponseDto(order),
     );
   }
 
@@ -164,7 +164,9 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Orders retrieved successfully',
-      orders.map((order) => this.transformToOrderResponseDto(order)),
+      orders.map((order) =>
+        this.orderService.transformToOrderResponseDto(order),
+      ),
     );
   }
 
@@ -201,7 +203,9 @@ export class OrderController {
 
     const transformed = {
       ...paginated,
-      data: paginated.data.map((o) => this.transformToOrderResponseDto(o)),
+      data: paginated.data.map((o) =>
+        this.orderService.transformToOrderResponseDto(o),
+      ),
     } as PaginatedResponseDto<OrderResponseDto>;
 
     return new ApiResponseDto(
@@ -231,7 +235,9 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Orders retrieved successfully',
-      orders.map((order) => this.transformToOrderResponseDto(order)),
+      orders.map((order) =>
+        this.orderService.transformToOrderResponseDto(order),
+      ),
     );
   }
 
@@ -261,7 +267,9 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Orders retrieved successfully',
-      orders.map((order) => this.transformToOrderResponseDto(order)),
+      orders.map((order) =>
+        this.orderService.transformToOrderResponseDto(order),
+      ),
     );
   }
 
@@ -281,7 +289,7 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Order retrieved successfully',
-      this.transformToOrderResponseDto(order),
+      this.orderService.transformToOrderResponseDto(order),
     );
   }
 
@@ -304,7 +312,7 @@ export class OrderController {
     return new ApiResponseDto(
       true,
       'Order updated successfully',
-      this.transformToOrderResponseDto(order),
+      this.orderService.transformToOrderResponseDto(order),
     );
   }
 
@@ -319,5 +327,92 @@ export class OrderController {
   @ApiResponse({ status: 404, description: 'Order not found' })
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.orderService.remove(id);
+  }
+
+  @Post('transition-order')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Transition order to next post office or confirm order moved to next post office',
+  })
+  @ApiParam({ name: 'transitionOrderDto', type: TransitionOrderDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Order transitioned successfully',
+    type: OrderResponseDto,
+  })
+  async transitionOrder(
+    @Body() transitionOrderDto: TransitionOrderDto,
+  ): Promise<ApiResponseDto<OrderResponseDto>> {
+    const order = await this.orderService.transitionOrder(transitionOrderDto);
+    return new ApiResponseDto(
+      true,
+      'Order transitioned successfully',
+      this.orderService.transformToOrderResponseDto(order),
+    );
+  }
+
+  @Post('order-post-office')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create order-post-office association' })
+  @ApiBody({ type: OrderPostOfficeDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Order-PostOffice association created successfully',
+    type: OrderResponseDto,
+  })
+  async createOrderPostOffice(
+    @Body() orderPostOfficeDto: OrderPostOfficeDto,
+  ): Promise<ApiResponseDto<OrderResponseDto>> {
+    const order =
+      await this.orderService.createOrderPostOffice(orderPostOfficeDto);
+    return new ApiResponseDto(
+      true,
+      'Order-PostOffice association created successfully',
+      this.orderService.transformToOrderResponseDto(order),
+    );
+  }
+
+  @Get('post-office/:postOfficeId')
+  @ApiOperation({
+    summary:
+      'Get orders by post office ID with optional status filter and pagination',
+  })
+  @ApiParam({
+    name: 'postOfficeId',
+    description: 'Post Office ID',
+    type: 'number',
+  })
+  @ApiQuery({
+    name: 'status',
+    description: 'Filter orders by status',
+    required: false,
+    enum: PostOfficeOrderStatus,
+  })
+  @ApiQuery({
+    name: 'page',
+    description: 'Page number',
+    required: false,
+    type: 'number',
+  })
+  @ApiQuery({
+    name: 'limit',
+    description: 'Number of items per page',
+    required: false,
+    type: 'number',
+  })
+  async findByPostOffice(
+    @Param('postOfficeId', ParseIntPipe) postOfficeId: number,
+    @Query('status') status?: PostOfficeOrderStatus,
+    @Query('page') page = 1,
+    @Query('limit') limit = 10,
+  ): Promise<ApiResponseDto<PaginatedResponseDto<OrderResponseDto>>> {
+    const paginated = await this.orderService.findOrdersByPostOffice(
+      postOfficeId,
+      status,
+      { page, limit },
+    );
+
+    return new ApiResponseDto(true, 'Orders retrieved successfully', paginated);
   }
 }

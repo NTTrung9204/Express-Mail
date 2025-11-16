@@ -6,6 +6,8 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   OneToMany,
+  OneToOne,
+  JoinColumn,
 } from 'typeorm';
 import { OrderPostOffice } from './post-office-order.entity';
 import { ShippingStatus } from '../enums/shipping-status.enum';
@@ -13,6 +15,7 @@ import { OrderStatus } from '../enums/order-status.enum';
 import { Product } from 'src/domain/product/entities/product.entity';
 import { OrderTransition } from './order-transition.entity';
 import { Shipping } from 'src/domain/shipping/entities/shipping.entity';
+import { RouteStep } from 'src/domain/plan/entities/route-step.entity';
 
 @Entity('orders')
 export class Order {
@@ -42,6 +45,9 @@ export class Order {
 
   @Column({ length: 100 })
   receiver_coordinate: string;
+
+  @Column({ length: 100 })
+  receiver_district: string;
 
   @Column('float')
   length: number;
@@ -101,4 +107,8 @@ export class Order {
 
   @OneToMany(() => Shipping, (shipping) => shipping.order)
   shipping: Shipping[];
+
+  @OneToOne(() => RouteStep)
+  @JoinColumn({ name: 'route_step_id' })
+  routeStep: RouteStep;
 }

@@ -10,7 +10,8 @@ import {
   Patch,
   Post,
   Query,
-  // UseGuards,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -22,7 +23,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ApiResponseDto } from 'src/common/dto/api-response.dto';
-// import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { ShippingService } from './shipping.service';
 import {
   AssignShipperDto,
@@ -35,10 +36,12 @@ import { PaginatedResponseDto } from 'src/common/dto/paginated-response.dto';
 import { Shipping } from './entities/shipping.entity';
 import { GetShipperOrdersDto } from './dto/get-shipper-orders.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { AuthJwtRequest } from 'src/common/@type/jwt-payload.type';
 
 @ApiTags('Shipping')
 @Controller('shipping')
-// @UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth('JWT-auth')
 @ApiBearerAuth()
 export class ShippingController {
   constructor(private readonly shippingService: ShippingService) {}
@@ -89,14 +92,13 @@ export class ShippingController {
 
   @Get('shipper/:shipperId')
   @ApiOperation({ summary: 'Get orders by shipper ID with filters' })
-  @ApiParam({ name: 'shipperId', type: 'string', description: 'Shipper ID' })
   @ApiResponse({ status: 200, type: PaginatedResponseDto })
   async getShipperOrders(
-    @Param('shipperId') shipperId: string,
     @Query() query: GetShipperOrdersDto,
+    @Req() req: AuthJwtRequest,
   ): Promise<ApiResponseDto<PaginatedResponseDto<Shipping>>> {
     const orders = await this.shippingService.getShipperOrders(
-      shipperId,
+      String(req.user.userId),
       query,
     );
     return new ApiResponseDto(

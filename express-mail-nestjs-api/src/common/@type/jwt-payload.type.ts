@@ -4,6 +4,7 @@ import { PermissionEnum } from '../enums/permission.enum';
 export interface JwtPayload {
   userId: number;
   shopId?: number;
+  postOfficeId?: string;
   permissions: PermissionEnum[];
   expireAt: Date;
   code: string;

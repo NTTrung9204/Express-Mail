@@ -1,20 +1,79 @@
 import { Injectable, Logger } from '@nestjs/common';
-import axios, { AxiosInstance } from 'axios';
 import { RedisService } from './redis.service';
-
-const DJANGO_BASE = process.env.DJANGO_BACKEND_URL || 'localhost:8000';
+import { ShippingCostInformationDto } from 'src/domain/shipping/dto/shipping-cost-information.dto';
 
 @Injectable()
 export class DjangoService {
   private readonly logger = new Logger(DjangoService.name);
-  private readonly http: AxiosInstance;
+  private readonly baseURL: string;
   private readonly redis: ReturnType<RedisService['getClient']>;
-  private readonly loginPath = '/api/v1/auth/login/';
-  private readonly refreshPath = '/api/v1/auth/refresh/';
+  private readonly loginPath = '/api/v1/auth/login';
+  private readonly refreshPath = '/api/v1/auth/refresh';
+  private loginPromise: Promise<string> | null = null;
 
   constructor(private readonly redisService: RedisService) {
-    this.http = axios.create({ baseURL: DJANGO_BASE, timeout: 5000 });
+    this.baseURL =
+      process.env.DJANGO_BASE_URL ||
+      process.env.DJANGO_BACKEND_URL ||
+      'http://localhost:8000';
+
+    // Đảm bảo baseURL có protocol
+    if (!this.baseURL.startsWith('http')) {
+      this.baseURL = `https://${this.baseURL}`;
+    }
+
+    this.logger.log(`DjangoService using backend URL: ${this.baseURL}`);
     this.redis = this.redisService.getClient();
+  }
+
+  private async fetchWithAuth(
+    url: string,
+    options: RequestInit = {},
+  ): Promise<Response> {
+    const fullUrl = url.startsWith('http') ? url : `${this.baseURL}${url}`;
+
+    // Không thêm auth cho login/refresh endpoints
+    const isAuthEndpoint =
+      url.includes('/auth/login') || url.includes('/auth/refresh');
+
+    if (!isAuthEndpoint) {
+      const token = await this.loginIfNeeded();
+      options.headers = {
+        ...options.headers,
+        Authorization: `Bearer ${token}`,
+      };
+    }
+
+    const response = await fetch(fullUrl, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+
+    // Retry với token mới nếu 401
+    if (response.status === 401 && !isAuthEndpoint) {
+      this.logger.warn('Got 401, clearing token and retrying');
+      await this.redis.del('django:auth');
+      this.loginPromise = null;
+
+      const newToken = await this.loginIfNeeded();
+      options.headers = {
+        ...options.headers,
+        Authorization: `Bearer ${newToken}`,
+      };
+
+      return fetch(fullUrl, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+      });
+    }
+
+    return response;
   }
 
   private async saveTokens(
@@ -46,39 +105,126 @@ export class DjangoService {
   }
 
   async loginIfNeeded(): Promise<string> {
+    // Nếu đang login thì đợi
+    if (this.loginPromise) {
+      this.logger.debug('Login already in progress, waiting');
+      return this.loginPromise;
+    }
+
+    // Check token trong cache
     const stored = await this.getStoredTokens();
     if (stored && stored.access && Date.now() < stored.expiresAt - 5000) {
+      this.logger.debug('Using cached token');
       return stored.access;
     }
 
-    // try to refresh
+    // Check lại lần nữa sau khi await
+    if (this.loginPromise) {
+      this.logger.debug('Login started by another request, waiting');
+      return this.loginPromise;
+    }
+
+    // Bắt đầu login
+    this.logger.log('Token expired or missing, initiating login');
+
+    this.loginPromise = this.performLogin(stored)
+      .then((token) => {
+        this.loginPromise = null;
+        return token;
+      })
+      .catch((error) => {
+        this.loginPromise = null;
+        throw error;
+      });
+
+    return this.loginPromise;
+  }
+
+  private async performLogin(
+    stored: { access: string; refresh: string; expiresAt: number } | null,
+  ): Promise<string> {
+    this.logger.debug('performLogin started');
+
+    // Thử refresh token trước
     if (stored && stored.refresh) {
       try {
-        const res = await this.http.post(this.refreshPath, {
-          refresh: stored.refresh,
+        this.logger.debug('Attempting to refresh token');
+
+        const response = await fetch(`${this.baseURL}${this.refreshPath}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ refresh: stored.refresh }),
         });
-        const { access, refresh, expires_in } = res.data;
-        await this.saveTokens(
-          access,
-          refresh || stored.refresh,
-          expires_in || 3600,
+
+        if (response.ok) {
+          const data = await response.json();
+          const { access, refresh, expires_in } = data;
+
+          if (!access) {
+            throw new Error('No access token in refresh response');
+          }
+
+          await this.saveTokens(
+            access,
+            refresh || stored.refresh,
+            expires_in || 3600,
+          );
+          this.logger.log('Token refreshed successfully');
+          return access;
+        } else {
+          this.logger.warn(`Refresh failed with status ${response.status}`);
+        }
+      } catch (err: any) {
+        this.logger.warn(
+          `Refresh failed: ${err?.message || err}, will login using credentials`,
         );
-        return access;
-      } catch (err) {
-        this.logger.warn('Refresh failed, will login using credentials', err);
       }
     }
 
-    // login using env credentials
+    // Login bằng username/password
     const username = process.env.DJANGO_USERNAME;
     const password = process.env.DJANGO_PASSWORD;
+
     if (!username || !password) {
-      throw new Error('DJANGO_USERNAME/DJANGO_PASSWORD not set in env');
+      const error = new Error('DJANGO_USERNAME/DJANGO_PASSWORD not set in env');
+      this.logger.error(error.message);
+      throw error;
     }
-    const res = await this.http.post(this.loginPath, { username, password });
-    const { access, refresh, expires_in } = res.data;
-    await this.saveTokens(access, refresh, expires_in || 3600);
-    return access;
+
+    try {
+      this.logger.debug('Attempting to login with credentials');
+
+      const response = await fetch(`${this.baseURL}${this.loginPath}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Login failed with status ${response.status}: ${errorText}`,
+        );
+      }
+
+      const data = await response.json();
+      const { access, refresh, expires_in } = data;
+
+      if (!access) {
+        throw new Error('No access token in login response');
+      }
+
+      await this.saveTokens(access, refresh, expires_in || 3600);
+      this.logger.log('Logged in successfully');
+      return access;
+    } catch (err: any) {
+      this.logger.error(`Login failed: ${err?.message || err}`, err?.stack);
+      throw new Error(`Login failed: ${err?.message || err}`);
+    }
   }
 
   async fetchShopProfile(shopId: string) {
@@ -94,30 +240,108 @@ export class DjangoService {
       }
     }
 
-    const token = await this.loginIfNeeded();
     try {
-      const res = await this.http.get(`/api/v1/users/${shopId}/profile/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const profile = res.data;
-      // cache 1 hour
+      const response = await this.fetchWithAuth(
+        `/api/v1/users/${shopId}/profile`,
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const profile = await response.json();
       await this.redis.set(cacheKey, JSON.stringify(profile), 'EX', 3600);
       return profile;
     } catch (err: any) {
-      // if unauthorized, try refresh+retry once
-      if (err.response && err.response.status === 401) {
-        const access = await this.loginIfNeeded();
-        const retry = await this.http.get(`/api/v1/users/${shopId}/profile/`, {
-          headers: { Authorization: `Bearer ${access}` },
-        });
-        const profile = retry.data;
-        await this.redis.set(cacheKey, JSON.stringify(profile), 'EX', 3600);
-        return profile;
-      }
       this.logger.warn(
-        `Failed to fetch shop profile ${shopId}: ${err?.message}`,
+        `Failed to fetch shop profile ${shopId}: ${err?.message || ''}`,
       );
       return null;
+    }
+  }
+
+  async fetchShippingRates(
+    lengthCm: number,
+    widthCm: number,
+    heightCm: number,
+    weightKg: number,
+    postOffice: string,
+    receiverLatitude: string,
+    receiverLongitude: string,
+  ): Promise<ShippingCostInformationDto> {
+    try {
+      this.logger.log(
+        `Fetching shipping rates: ${lengthCm}x${widthCm}x${heightCm} cm, ${weightKg} kg`,
+      );
+
+      const response = await this.fetchWithAuth(
+        '/api/v1/shipping-rates/calculate-fee',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            lengthCm,
+            widthCm,
+            heightCm,
+            weightKg,
+            postOffice,
+            receiverLatitude,
+            receiverLongitude,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      this.logger.error('Failed to fetch shipping rates from Django:', error);
+      throw error;
+    }
+  }
+
+  async calculateVehicleRoutingProblem(
+    vehicles: Array<{
+      id: number;
+      start: [string, string];
+      end: [string, string];
+      profile: string;
+    }>,
+    jobs: Array<{
+      id: number;
+      location: [string, string];
+      amounts: [number, number];
+    }>,
+    mode: string,
+  ): Promise<any> {
+    try {
+      this.logger.log(
+        `Calculating VRP with ${vehicles.length} vehicles and ${jobs.length} jobs`,
+      );
+
+      const response = await this.fetchWithAuth(
+        '/api/v1/routes/vehicle-routing-problem',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            vehicles,
+            jobs,
+            mode,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      return response.json();
+    } catch (error) {
+      this.logger.error('Failed to calculate VRP from Django:', error);
+      throw error;
     }
   }
 }
