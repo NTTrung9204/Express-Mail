@@ -12,6 +12,7 @@ import { OrderPostOffice } from '../order/entities/post-office-order.entity';
 import { ProductService } from '../product/product.service';
 import { Product } from '../product/entities/product.entity';
 import { CommonModule } from 'src/common/module/common.module';
+import { RouteStep } from '../plan/entities/route-step.entity';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { CommonModule } from 'src/common/module/common.module';
       OrderTransition,
       OrderPostOffice,
       Product,
+      RouteStep,
     ]),
     JwtModule.register({
       secret: process.env.JWT_ACCESS_SECRET,
@@ -29,7 +31,13 @@ import { CommonModule } from 'src/common/module/common.module';
     CommonModule,
   ],
   controllers: [ShippingController],
-  providers: [ShippingService, JwtAuthGuard, OrderService, ProductService],
+  providers: [
+    ShippingService,
+    JwtAuthGuard,
+    OrderService,
+    ProductService,
+    RouteStep,
+  ],
   exports: [ShippingService],
 })
 export class ShippingModule {}

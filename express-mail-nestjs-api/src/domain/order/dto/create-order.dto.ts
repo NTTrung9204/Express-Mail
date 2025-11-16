@@ -13,6 +13,7 @@ import {
 import { Type, Transform, plainToInstance } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { OrderStatus } from '../enums/order-status.enum';
+import { ShippingStatus } from '../enums/shipping-status.enum';
 
 export class CreateProductForOrderDto {
   @ApiProperty({ description: 'Product name', example: 'Laptop Dell XPS 13' })
@@ -188,4 +189,9 @@ export class CreateOrderDto {
   @IsOptional()
   @MaxLength(50)
   order_status?: OrderStatus;
+
+  @IsEnum(ShippingStatus)
+  @IsOptional()
+  @MaxLength(50)
+  shipping_status?: ShippingStatus;
 }

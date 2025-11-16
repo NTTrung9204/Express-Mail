@@ -5,6 +5,7 @@ import { Shipping } from './entities/shipping.entity';
 import { Repository } from 'typeorm';
 import { DjangoService } from 'src/common/services/django.service';
 import { OrderService } from '../order/order.service';
+import { RouteStep } from '../plan/entities/route-step.entity';
 
 describe('ShippingService', () => {
   let service: ShippingService;
@@ -44,6 +45,10 @@ describe('ShippingService', () => {
         {
           provide: OrderService,
           useValue: mockOrderService,
+        },
+        {
+          provide: RouteStep,
+          useValue: {},
         },
       ],
     }).compile();

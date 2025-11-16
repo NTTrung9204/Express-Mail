@@ -442,6 +442,9 @@ export class PlanService {
           orders: filteredOrders as any,
           geometry: vehicleRoute.geometry,
           mode: vehicleRoute.mode,
+          time: vehicleRoute.createdAt,
+          distance: vehicleRoute.distance,
+          duration: vehicleRoute.duration,
         };
       },
     );

@@ -19,4 +19,22 @@ export class ResShippingPlanDto {
     type: String,
   })
   mode: string;
+
+  @ApiProperty({
+    description: 'Time of the route',
+    type: Date,
+  })
+  time: Date;
+
+  @ApiProperty({
+    description: 'Distance of the route',
+    type: Number,
+  })
+  distance: number;
+
+  @ApiProperty({
+    description: 'Duration of the route',
+    type: Number,
+  })
+  duration: number;
 }
