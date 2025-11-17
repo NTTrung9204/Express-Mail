@@ -423,25 +423,35 @@ export class PlanService {
 
     const shippingPlan: ResShippingPlanDto[] = vehicleRoutes.map(
       (vehicleRoute): ResShippingPlanDto => {
-        const filteredOrders = enrichedOrders.filter((order) =>
-          vehicleRoute.routeSteps?.some(
-            (routeStep) => routeStep.jobId === order.id,
-          ),
+        // Create a map of route steps by jobId for faster lookup
+        const routeStepMap = new Map(
+          vehicleRoute.routeSteps?.map((rs) => [rs.jobId, rs]) || [],
         );
+
+        const filteredOrders = enrichedOrders
+          .filter((order) => routeStepMap.has(order.id))
+          .map((order) => {
+            const routeStep = routeStepMap.get(order.id);
+            console.log(`Order ${order.id} routeStep:`, routeStep);
+            return {
+              ...order,
+              routeStep,
+            };
+          });
+
         // sort orders by routeStep.stepOrder
         filteredOrders.sort(
           (a, b) =>
-            (vehicleRoute.routeSteps?.find(
-              (routeStep) => routeStep.jobId === a.id,
-            )?.stepOrder || 0) -
-            (vehicleRoute.routeSteps?.find(
-              (routeStep) => routeStep.jobId === b.id,
-            )?.stepOrder || 0),
+            (a.routeStep?.stepOrder || 0) - (b.routeStep?.stepOrder || 0),
         );
+
         return {
           orders: filteredOrders as any,
           geometry: vehicleRoute.geometry,
           mode: vehicleRoute.mode,
+          time: vehicleRoute.createdAt,
+          distance: vehicleRoute.distance,
+          duration: vehicleRoute.duration,
         };
       },
     );

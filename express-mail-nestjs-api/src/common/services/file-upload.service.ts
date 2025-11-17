@@ -5,7 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class FileUploadService {
-  private readonly uploadDir = process.env.UPLOAD_DIR || './uploads';
+  private readonly uploadDir =
+    process.env.UPLOAD_DIR || path.join(__dirname, '..', '..', '..', 'uploads');
   private readonly maxFileSize = 5 * 1024 * 1024; // 5MB
   private readonly allowedMimeTypes = [
     'image/jpeg',

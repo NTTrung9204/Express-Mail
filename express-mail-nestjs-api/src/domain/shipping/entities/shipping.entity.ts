@@ -8,7 +8,6 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   JoinColumn,
-  OneToOne,
 } from 'typeorm';
 import { ShippingStatus } from '../enums/shipping-status.enum';
 import { RouteStep } from 'src/domain/plan/entities/route-step.entity';
@@ -40,7 +39,7 @@ export class Shipping {
   @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt: Date;
 
-  @OneToOne(() => RouteStep, (routeStep) => routeStep.id, {
+  @ManyToOne(() => RouteStep, (routeStep) => routeStep.shipping, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'route_step_id' })

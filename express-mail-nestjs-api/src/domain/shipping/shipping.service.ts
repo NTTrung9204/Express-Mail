@@ -14,17 +14,25 @@ import { GetShipperOrdersDto } from './dto/get-shipper-orders.dto';
 import { ShippingStatus } from './enums/shipping-status.enum';
 import { OrderService } from '../order/order.service';
 import { OrderStatus } from '../order/enums/order-status.enum';
+import { RouteStep } from '../plan/entities/route-step.entity';
+import { RouteStepEnum } from '../plan/enums/route-step-status.enum';
 
 @Injectable()
 export class ShippingService {
   constructor(
     @InjectRepository(Shipping)
     private readonly shippingRepository: Repository<Shipping>,
+    @InjectRepository(RouteStep)
+    private readonly routeStepRepository: Repository<RouteStep>,
     private readonly orderService: OrderService,
   ) {}
 
   async create(createShippingDto: CreateShippingDto): Promise<Shipping> {
     try {
+      await this.orderService.update(createShippingDto.orderId, {
+        shipping_status: createShippingDto.status as any,
+      });
+
       if (createShippingDto.status === ShippingStatus.FINISHED) {
         const latestShipping =
           await this.orderService.getLastestShippingByOrderId(
@@ -50,6 +58,27 @@ export class ShippingService {
           : undefined,
       });
       const savedShipping = await this.shippingRepository.save(shipping);
+
+      // Update route step status based on shipping status
+      if (createShippingDto.routeStepId) {
+        let routeStepStatus: RouteStepEnum | undefined;
+
+        if (createShippingDto.status === ShippingStatus.FINISHED) {
+          routeStepStatus = RouteStepEnum.COMPLETED;
+        } else if (
+          createShippingDto.status === ShippingStatus.PICKUP_FAILED ||
+          createShippingDto.status === ShippingStatus.DELIVERY_FAILED
+        ) {
+          routeStepStatus = RouteStepEnum.FAILED;
+        }
+
+        if (routeStepStatus) {
+          await this.routeStepRepository.update(
+            { id: createShippingDto.routeStepId },
+            { status: routeStepStatus },
+          );
+        }
+      }
 
       return savedShipping;
     } catch (error) {

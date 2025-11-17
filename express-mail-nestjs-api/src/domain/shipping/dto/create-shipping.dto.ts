@@ -40,5 +40,5 @@ export class CreateShippingDto {
   @IsOptional()
   @IsInt()
   @Min(1)
-  routeStepId?: number;
+  routeStepId: number;
 }
