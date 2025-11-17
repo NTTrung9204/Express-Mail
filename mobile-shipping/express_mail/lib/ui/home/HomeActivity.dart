@@ -36,7 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late final List<Widget> _fragments = [
     HomeFragment(loginResponse: widget.loginResponse),
     OrderFragment(loginResponse: widget.loginResponse),
-    MapFragment(),
+    // MapFragment(),
     EarningFragment(loginResponse: widget.loginResponse),
     ProfileFragment(loginResponse: widget.loginResponse),
   ];
@@ -102,23 +102,23 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               label: AppStrings.order,
             ),
-            BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                "assets/images/ic_map.svg",
-                colorFilter: ColorFilter.mode(
-                  _selectedIndex == 2
-                      ? AppColors.blue_127AE2
-                      : AppColors.gray_7B899D,
-                  BlendMode.srcIn,
-                ),
-              ),
-              label: AppStrings.map,
-            ),
+            // BottomNavigationBarItem(
+            //   icon: SvgPicture.asset(
+            //     "assets/images/ic_map.svg",
+            //     colorFilter: ColorFilter.mode(
+            //       _selectedIndex == 2
+            //           ? AppColors.blue_127AE2
+            //           : AppColors.gray_7B899D,
+            //       BlendMode.srcIn,
+            //     ),
+            //   ),
+            //   label: AppStrings.map,
+            // ),
             BottomNavigationBarItem(
               icon: SvgPicture.asset(
                 "assets/images/ic_earning.svg",
                 colorFilter: ColorFilter.mode(
-                  _selectedIndex == 3
+                  _selectedIndex == 2
                       ? AppColors.blue_127AE2
                       : AppColors.gray_7B899D,
                   BlendMode.srcIn,
@@ -130,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: SvgPicture.asset(
                 "assets/images/ic_profile.svg",
                 colorFilter: ColorFilter.mode(
-                  _selectedIndex == 4
+                  _selectedIndex == 3
                       ? AppColors.blue_127AE2
                       : AppColors.gray_7B899D,
                   BlendMode.srcIn,
