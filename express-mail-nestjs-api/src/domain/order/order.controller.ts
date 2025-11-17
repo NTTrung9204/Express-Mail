@@ -174,13 +174,6 @@ export class OrderController {
     @Query('fromDate') fromDate?: string,
     @Query('toDate') toDate?: string,
   ): Promise<ApiResponseDto<PaginatedResponseDto<OrderResponseDto>>> {
-    console.log('Received pickup orders request with params:', {
-      postOfficeId,
-      page,
-      limit,
-      fromDate,
-      toDate,
-    });
     const fromDateObj = fromDate ? new Date(fromDate) : undefined;
     const toDateObj = toDate ? new Date(toDate) : undefined;
 

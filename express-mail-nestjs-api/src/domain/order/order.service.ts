@@ -59,7 +59,6 @@ export class OrderService {
         updatedAt: ship.updatedAt,
       })),
       deleted_at: order.deleted_at ?? undefined,
-      shopProfile: (order as any).shopProfile,
     } as OrderResponseDto;
   }
 
@@ -632,8 +631,6 @@ export class OrderService {
     fromDate?: Date,
     toDate?: Date,
   ): Promise<PaginatedResponseDto<OrderResponseDto>> {
-    console.log('Finding pickup orders for postOfficeId:', postOfficeId);
-
     // First, get order IDs that match criteria using subquery
     const orderIdsQuery = this.orderTransitionRepository
       .createQueryBuilder('transition')
@@ -661,8 +658,6 @@ export class OrderService {
     if (toDate) {
       orderIdsQuery.andWhere('transition.created_at <= :toDate', { toDate });
     }
-
-    console.log('Order IDs Query:', orderIdsQuery.getSql());
 
     // Get total count and order data with createdAt for sorting
     const orderData = await orderIdsQuery

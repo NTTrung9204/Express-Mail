@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance with base URL
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
+  baseURL: import.meta.env.VITE_API_NESTJS_BASE_URL || 'http://localhost:8000',
   headers: {
     'Content-Type': 'application/json',
   },

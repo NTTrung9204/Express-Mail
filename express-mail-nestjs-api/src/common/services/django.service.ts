@@ -241,15 +241,59 @@ export class DjangoService {
     }
 
     try {
-      const response = await this.fetchWithAuth(
+      // Fetch user info
+      const userResponse = await this.fetchWithAuth(`/api/v1/users/${shopId}`);
+
+      if (!userResponse.ok) {
+        throw new Error(
+          `Failed to fetch user info: HTTP ${userResponse.status}`,
+        );
+      }
+
+      const userData = await userResponse.json();
+
+      // Fetch shop profile info
+      const profileResponse = await this.fetchWithAuth(
         `/api/v1/users/${shopId}/profile`,
       );
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+      if (!profileResponse.ok) {
+        this.logger.warn(
+          `Failed to fetch shop profile: HTTP ${profileResponse.status}`,
+        );
+        // If profile endpoint fails, return just user data
+        const profile = {
+          ...userData,
+          profileId: null,
+          address: null,
+          phoneNumber: null,
+          latitude: null,
+          longitude: null,
+          postOffice: null,
+        };
+        await this.redis.set(cacheKey, JSON.stringify(profile), 'EX', 3600);
+        return profile;
       }
 
-      const profile = await response.json();
+      const profileData = await profileResponse.json();
+
+      // Merge user and profile data
+      const profile = {
+        id: userData.id,
+        username: userData.username,
+        email: userData.email,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        role: userData.role,
+        excludePermissions: userData.excludePermissions || [],
+        profileId: profileData.id,
+        address: profileData.address,
+        phoneNumber: profileData.phoneNumber,
+        latitude: profileData.latitude,
+        longitude: profileData.longitude,
+        postOffice: profileData.postOffice,
+      };
+
       await this.redis.set(cacheKey, JSON.stringify(profile), 'EX', 3600);
       return profile;
     } catch (err: any) {
