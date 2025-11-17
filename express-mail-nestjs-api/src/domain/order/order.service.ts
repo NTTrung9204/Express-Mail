@@ -48,7 +48,6 @@ export class OrderService {
   ) {}
 
   transformToOrderResponseDto(order: Order): OrderResponseDto {
-    console.log('fetched shop profile for order', (order as any).shopProfile);
     return {
       ...order,
       shipping: order.shipping?.map((ship: Shipping) => ({
@@ -275,8 +274,6 @@ export class OrderService {
         ),
       );
 
-      console.log('shopIds', shopIds);
-
       if (shopIds.length === 0) return orders;
 
       // Fetch shop profiles in parallel
@@ -289,8 +286,6 @@ export class OrderService {
         ),
       );
 
-      console.log('profiles', profiles);
-
       // Map profiles by shop ID
       const profileMap = new Map<string, ShopProfileDto>();
       shopIds.forEach((id, idx) => {
@@ -298,8 +293,6 @@ export class OrderService {
           profileMap.set(id, profiles[idx]);
         }
       });
-
-      console.log('profileMap', profileMap);
 
       // Attach shop profile to each order
       return orders.map((order) => ({
@@ -620,6 +613,88 @@ export class OrderService {
     const enrichedOrders = await this.enrichOrdersWithShopProfiles(orders);
 
     // Transform orders and return paginated response
+    const items = enrichedOrders.map((order) =>
+      this.transformToOrderResponseDto(order),
+    );
+
+    return new PaginatedResponseDto<OrderResponseDto>(
+      items,
+      total,
+      page,
+      limit,
+    );
+  }
+
+  async findPickupOrders(
+    postOfficeId: string,
+    page: number = 1,
+    limit: number = 10,
+    fromDate?: Date,
+    toDate?: Date,
+  ): Promise<PaginatedResponseDto<OrderResponseDto>> {
+    console.log('Finding pickup orders for postOfficeId:', postOfficeId);
+
+    // First, get order IDs that match criteria using subquery
+    const orderIdsQuery = this.orderTransitionRepository
+      .createQueryBuilder('transition')
+      .select('DISTINCT transition.order_id', 'order_id')
+      .where('transition.current_post_office IS NULL')
+      .andWhere('transition.next_post_office = :postOfficeId', { postOfficeId })
+      .andWhere((qb) => {
+        const sub = qb
+          .subQuery()
+          .select('MAX(ot.id)')
+          .from(OrderTransition, 'ot')
+          .where('ot.order_id = transition.order_id')
+          .andWhere('ot.deleted_at IS NULL')
+          .getQuery();
+
+        return `transition.id = ${sub}`;
+      });
+
+    // Apply date filters
+    if (fromDate) {
+      orderIdsQuery.andWhere('transition.created_at >= :fromDate', {
+        fromDate,
+      });
+    }
+    if (toDate) {
+      orderIdsQuery.andWhere('transition.created_at <= :toDate', { toDate });
+    }
+
+    console.log('Order IDs Query:', orderIdsQuery.getSql());
+
+    // Get total count and order data with createdAt for sorting
+    const orderData = await orderIdsQuery
+      .addSelect('transition.created_at', 'created_at')
+      .getRawMany();
+
+    const total = orderData.length;
+
+    // Sort by created_at DESC
+    const sortedOrderData = orderData.sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+
+    // Apply pagination
+    const paginatedOrderIds = sortedOrderData
+      .slice((page - 1) * limit, page * limit)
+      .map((row) => row.order_id);
+
+    // Fetch full orders with relations
+    const orders =
+      paginatedOrderIds.length > 0
+        ? await this.orderRepository.find({
+            where: { id: In(paginatedOrderIds) },
+            relations: ['products', 'shipping', 'transitions'],
+          })
+        : [];
+
+    // Enrich with shop profiles
+    const enrichedOrders = await this.enrichOrdersWithShopProfiles(orders);
+
+    // Transform orders
     const items = enrichedOrders.map((order) =>
       this.transformToOrderResponseDto(order),
     );

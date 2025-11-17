@@ -129,6 +129,76 @@ export class OrderController {
     );
   }
 
+  @Get('pickup')
+  @ApiOperation({
+    summary: 'Get orders that need to be picked up by post office',
+  })
+  @ApiQuery({
+    name: 'postOfficeId',
+    required: true,
+    description: 'Post office ID',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Items per page',
+    example: 10,
+  })
+  @ApiQuery({
+    name: 'fromDate',
+    required: false,
+    description: 'Start date (ISO format)',
+    example: '2024-01-01T00:00:00Z',
+  })
+  @ApiQuery({
+    name: 'toDate',
+    required: false,
+    description: 'End date (ISO format)',
+    example: '2024-01-31T23:59:59Z',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of pickup orders',
+    type: PaginatedResponseDto<OrderResponseDto>,
+  })
+  async findPickupOrders(
+    @Query('postOfficeId') postOfficeId: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Query('fromDate') fromDate?: string,
+    @Query('toDate') toDate?: string,
+  ): Promise<ApiResponseDto<PaginatedResponseDto<OrderResponseDto>>> {
+    console.log('Received pickup orders request with params:', {
+      postOfficeId,
+      page,
+      limit,
+      fromDate,
+      toDate,
+    });
+    const fromDateObj = fromDate ? new Date(fromDate) : undefined;
+    const toDateObj = toDate ? new Date(toDate) : undefined;
+
+    const paginated = await this.orderService.findPickupOrders(
+      postOfficeId,
+      page,
+      limit,
+      fromDateObj,
+      toDateObj,
+    );
+
+    return new ApiResponseDto(
+      true,
+      'Pickup orders retrieved successfully',
+      paginated,
+    );
+  }
+
   @Get('code/:code')
   @ApiOperation({ summary: 'Get order by code' })
   @ApiParam({ name: 'code', description: 'Order code', example: 'ORD12345' })

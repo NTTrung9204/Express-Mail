@@ -1,11 +1,25 @@
 import React from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Dashboard, LocalShipping, Inventory2, People } from "@mui/icons-material";
 import LogoutIcon from '@mui/icons-material/Logout';
+import { toast } from "react-toastify";
+import authAPI from "../../api/authAPI";
 
 
 const Sidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await authAPI.logout();
+      toast.success("Đã đăng xuất");
+      navigate('/post-office/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error("Lỗi khi đăng xuất");
+    }
+  };
 
   const linkClasses =
     "flex items-center p-4 rounded-lg transition-all duration-200 hover:bg-orange-400 text-sm";
@@ -66,14 +80,12 @@ const Sidebar = () => {
           </NavLink>
         </li>
         <li>
-          <NavLink
-            to="/post-office/login"
-            className={({ isActive }) =>
-              `${linkClasses} ${isActive ? activeClasses : ""}`
-            }
+          <button
+            onClick={handleLogout}
+            className={`${linkClasses} w-full text-left`}
           >
             <LogoutIcon className="mr-3 text-base" /> Đăng xuất
-          </NavLink>
+          </button>
         </li>
       </ul>
     </div>

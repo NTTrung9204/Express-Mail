@@ -16,21 +16,13 @@ export class JwtAuthGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
 
-    console.log('Request headers:', request.headers);
     const authHeader = request.headers.authorization;
-    console.log('Auth Header:', authHeader);
 
     if (!authHeader) {
       throw new UnauthorizedException('Authorization header is missing');
     }
 
     const [type, token] = authHeader.split(' ');
-    console.log(
-      'Auth type:',
-      type,
-      'Token:',
-      token ? '(present)' : '(missing)',
-    );
 
     if (type !== 'Bearer') {
       throw new UnauthorizedException('Bearer token is required');
@@ -44,8 +36,6 @@ export class JwtAuthGuard implements CanActivate {
       const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
         secret: process.env.JWT_ACCESS_SECRET,
       });
-
-      console.log('payload', payload);
 
       request['user'] = keysToCamel(payload);
 

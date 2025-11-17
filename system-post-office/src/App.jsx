@@ -11,15 +11,28 @@ import FailedOrders from "./pages/orders/FailedOrders";
 import RequestOrders from "./pages/orders/RequestOrders";
 import ClassifiedOrders from "./pages/orders/ClassifiedOrders";
 import Staffs from "./pages/Staffs";
+import { ProtectedRoute, PublicRoute } from "./components/ProtectedRoute";
+import authAPI from "./api/authAPI";
 
 export default function App() {
+  const isAuthenticated = authAPI.isAuthenticated();
+
   return (
     <div>
       <ToastContainer/>
       <Routes>
+        {/* If authenticated, redirect root to home */}
+        <Route path="/" element={<Navigate to={isAuthenticated ? "/post-office/home" : "/post-office/login"} replace />} />
 
-
-        <Route path="/" element={<MainLayout />}>
+        {/* Protected routes - only accessible if logged in */}
+        <Route 
+          path="/post-office" 
+          element={
+            <ProtectedRoute>
+              <MainLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route path="home" element={<Dashboard />} />
           <Route path="shippers" element={<Shippers />} />
 
@@ -31,10 +44,20 @@ export default function App() {
           </Route>
 
           <Route path="staffs" element={<Staffs />} />
-
         </Route>
 
-        <Route path="*" element={<Navigate to="/post-office/login" replace />} />
+        {/* Public route - redirect to home if already logged in */}
+        <Route 
+          path="/post-office/login" 
+          element={
+            <PublicRoute>
+              <LoginPage />
+            </PublicRoute>
+          } 
+        />
+
+        {/* Catch all - redirect to appropriate page */}
+        <Route path="*" element={<Navigate to={isAuthenticated ? "/post-office/home" : "/post-office/login"} replace />} />
       </Routes>
     </div>
   );
