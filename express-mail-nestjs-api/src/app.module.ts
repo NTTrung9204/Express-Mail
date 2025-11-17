@@ -8,6 +8,7 @@ import { ShippingModule } from './domain/shipping/shipping.module';
 import { dataSourceOptions } from './config/database.config';
 import { PlanModule } from './domain/plan/plan.module';
 import { CommonModule } from './common/module/common.module';
+import { FileModule } from './domain/file/file.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { CommonModule } from './common/module/common.module';
     ShippingModule,
     PlanModule,
     CommonModule,
+    FileModule,
   ],
   controllers: [AppController],
   providers: [AppService],
