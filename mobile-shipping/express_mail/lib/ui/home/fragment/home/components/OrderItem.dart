@@ -1,14 +1,14 @@
+import 'package:express_mail/data/model/ShippingOrder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
-import 'package:express_mail/data/model/DetailOrder.dart';
 import 'package:express_mail/data/enum/ShippingStatus.dart';
 import 'package:express_mail/resources/colors.dart';
 import 'package:express_mail/resources/strings.dart';
 import 'package:shimmer/shimmer.dart';
 
 class OrderItem extends StatelessWidget {
-  final DetailOrder? detailOrder;
+  final ShippingOrder? detailOrder;
   final bool isLoading;
   final VoidCallback? onGuidePressed;
   final VoidCallback? onFinishPressed;
@@ -111,24 +111,24 @@ class OrderItem extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              order.order.code,
+              order.code,
               style: const TextStyle(
                 fontFamily: "Inter_bold",
                 fontSize: 13,
                 color: AppColors.blue_344256,
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: order.status.color,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                order.status.name,
-                style: const TextStyle(fontSize: 12, color: AppColors.white),
-              ),
-            ),
+            // Container(
+            //   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            //   decoration: BoxDecoration(
+            //     color: order.shippingStatus.color,
+            //     borderRadius: BorderRadius.circular(8),
+            //   ),
+            //   child: Text(
+            //     order.shippingStatus.name,
+            //     style: const TextStyle(fontSize: 12, color: AppColors.white),
+            //   ),
+            // ),
           ],
         ),
         const SizedBox(height: 10),
@@ -148,9 +148,9 @@ class OrderItem extends StatelessWidget {
             const SizedBox(width: 5),
             Expanded(
               child: Text(
-                order.status == ShippingStatus.SHIPPING
-                    ? "${AppStrings.delivery} ${order.order.receiverAddress}, ${order.order.receiverWardCommune}, ${order.order.receiverProvinceCity}"
-                    : "${AppStrings.get_goods} ${order.order.receiverAddress}, ${order.order.receiverWardCommune}, ${order.order.receiverProvinceCity}",
+                order.shippingStatus == ShippingStatus.SHIPPING
+                    ? "${AppStrings.delivery} ${order.receiverAddress}, ${order.receiverWardCommune}, ${order.receiverProvinceCity}"
+                    : "${AppStrings.get_goods} ${order.receiverAddress}, ${order.receiverWardCommune}, ${order.receiverProvinceCity}",
                 style: const TextStyle(
                   fontSize: 13,
                   color: AppColors.gray_7B899D,
@@ -176,7 +176,7 @@ class OrderItem extends StatelessWidget {
             const SizedBox(width: 5),
             Expanded(
               child: Text(
-                "${AppStrings.phone_number}: ${order.order.receiverPhone}",
+                "${AppStrings.phone_number}: ${order.receiverPhone}",
                 style: const TextStyle(
                   fontSize: 13,
                   color: AppColors.gray_7B899D,
@@ -191,7 +191,7 @@ class OrderItem extends StatelessWidget {
         Align(
           alignment: Alignment.centerRight,
           child: Text(
-            "${AppStrings.total_amount}: ${NumberFormat.decimalPattern('vi').format(order.order.cod + order.order.shippingCost)}đ",
+            "${AppStrings.total_amount}: ${NumberFormat.decimalPattern('vi').format(order.cod + order.shippingCost)}đ",
             style: const TextStyle(
               fontSize: 14,
               color: AppColors.green_22C35D,

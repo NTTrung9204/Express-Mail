@@ -1,57 +1,58 @@
 import 'dart:convert';
-import 'package:express_mail/data/enum/ShippingStatus.dart';
+import 'package:express_mail/data/model/ShippingPlan.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:express_mail/data/model/DetailOrder.dart';
 import 'package:express_mail/data/model/LoginResponse.dart';
 import 'package:express_mail/constants/Constants.dart';
 import 'package:express_mail/resources/strings.dart';
 
 class OrderViewModel extends ChangeNotifier {
-  // --- Loading states ---
-  bool isLoadingPickupRequest = false;
-  bool isLoadingShipping = false;
-  bool isLoadingReturning = false;
-  bool isLoadingAll = false;
+  bool _isLoadingOrdersPickup = false;
 
-  bool _isCompletingOrder = false;
+  bool get isLoadingOrdersPickup => _isLoadingOrdersPickup;
 
-  bool get isCompletingOrder => _isCompletingOrder;
+  bool _isLoadingOrdersDelivery = false;
 
-  // --- Error message ---
-  String? errorMessage;
+  bool get isLoadingOrdersDelivery => _isLoadingOrdersDelivery;
 
-  // --- Order lists ---
-  List<DetailOrder> pickupRequestOrders = [];
-  List<DetailOrder> shippingOrders = [];
-  List<DetailOrder> returningOrders = [];
-  List<DetailOrder> allOrders = [];
+  List<ShippingPlan> _allOrdersPickup = [];
 
-  int pickupRequestCount = 0;
-  int shippingCount = 0;
-  int returningCount = 0;
-  int allCount = 0;
+  List<ShippingPlan> get ordersPickup => _allOrdersPickup;
 
-  int allTotalPages = 1;
-  int pickupTotalPages = 1;
-  int shippingTotalPages = 1;
-  int returningTotalPages = 1;
+  List<ShippingPlan> _allOrdersDelivery = [];
 
-  // --- Fetch Orders General ---
-  Future<void> fetchOrders(
-    LoginResponse loginResponse, {
-    required String? status,
-    required int page,
-    required ValueSetter<List<DetailOrder>> onSuccess,
-    required ValueSetter<bool> setLoading,
-  }) async {
-    setLoading(true);
-    errorMessage = null;
+  List<ShippingPlan> get ordersDelivery => _allOrdersDelivery;
+
+  String? _errorMessagePickup;
+
+  String? get errorMessagePickup => _errorMessagePickup;
+
+  String? _errorMessageDelivery;
+
+  String? get errorMessageDelivery => _errorMessageDelivery;
+
+  void _setErrorPickup(String message) {
+    _errorMessagePickup = message;
+    notifyListeners();
+  }
+
+  void _setErrorDelivery(String message) {
+    _errorMessageDelivery = message;
+    notifyListeners();
+  }
+
+  Future<void> getListOrderPickup(
+    LoginResponse loginResponse,
+    String fromStr,
+    String toStr,
+  ) async {
+    _isLoadingOrdersPickup = true;
+    _errorMessagePickup = null;
     notifyListeners();
 
-    String url = '${Constants.shipperOrderUrl}${loginResponse.user.id}?';
-    if (status != null) url += 'status=$status&';
-    url += 'page=$page&limit=${Constants.limit}';
+    final url =
+        '${Constants.baseUrlTrung}/plan/shipping-plan?shipper_id=${loginResponse.user.id}&mode=pickup&start_date=$fromStr&end_date=$toStr';
+
     try {
       final response = await http.get(
         Uri.parse(url),
@@ -61,160 +62,67 @@ class OrderViewModel extends ChangeNotifier {
         },
       );
 
-      if (response.statusCode != 200) {
-        final error = jsonDecode(response.body);
-        errorMessage = error['message'] ?? '';
-        setLoading(false);
-        notifyListeners();
-        return;
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        List<ShippingPlan> allPlans = [];
+
+        for (var batch in data) {
+          final plan = ShippingPlan.fromJson(Map<String, dynamic>.from(batch));
+          allPlans.add(plan);
+        }
+        _allOrdersPickup = allPlans;
+      } else {
+        _allOrdersPickup = [];
+        _setErrorPickup(AppStrings.error_loading_order_list);
       }
-
-      final meta = jsonDecode(response.body)['data']?['meta'];
-      switch (status) {
-        case "PICKUP_REQUESTED":
-          pickupTotalPages = meta['totalPages'] ?? 1;
-          pickupRequestCount = meta['total'] ?? 0;
-          break;
-        case "SHIPPING":
-          shippingTotalPages = meta['totalPages'] ?? 1;
-          shippingCount = meta['total'] ?? 0;
-          break;
-        case "RETURNING":
-          returningTotalPages = meta['totalPages'] ?? 1;
-          returningCount = meta['total'] ?? 0;
-          break;
-        default:
-          allTotalPages = meta['totalPages'] ?? 1;
-          allCount = meta['total'] ?? 0;
-          break;
-      }
-
-      final dataList = jsonDecode(response.body)['data']?['data'] ?? [];
-
-      List<DetailOrder> orders = dataList
-          .map<DetailOrder>(
-            (item) => DetailOrder.fromJson(Map<String, dynamic>.from(item)),
-          )
-          .toList();
-      orders = orders
-          .where((order) => order.status != ShippingStatus.FINISHED)
-          .toList();
-
-      if (status == null) {
-        allCount = orders.length;
-        allTotalPages = (allCount / Constants.limit).ceil();
-      }
-
-      print("SSSS ${allCount} ${allTotalPages}");
-
-      onSuccess(orders);
     } catch (e) {
-      errorMessage = '${AppStrings.connection_error}: $e';
+      _allOrdersPickup = [];
+      _setErrorPickup('${AppStrings.connection_error}: $e');
     } finally {
-      setLoading(false);
+      _isLoadingOrdersPickup = false;
       notifyListeners();
     }
   }
 
-  // --- Fetch Orders by status ---
-  Future<void> fetchPickupRequestOrders(
-    LoginResponse loginResponse, {
-    int page = 1,
-  }) async {
-    await fetchOrders(
-      loginResponse,
-      status: "PICKUP_REQUESTED",
-      page: page,
-      onSuccess: (orders) => pickupRequestOrders = orders,
-      setLoading: (loading) => isLoadingPickupRequest = loading,
-    );
-  }
-
-  Future<void> fetchShippingOrders(
-    LoginResponse loginResponse, {
-    int page = 1,
-  }) async {
-    await fetchOrders(
-      loginResponse,
-      status: "SHIPPING",
-      page: page,
-      onSuccess: (orders) => shippingOrders = orders,
-      setLoading: (loading) => isLoadingShipping = loading,
-    );
-  }
-
-  Future<void> fetchReturningOrders(
-    LoginResponse loginResponse, {
-    int page = 1,
-  }) async {
-    await fetchOrders(
-      loginResponse,
-      status: "RETURNING",
-      page: page,
-      onSuccess: (orders) => returningOrders = orders,
-      setLoading: (loading) => isLoadingReturning = loading,
-    );
-  }
-
-  Future<void> fetchAllOrders(
-    LoginResponse loginResponse, {
-    int page = 1,
-  }) async {
-    await fetchOrders(
-      loginResponse,
-      status: null,
-      page: page,
-      onSuccess: (orders) => allOrders = orders,
-      setLoading: (loading) => isLoadingAll = loading,
-    );
-  }
-
-  // --- Complete order by orderId ---
-  Future<bool> completeOrderById(
+  Future<void> getListOrderDelivery(
     LoginResponse loginResponse,
-    int orderId,
-    int pageAll,
-    int pagePickup,
-    int pageShipping,
-    int pageReturn,
+    String fromStr,
+    String toStr,
   ) async {
-    _isCompletingOrder = true;
+    _isLoadingOrdersDelivery = true;
+    _errorMessageDelivery = null;
     notifyListeners();
 
-    final url = "${Constants.baseUrlTrung}/shipping";
+    final url =
+        '${Constants.baseUrlTrung}/plan/shipping-plan?shipper_id=${loginResponse.user.id}&mode=delivery&start_date=$fromStr&end_date=$toStr';
 
     try {
-      final response = await http.post(
+      final response = await http.get(
         Uri.parse(url),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${loginResponse.access}',
-          'accept': 'application/json',
         },
-        body: jsonEncode({
-          "orderId": orderId,
-          "status": "FINISHED",
-          "shipperId": loginResponse.user.id.toString(),
-        }),
       );
 
-      if (response.statusCode == 201) {
-        await Future.wait([
-          fetchAllOrders(loginResponse, page: pageAll),
-          fetchPickupRequestOrders(loginResponse, page: pagePickup),
-          fetchShippingOrders(loginResponse, page: pageShipping),
-          fetchReturningOrders(loginResponse, page: pageReturn),
-        ]);
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        List<ShippingPlan> allPlans = [];
 
-        notifyListeners();
-        return true;
+        for (var batch in data) {
+          final plan = ShippingPlan.fromJson(Map<String, dynamic>.from(batch));
+          allPlans.add(plan);
+        }
+        _allOrdersDelivery = allPlans;
       } else {
-        return false;
+        _allOrdersDelivery = [];
+        _setErrorDelivery(AppStrings.error_loading_order_list);
       }
-    } catch (_) {
-      return false;
+    } catch (e) {
+      _allOrdersDelivery = [];
+      _setErrorDelivery('${AppStrings.connection_error}: $e');
     } finally {
-      _isCompletingOrder = false;
+      _isLoadingOrdersDelivery = false;
       notifyListeners();
     }
   }
