@@ -4,13 +4,46 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import logoImg from '../assets/logo.png';
 import warehouse_worker from '../assets/ghn_img-login.jpg';
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { djangoAPI } from '../api/axiosInstances';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-    navigate('/post-office/home');
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    
+    if (!username || !password) {
+      toast.error("Vui lòng nhập tên đăng nhập và mật khẩu");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await djangoAPI.post('/api/v1/auth/login', {
+        username: username,
+        password: password,
+      });
+
+      const { access, refresh, user } = response.data;
+
+      // Save tokens and user info to localStorage
+      localStorage.setItem('accessToken', access);
+      localStorage.setItem('refreshToken', refresh);
+      localStorage.setItem('user', JSON.stringify(user));
+
+      toast.success("Đăng nhập thành công");
+      navigate('/post-office/home');
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error(error.response?.data?.message || "Đăng nhập thất bại");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -33,7 +66,7 @@ export default function LoginPage() {
             />
           </div>
 
-          <form className="space-y-5">
+          <form className="space-y-5" onSubmit={handleLogin}>
             <div>
               <label className="block text-gray-700 font-medium mb-1">
                 Mã nhân viên
@@ -41,6 +74,8 @@ export default function LoginPage() {
               <input
                 type="text"
                 placeholder="Nhập tên đăng nhập"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-orange-500"
               />
             </div>
@@ -57,6 +92,8 @@ export default function LoginPage() {
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="Nhập mật khẩu"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-orange-500 pr-10"
                 />
                 <button
@@ -70,11 +107,11 @@ export default function LoginPage() {
             </div>
 
             <button
-              type="button"
-              onClick={handleLogin}
-              className="w-full bg-orange-400 hover:bg-orange-500 text-white font-semibold rounded-lg py-2 transition"
+              type="submit"
+              disabled={loading}
+              className="w-full bg-orange-400 hover:bg-orange-500 disabled:bg-orange-300 text-white font-semibold rounded-lg py-2 transition"
             >
-              Đăng nhập
+              {loading ? "Đang đăng nhập..." : "Đăng nhập"}
             </button>
           </form>
         </div>
