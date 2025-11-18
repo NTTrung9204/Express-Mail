@@ -1,4 +1,5 @@
-import API from './axiosConfig';
+import { nestJSAPI } from "./axiosInstances";
+
 
 export const ordersAPI = {
   // Get pickup orders
@@ -16,7 +17,7 @@ export const ordersAPI = {
       params.toDate = toDate;
     }
 
-    const response = await API.get('/orders/pickup', { params });
+    const response = await nestJSAPI.get('/orders/pickup', { params });
     return response.data;
   },
 
@@ -35,7 +36,7 @@ export const ordersAPI = {
       params.toDate = toDate;
     }
 
-    const response = await API.get('/orders/received', { params });
+    const response = await nestJSAPI.get('/orders/received', { params });
     return response.data;
   },
 
@@ -54,7 +55,7 @@ export const ordersAPI = {
       params.toDate = toDate;
     }
 
-    const response = await API.get('/orders/failed', { params });
+    const response = await nestJSAPI.get('/orders/failed', { params });
     return response.data;
   },
 
@@ -73,19 +74,25 @@ export const ordersAPI = {
       params.toDate = toDate;
     }
 
-    const response = await API.get('/orders/classified', { params });
+    const response = await nestJSAPI.get('/orders/classified', { params });
     return response.data;
   },
 
   // Get order by ID
   getOrderById: async (orderId) => {
-    const response = await API.get(`/orders/${orderId}`);
+    const response = await nestJSAPI.get(`/orders/${orderId}`);
+    return response.data;
+  },
+
+  // Get order by code
+  getOrderByCode: async (code) => {
+    const response = await nestJSAPI.get(`/orders/code/${code}`);
     return response.data;
   },
 
   // Update order
   updateOrder: async (orderId, data) => {
-    const response = await API.patch(`/orders/${orderId}`, data);
+    const response = await nestJSAPI.patch(`/orders/${orderId}`, data);
     return response.data;
   },
 };

@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 const tabs = [
   { name: "Đơn đã nhận", path: "received" },
   { name: "Đơn giao thất bại", path: "failed" },
-  { name: "Đơn yêu cầu", path: "requests" },
+  { name: "Đơn yêu cầu", path: "request" },
   { name: "Đơn đã phân loại", path: "classified" },
 ];
 

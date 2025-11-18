@@ -9,6 +9,7 @@ import Orders from "./pages/orders/Orders";
 import ReceivedOrders from "./pages/orders/ReceivedOrders";
 import FailedOrders from "./pages/orders/FailedOrders";
 import RequestOrders from "./pages/orders/RequestOrders";
+import OrderHistory from "./pages/orders/OrderHistory";
 import ClassifiedOrders from "./pages/orders/ClassifiedOrders";
 import Staffs from "./pages/Staffs";
 import { ProtectedRoute, PublicRoute } from "./components/ProtectedRoute";
@@ -39,12 +40,22 @@ export default function App() {
           <Route path="orders" element={<Orders />}>
             <Route path="received" element={<ReceivedOrders />} />
             <Route path="failed" element={<FailedOrders />} />
-            <Route path="requests" element={<RequestOrders />} />
+            <Route path="request" element={<RequestOrders />} />
             <Route path="classified" element={<ClassifiedOrders />} />
           </Route>
 
           <Route path="staffs" element={<Staffs />} />
         </Route>
+
+        {/* Order History - standalone route outside MainLayout */}
+        <Route 
+          path="/post-office/orders/history" 
+          element={
+            <ProtectedRoute>
+              <OrderHistory />
+            </ProtectedRoute>
+          } 
+        />
 
         {/* Public route - redirect to home if already logged in */}
         <Route 

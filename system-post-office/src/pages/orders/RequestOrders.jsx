@@ -129,8 +129,7 @@ const RequestOrders = () => {
                       <td className="p-3 text-center space-x-2">
                         <button
                           onClick={() => {
-                            setSelectedOrder(order);
-                            setOpenHistory(true);
+                            window.open(`/post-office/orders/history?code=${order.code}`, '_blank');
                           }}
                           className="border border-orange-200 text-orange-700 hover:bg-orange-50 text-sm transition px-3 py-1 rounded-lg items-center gap-1 inline-flex cursor-pointer"
                         >
@@ -165,7 +164,15 @@ const RequestOrders = () => {
       </div>
 
       <OrderHistoryModal open={openHistory} onClose={() => setOpenHistory(false)} order={selectedOrder}/>
-      <ConfirmArrivedModal open={openConfirm} onClose={() => setOpenConfirm(false)} order={selectedOrder}/>
+      <ConfirmArrivedModal
+        open={openConfirm}
+        onClose={() => setOpenConfirm(false)}
+        order={selectedOrder}
+        onConfirmed={() => {
+          setOpenConfirm(false);
+          fetchOrders();
+        }}
+      />
     </div>
   );
 };

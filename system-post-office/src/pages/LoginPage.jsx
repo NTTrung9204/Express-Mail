@@ -5,7 +5,7 @@ import logoImg from '../assets/logo.png';
 import warehouse_worker from '../assets/ghn_img-login.jpg';
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import API from "../api/axiosConfig";
+import { djangoAPI } from '../api/axiosInstances';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -24,7 +24,7 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const response = await API.post('/api/v1/auth/login', {
+      const response = await djangoAPI.post('/api/v1/auth/login', {
         username: username,
         password: password,
       });
