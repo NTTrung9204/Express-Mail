@@ -2,14 +2,14 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   base: '/admin/',
   plugins: [react(), tailwindcss()],
   server: {
     allowedHosts: ['express-mail.work.gd'],
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: mode === 'development' ? 'http://localhost:3000' : 'https://express-mail.work.gd',
         changeOrigin: true,
       }
     }
@@ -17,4 +17,4 @@ export default defineConfig({
   preview: {
     allowedHosts: ['express-mail.work.gd']
   }
-})
+}))

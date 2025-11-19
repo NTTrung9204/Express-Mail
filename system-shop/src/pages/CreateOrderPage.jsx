@@ -1,196 +1,716 @@
-import React, { useState } from 'react'
-import Sidebar from '../components/Sidebar';
-import AddressModal from '../components/AddressModal';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { toast } from 'react-toastify';
 
-const CreateOrderPage = () => {
+import LocationOn from '@mui/icons-material/LocationOn';
+import Inventory2Outlined from '@mui/icons-material/Inventory2Outlined';
+import ViewInArOutlined from '@mui/icons-material/ViewInArOutlined';
+import DeleteOutline from '@mui/icons-material/DeleteOutline';
+import Add from '@mui/icons-material/Add';
+import CameraAltOutlined from '@mui/icons-material/CameraAltOutlined';
+import Close from '@mui/icons-material/Close';
+import AttachMoney from '@mui/icons-material/AttachMoney';
+import PhoneOutlined from '@mui/icons-material/PhoneOutlined';
+import ExpandMore from '@mui/icons-material/ExpandMore';
+import CheckCircle from '@mui/icons-material/CheckCircle';
 
-  const [open, setOpen] = useState(true);
+import { useOrderCreationStore } from '../stores/useCreateOrderStore';
+
+import VietmapPicker from '../components/VietmapPicker';
+
+const LocationSelect = ({ label, value, onChange, options, loading, placeholder, disabled, name }) => (
+  <div>
+    <label className="block text-sm font-medium mb-1.5 text-gray-700">{label}</label>
+    <div className="relative">
+      <select
+        name={name}
+        value={value}
+        onChange={onChange}
+        disabled={disabled || loading}
+        className="w-full bg-gray-50 border border-orange-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none p-2.5 appearance-none pr-10 transition-colors"
+      >
+        <option value="">{loading ? "Đang tải..." : placeholder}</option>
+        {options.map((option) => (
+          <option key={option.code} value={option.code}>
+            {option.name}
+          </option>
+        ))}
+      </select>
+      <ExpandMore className="w-5 h-5 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+    </div>
+  </div>
+);
+
+const ImageUploader = ({ previews = [], onChange, onRemove }) => {
+  const inputId = useMemo(() => `file-upload-${Math.random()}`, []);
+  
+  return (
+    <div className="w-full">
+      <label htmlFor={inputId} className="cursor-pointer block">
+        {previews.length > 0 ? (
+          <div className="relative group w-full h-24 rounded-lg overflow-hidden border border-orange-300 bg-gray-100">
+            <img 
+              src={previews[0]} 
+              alt="Ảnh sản phẩm"
+              className="w-full h-full object-contain"
+            />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                onRemove(0);
+              }}
+              className="absolute top-1.5 right-1.5 w-6 h-6 bg-black/50 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Close className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="w-full h-32 border-2 border-dashed border-orange-300 rounded-lg flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors">
+            <CameraAltOutlined className="w-8 h-8 mb-1" />
+            <span className="text-sm font-medium">Tải ảnh lên</span>
+            <span className="text-xs text-gray-400 mt-0.5">Tối đa 5MB</span>
+          </div>
+        )}
+      </label>
+      <input
+        id={inputId}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={onChange}
+      />
+    </div>
+  );
+};
+
+const ProductItem = ({ product, index, onChange, onRemove, onImageChange, onImageRemove }) => {
+  useEffect(() => {
+    return () => {
+      if (product.localPreviews) {
+        product.localPreviews.forEach(preview => URL.revokeObjectURL(preview));
+      }
+    };
+  }, [product.localPreviews]);
+
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      onImageChange(index, files[0]); 
+    }
+  };
+
+  const removeImage = (imageIndex) => {
+    onImageRemove(index, imageIndex);
+  };
 
   return (
-    <div className="bg-gray-50 min-h-screen p-6">
-      <AddressModal open={open} onClose={()=>setOpen(false)}/>
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-6">
-       <div className="lg:col-span-3 space-y-6">
-          <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-gray-800">
-              Thông tin người gửi
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Số điện thoại *
-                </label>
-                <input
-                  type="text"
-                  placeholder="Nhập số điện thoại"
-                  className="w-full border rounded-lg p-2"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  placeholder="Nhập tên đầy đủ"
-                  className="w-full border rounded-lg p-2"
-                />
-              </div>
-            </div>
+    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-4 relative">
+      <button
+        type="button"
+        onClick={() => onRemove(index)}
+        className="absolute top-4 right-4 w-7 h-7 bg-red-100 text-red-600 rounded-full flex items-center justify-center hover:bg-red-200 transition-colors"
+      >
+        <DeleteOutline className="w-5 h-5" />
+      </button>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2 space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1.5 text-gray-700">
+              Tên sản phẩm *
+            </label>
+            <input
+              type="text"
+              name="name"
+              placeholder="Ví dụ: Laptop Dell XPS 13"
+              value={product.name}
+              onChange={(e) => onChange(index, e)}
+              required
+              className="w-full border border-orange-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Địa chỉ *</label>
+              <label className="block text-sm font-medium mb-1.5 text-gray-700">
+                Số lượng *
+              </label>
               <input
-                type="text"
-                placeholder="Nhập địa chỉ"
-                className="w-full border rounded-lg p-2"
+                type="number"
+                name="quantity"
+                min="1"
+                placeholder="1"
+                value={product.quantity}
+                onChange={(e) => onChange(index, e)}
+                required
+                className="w-full border border-orange-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
               />
             </div>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Lựa chọn lấy hàng
-                </label>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2">
-                    <input type="radio" name="pickup" className="accent-orange-500" />
-                    <span>Lấy hàng tại nơi ở người gửi</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input type="radio" name="pickup" className="accent-orange-500" />
-                    <span>Lấy hàng tại bưu điện</span>
-                  </label>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Lịch trình lấy hàng
-                </label>
-                <select className="w-full border rounded-lg p-2">
-                  <option>Chọn thời gian</option>
-                </select>
-              </div>
-            </div>
-          </section>
-
-          <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-            <h2 className="text-lg font-semibold text-gray-800">
-              Thông tin người nhận
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Số điện thoại *
-                </label>
-                <input
-                  type="text"
-                  placeholder="Nhập số điện thoại"
-                  className="w-full border rounded-lg p-2"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Tên đầy đủ *
-                </label>
-                <input
-                  type="text"
-                  placeholder="Nhập tên đầy đủ"
-                  className="w-full border rounded-lg p-2"
-                />
-              </div>
-            </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Địa chỉ *</label>
+              <label className="block text-sm font-medium mb-1.5 text-gray-700">
+                Cân nặng (kg) *
+              </label>
               <input
-                type="text"
-                placeholder="Nhập địa chỉ"
-                className="w-full border rounded-lg p-2"
+                type="number"
+                name="weight"
+                step="0.1"
+                min="0.1"
+                placeholder="1.2"
+                value={product.weight}
+                onChange={(e) => onChange(index, e)}
+                required
+                className="w-full border border-orange-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
               />
             </div>
-          </section>
-
-          <section className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-800">
-                Thông tin sản phẩm
-              </h2>
-              <button className="text-orange-500 text-sm font-medium hover:underline">
-                + Thêm sản phẩm
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <h3 className="font-medium">Sản phẩm 1</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Tên sản phẩm
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Nhập tên sản phẩm"
-                    className="w-full border rounded-lg p-2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Mã sản phẩm
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Nhập mã sản phẩm"
-                    className="w-full border rounded-lg p-2"
-                  />
-                </div>
-              </div>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Cân nặng (grams)
-                  </label>
-                  <input
-                    type="number"
-                    defaultValue={200}
-                    className="w-full border rounded-lg p-2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Số lượng</label>
-                  <input
-                    type="number"
-                    defaultValue={1}
-                    className="w-full border rounded-lg p-2"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <button className="text-sm text-orange-500 hover:underline mt-2">
-              + Sản phẩm đã có
-            </button>
-          </section>
-
-          <div className="flex justify-end">
-            <button className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-medium">
-              Tạo đơn hàng
-            </button>
           </div>
         </div>
-
-        <aside className="bg-white rounded-xl border border-gray-200 p-6 h-fit">
-          <h2 className="text-lg font-semibold mb-4">Ước tính chi phí</h2>
-          <div className="border border-gray-200 rounded-lg flex flex-col items-center justify-center h-40 mb-4 text-center text-gray-500 text-sm">
-            Hoàn thành địa chỉ để ước tính chi phí giao hàng.
-          </div>
-          <ul className="space-y-2 text-sm text-gray-600">
-            <li>Khoảng cách: -- km</li>
-            <li>Chi phí ước tính: $--</li>
-            <li>Thời gian giao hàng: -- giờ</li>
-          </ul>
-        </aside>
+        
+        <div className="md:col-span-1">
+          <label className="block text-sm font-medium mb-1.5 text-gray-700">
+            Hình ảnh {product.localPreviews?.length > 0 ? '(1)' : '(0)'}
+          </label>
+          <ImageUploader
+            previews={product.localPreviews || []}
+            onChange={handleFileChange}
+            onRemove={removeImage}
+          />
+        </div>
       </div>
+    </div>
+  );
+};
+
+const CreateOrderPage = () => {
+  
+  const {
+    provinces,
+    districts,
+    wards,
+    loadingProvinces,
+    loadingDistricts,
+    loadingWards,
+    loadingCreateOrder,
+    fetchDistrictsAction,
+    fetchWardsAction,
+    createOrderAction,
+  } = useOrderCreationStore();
+
+  const [orderData, setOrderData] = useState({
+    receiver_name: "",
+    receiver_phone: "",
+    receiver_province_city: "",
+    receiver_district: "",
+    receiver_ward_commune: "",
+    receiver_address: "",
+    receiver_coordinate: "",
+    length: "",
+    width: "",
+    height: "",
+    weight: "",
+    cod: 0,
+    is_receiver_pay_shipping: false,
+    products: [
+      { 
+        name: "", 
+        quantity: 1, 
+        weight: "", 
+        img_urls: [],
+        localPreviews: []
+      }
+    ],
+    order_status: "PENDING"
+  });
+
+  const [mapInfo, setMapInfo] = useState({
+    latitude: 21.0285,
+    longitude: 105.8542,
+    address: ""
+  });
+  
+  const vietmapPickerRef = useRef(null);
+
+  useEffect(() => {
+    const totalWeight = orderData.products.reduce((acc, product) => {
+      const w = parseFloat(product.weight) || 0;
+      const q = parseInt(product.quantity, 10) || 0;
+      return acc + (w * q);
+    }, 0);
+    setOrderData(prev => ({ 
+      ...prev, 
+      weight: totalWeight > 0 ? totalWeight.toFixed(2) : "" 
+    }));
+  }, [orderData.products]);
+
+  const handleSimpleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setOrderData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleLocationChange = (e) => {
+    const { name, value } = e.target;
+    
+    setOrderData(prev => ({
+      ...prev,
+      [name]: value,
+      ...(name === 'receiver_province_city' && { 
+        receiver_district: '', 
+        receiver_ward_commune: '' 
+      }),
+      ...(name === 'receiver_district' && { 
+        receiver_ward_commune: '' 
+      }),
+    }));
+
+    if (name === 'receiver_province_city') {
+      fetchDistrictsAction(value);
+    }
+    if (name === 'receiver_district') {
+      fetchWardsAction(value);
+    }
+  };
+
+  const handleMapChange = ({ latitude, longitude, address }) => {
+    setOrderData(prev => ({
+      ...prev,
+      receiver_coordinate: `${latitude},${longitude}`,
+      receiver_address: address || prev.receiver_address
+    }));
+    setMapInfo({ latitude, longitude, address });
+  };
+
+  const handleProductChange = (index, e) => {
+    const { name, value } = e.target;
+    const newProducts = [...orderData.products];
+    newProducts[index] = { ...newProducts[index], [name]: value };
+    setOrderData(prev => ({ ...prev, products: newProducts }));
+  };
+
+  const handleImageChange = (index, file) => {
+    const newProducts = [...orderData.products];
+    const currentProduct = newProducts[index];
+
+    if (currentProduct.localPreviews && currentProduct.localPreviews.length > 0) {
+      currentProduct.localPreviews.forEach(preview => URL.revokeObjectURL(preview));
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(`File ${file.name} vượt quá 5MB`);
+      return;
+    }
+
+    const newPreview = URL.createObjectURL(file);
+    currentProduct.img_urls = [file];
+    currentProduct.localPreviews = [newPreview];
+
+    setOrderData(prev => ({ ...prev, products: newProducts }));
+  };
+
+  const handleImageRemove = (productIndex) => {
+    const newProducts = [...orderData.products];
+    const currentProduct = newProducts[productIndex];
+
+    if (currentProduct.localPreviews[0]) {
+      URL.revokeObjectURL(currentProduct.localPreviews[0]);
+    }
+
+    currentProduct.img_urls = [];
+    currentProduct.localPreviews = [];
+
+    setOrderData(prev => ({ ...prev, products: newProducts }));
+  };
+
+  const addProduct = () => {
+    setOrderData(prev => ({
+      ...prev,
+      products: [
+        ...prev.products,
+        { 
+          name: "", 
+          quantity: 1, 
+          weight: "", 
+          img_urls: [],
+          localPreviews: []
+        }
+      ]
+    }));
+  };
+
+  const removeProduct = (index) => {
+    const productToRemove = orderData.products[index];
+    
+    if (productToRemove.localPreviews) {
+      productToRemove.localPreviews.forEach(preview => URL.revokeObjectURL(preview));
+    }
+    
+    const newProducts = orderData.products.filter((_, i) => i !== index);
+    
+    if (newProducts.length === 0) {
+      toast.warning("Phải có ít nhất 1 sản phẩm");
+      return;
+    }
+    
+    setOrderData(prev => ({ ...prev, products: newProducts }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!orderData.receiver_phone) {
+      toast.error("Vui lòng nhập số điện thoại người nhận");
+      return;
+    }
+    if (!orderData.receiver_province_city || !orderData.receiver_district || !orderData.receiver_ward_commune) {
+      toast.error("Vui lòng chọn đầy đủ địa chỉ");
+      return;
+    }
+    if (!orderData.receiver_address) {
+      toast.error("Vui lòng chọn địa chỉ cụ thể trên bản đồ");
+      return;
+    }
+    if (orderData.products.some(p => !p.name || !p.quantity || !p.weight)) {
+      toast.error("Vui lòng điền đầy đủ thông tin sản phẩm");
+      return;
+    }
+
+    try {
+      const productsForAPI = orderData.products.map(p => ({
+        name: p.name,
+        quantity: p.quantity,
+        weight: p.weight,
+        img_url: p.img_urls[0] || null, 
+      }));
+
+      const dataToSend = {
+        ...orderData,
+        products: productsForAPI
+      };
+
+      await createOrderAction(dataToSend);
+      
+      toast.success("Tạo đơn hàng thành công!");
+
+      setOrderData({
+        receiver_name: "",
+        receiver_phone: "",
+        receiver_province_city: "",
+        receiver_district: "",
+        receiver_ward_commune: "",
+        receiver_address: "",
+        receiver_coordinate: "",
+        length: "",
+        width: "",
+        height: "",
+        weight: "",
+        cod: 0,
+        is_receiver_pay_shipping: false,
+        products: [
+          { 
+            name: "", 
+            quantity: 1, 
+            weight: "", 
+            img_urls: [],
+            localPreviews: []
+          }
+        ],
+        order_status: "PENDING"
+      });
+
+      setMapInfo({
+        latitude: 21.0285,
+        longitude: 105.8542,
+        address: ""
+      });
+
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || "Tạo đơn hàng thất bại";
+      toast.error(errorMessage);
+      console.error("Create order error:", error);
+    }
+  };
+
+  return (
+    <div className="bg-gray-50 min-h-screen p-4 md:p-6">
+      <form onSubmit={handleSubmit} className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <div className="lg:col-span-2 space-y-6">
+          
+          <section className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="p-5 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <LocationOn className="w-6 h-6 text-orange-600" />
+                Thông tin người nhận
+              </h2>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700">Tên người nhận</label>
+                  <input
+                    type="text"
+                    name="receiver_name"
+                    placeholder="Nhập tên người nhận"
+                    value={orderData.receiver_name}
+                    onChange={handleSimpleChange}
+                    className="w-full border border-orange-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700">Số điện thoại *</label>
+                  <div className="relative">
+                    <PhoneOutlined className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="tel"
+                      name="receiver_phone"
+                      placeholder="Nhập số điện thoại người nhận"
+                      value={orderData.receiver_phone}
+                      onChange={handleSimpleChange}
+                      required
+                      className="w-full border border-orange-300 rounded-lg p-2.5 pl-10 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <LocationSelect
+                  label="Tỉnh/Thành phố *"
+                  value={orderData.receiver_province_city}
+                  onChange={handleLocationChange}
+                  options={provinces}
+                  loading={loadingProvinces}
+                  placeholder="Chọn Tỉnh/Thành"
+                  name="receiver_province_city"
+                />
+                <LocationSelect
+                  label="Quận/Huyện *"
+                  value={orderData.receiver_district}
+                  onChange={handleLocationChange}
+                  options={districts}
+                  loading={loadingDistricts}
+                  placeholder="Chọn Quận/Huyện"
+                  name="receiver_district"
+                  disabled={!orderData.receiver_province_city || loadingDistricts}
+                />
+                <LocationSelect
+                  label="Phường/Xã *"
+                  value={orderData.receiver_ward_commune}
+                  onChange={handleLocationChange}
+                  options={wards}
+                  loading={loadingWards}
+                  placeholder="Chọn Phường/Xã"
+                  name="receiver_ward_commune"
+                  disabled={!orderData.receiver_district || loadingWards}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1.5 text-gray-700">Địa chỉ cụ thể *</label>
+                <VietmapPicker
+                  ref={vietmapPickerRef}
+                  latitude={mapInfo.latitude}
+                  longitude={mapInfo.longitude}
+                  address={mapInfo.address}
+                  onChange={handleMapChange}
+                />
+                <input type="hidden" name="receiver_address" value={orderData.receiver_address} />
+                <input type="hidden" name="receiver_coordinate" value={orderData.receiver_coordinate} />
+              </div>
+            </div>
+          </section>
+
+          <section className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="p-5 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <Inventory2Outlined className="w-6 h-6 text-orange-600" />
+                Thông tin gói hàng
+              </h2>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700">Dài (cm)</label>
+                  <input
+                    type="number"
+                    name="length"
+                    step="0.1"
+                    min="0"
+                    placeholder="30"
+                    value={orderData.length}
+                    onChange={handleSimpleChange}
+                    className="w-full border border-orange-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700">Rộng (cm)</label>
+                  <input
+                    type="number"
+                    name="width"
+                    step="0.1"
+                    min="0"
+                    placeholder="20"
+                    value={orderData.width}
+                    onChange={handleSimpleChange}
+                    className="w-full border border-orange-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700">Cao (cm)</label>
+                  <input
+                    type="number"
+                    name="height"
+                    step="0.1"
+                    min="0"
+                    placeholder="10"
+                    value={orderData.height}
+                    onChange={handleSimpleChange}
+                    className="w-full border border-orange-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700">Tổng nặng (kg) *</label>
+                  <input
+                    type="number"
+                    name="weight"
+                    step="0.1"
+                    min="0.1"
+                    placeholder="Tự động"
+                    value={orderData.weight}
+                    readOnly
+                    required
+                    className="w-full border border-orange-300 rounded-lg p-2.5 text-sm bg-gray-100 outline-none cursor-not-allowed"
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="p-5 border-b border-gray-200 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <ViewInArOutlined className="w-6 h-6 text-orange-600" />
+                Sản phẩm ({orderData.products.length})
+              </h2>
+              <button
+                type="button"
+                onClick={addProduct}
+                className="flex items-center gap-1.5 text-sm font-medium text-orange-600 hover:text-orange-700 transition-colors cursor-pointer"
+              >
+                <Add className="w-5 h-5" />
+                Thêm sản phẩm
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              {orderData.products.map((product, index) => (
+                <ProductItem
+                  key={index}
+                  product={product}
+                  index={index}
+                  onChange={handleProductChange}
+                  onRemove={removeProduct}
+                  onImageChange={handleImageChange}
+                  onImageRemove={handleImageRemove}
+                />
+              ))}
+            </div>
+          </section>
+
+        </div>
+
+        <aside className="lg:col-span-1 h-fit lg:sticky lg:top-6">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900">Thanh toán & Gửi</h2>
+            
+            <div>
+              <label className="block text-sm font-medium mb-1.5 text-gray-700">Thu hộ (COD)</label>
+              <div className="relative flex">
+                <div className="flex items-center px-3 bg-gray-100 border border-r-0 border-orange-300 rounded-l-lg">
+                  <AttachMoney className="w-5 h-5 text-gray-500" />
+                  <span className="ml-1 text-gray-600 text-sm font-medium">VND</span>
+                </div>
+                <input
+                  type="number"
+                  name="cod"
+                  min="0"
+                  step="1000"
+                  placeholder="0"
+                  value={orderData.cod}
+                  onChange={handleSimpleChange}
+                  className="w-full border border-orange-300 rounded-r-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
+                />
+              </div>
+            </div>
+
+            <div className="relative flex items-start">
+              <div className="flex h-6 items-center">
+                <input
+                  id="is_receiver_pay_shipping"
+                  name="is_receiver_pay_shipping"
+                  type="checkbox"
+                  checked={orderData.is_receiver_pay_shipping}
+                  onChange={handleSimpleChange}
+                  className="h-4 w-4 rounded border-orage-300 text-orange-600 focus:ring-2 focus:ring-orange-500 outline-none transition-colors cursor-pointer"
+                />
+              </div>
+              <div className="ml-3 text-sm leading-6">
+                <label htmlFor="is_receiver_pay_shipping" className="font-medium text-gray-900 cursor-pointer">
+                  Người nhận trả phí
+                </label>
+                <p className="text-gray-500">Nếu không chọn, người gửi sẽ trả phí.</p>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-200 pt-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Tổng số lượng:</span>
+                <span className="font-medium text-gray-900">
+                  {orderData.products.reduce((acc, p) => acc + (parseInt(p.quantity, 10) || 0), 0)}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Tổng cân nặng:</span>
+                <span className="font-medium text-gray-900">
+                  {orderData.weight || 0} kg
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Tổng số ảnh:</span>
+                <span className="font-medium text-gray-900">
+                  {orderData.products.reduce((acc, p) => acc + (p.img_urls?.length || 0), 0)}
+                </span>
+              </div>
+              <div className="flex justify-between text-base font-semibold pt-2 border-t border-gray-100">
+                <span className="text-gray-900">Thu hộ (COD):</span>
+                <span className="text-orange-600">
+                  {new Intl.NumberFormat('vi-VN').format(orderData.cod || 0)} đ
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loadingCreateOrder}
+              className="w-full bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:bg-orange-300 cursor-pointer disabled:cursor-not-allowed"
+            >
+              {loadingCreateOrder ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Đang tạo đơn...
+                </span>
+              ) : (
+                "Tạo đơn hàng"
+              )}
+            </button>
+          </div>
+        </aside>
+
+      </form>
     </div>
   );
 }
 
-export default CreateOrderPage
+export default CreateOrderPage;

@@ -8,6 +8,9 @@ import logoImg from "../assets/logo.png";
 
 
 const LoginPage = () => {
+
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,14 +44,15 @@ const LoginPage = () => {
       });
 
       const { user } = res;
+
       toast.success("Đăng nhập thành công");
 
       if (user.role === "superadmin" || user.role === "admin") {
         navigate("/home");
       } else if (user.role === "post_office_manager" || user.role === "post_office_staff") {
-          window.location.href = "http://localhost:3000/post-office/home";
+        window.location.href = `${API_URL}/post-office/home`;
       } else if (user.role === "shop") {
-          window.location.href = "http://localhost:3000/shop/orders/order-draft";
+        window.location.href = `${API_URL}/shop/orders/pending`;
       }
     } catch (err) {
       console.error("Login failed:", err);
