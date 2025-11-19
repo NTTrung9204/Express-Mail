@@ -1,7 +1,7 @@
 import nestAPI from './axiosNestConfig';
 
 export const orderService = {
-  getOrders: async (page = 1, limit = 10, filters = {}) => {
+  getOrders: async (page = 1, limit = 9, filters = {}) => {
     const params = { page, limit, ...filters };
     const response = await nestAPI.get('/orders', { params });
     return response.data;
@@ -39,7 +39,46 @@ export const orderService = {
   },
 
   createOrder: async (orderData) => {
-    const response = await nestAPI.post('/orders', orderData);
+    const formData = new FormData();
+
+    formData.append('receiver_phone', orderData.receiver_phone);
+    formData.append('receiver_province_city', orderData.receiver_province_city);
+    formData.append('receiver_ward_commune', orderData.receiver_ward_commune);
+    formData.append('receiver_address', orderData.receiver_address);
+    formData.append('receiver_coordinate', orderData.receiver_coordinate);
+    formData.append('receiver_district', orderData.receiver_district);
+
+    formData.append('length', Number(orderData.length));
+    formData.append('width', Number(orderData.width));
+    formData.append('height', Number(orderData.height));
+    formData.append('weight', Number(orderData.weight));
+    formData.append('cod', Number(orderData.cod));
+
+    formData.append('is_receiver_pay_shipping', Boolean(orderData.is_receiver_pay_shipping));
+    
+    if (orderData.order_status) {
+      formData.append('order_status', orderData.order_status);
+    }
+
+    const productsPayload = orderData.products.map((p) => ({
+      name: p.name,
+      quantity: Number(p.quantity),
+      weight: Number(p.weight),
+    }));
+    formData.append('products', JSON.stringify(productsPayload));
+
+    orderData.products.forEach((product) => {
+      if (product.img_url && product.img_url instanceof File) {
+        formData.append('product_images', product.img_url);
+      }
+    });
+
+    const response = await nestAPI.post('/orders', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
     return response.data;
   },
 

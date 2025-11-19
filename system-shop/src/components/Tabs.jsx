@@ -1,38 +1,24 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { ORDER_TABS } from "../constants/orderTabs";
 
-const tabs = [
-  { name: "Đơn nháp", path: "/orders/order-draft" },
-  { name: "Chờ bàn giao", path: "/orders/waiting-delivery" },
-  { name: "Đã bàn giao - Đang giao", path: "/orders/order-delivery" },
-  { name: "Đã bàn giao - Đang hoàn hàng", path: "/orders/returning" },
-  { name: "Chờ xác nhận", path: "/orders/waiting-confirm" },
-  { name: "Hoàn tất", path: "/orders/completed" },
-  { name: "Đơn huỷ", path: "/orders/cancelled" },
-  { name: "Hàng thất lạc/Hư hỏng", path: "/orders/lost-damaged" },
-];
-
-const Tabs = ({ counts = Array(tabs.length).fill(0) }) => {
+const Tabs = ({ activeTab, counts = [], onTabChange }) => {
   return (
-    <div className="flex bg-white border-b border-gray-200">
-      {tabs.map((tab, idx) => (
-        <NavLink
-          key={tab.name}
-          to={tab.path}
-          className={({ isActive }) =>
-            `px-4 py-2 font-medium flex items-center gap-2 transition border-b-2 cursor-pointer ${
-              isActive
-                ? "border-orange-500 text-orange-600 bg-orange-50"
-                : "border-transparent text-gray-600 hover:bg-gray-100"
-            }`
-          }
-          end
+    <div className="flex bg-white border-b border-gray-200 overflow-x-auto">
+      {ORDER_TABS.map((tab, idx) => (
+        <button
+          key={tab.id}
+          onClick={() => onTabChange(idx)}
+          className={`px-4 py-2 font-medium flex items-center gap-2 transition border-b-2 cursor-pointer whitespace-nowrap ${
+            activeTab === idx
+              ? "border-orange-500 text-orange-600 bg-orange-50"
+              : "border-transparent text-gray-600 hover:bg-gray-100"
+          }`}
         >
           {tab.name}
-          <span className="ml-1 bg-gray-200 text-xs px-2 py-0.5 font-semibold">
+          <span className="ml-1 bg-gray-200 text-xs px-2 py-0.5 rounded font-semibold">
             {counts[idx] ?? 0}
           </span>
-        </NavLink>
+        </button>
       ))}
     </div>
   );

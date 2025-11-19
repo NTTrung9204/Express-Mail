@@ -21,8 +21,12 @@ export const useOrderStore = () => {
         const STATUS_MAP = {
           PENDING: "Đang xử lý",
           PICKUP_REQUESTED: "Yêu cầu lấy hàng",
-          IN_TRANSIT: "Đang giao hàng",
+          IN_TRANSIT: "Đang vận chuyển",
+          SHIPPING: 'Đang giao hàng',
           FINISHED: "Đã hoàn tất",
+          RETURNING: "Đang hoàn hàng",
+          PICKUP_FAILED: "Lấy hàng thất bại",
+          DELIVERY_FAILED: "Giao hàng thất bại"
         };
 
         const formatted = res.data.map((o) => ({
@@ -41,6 +45,7 @@ export const useOrderStore = () => {
             (o.shipping_cost_payper || 0)
           ).toLocaleString()} đ`,
           status: STATUS_MAP[o.shipping_status] || o.shipping_status || "Không rõ",
+          rawStatus: o.shipping_status, 
         }));
 
         setOrders(formatted);
