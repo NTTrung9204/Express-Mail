@@ -331,6 +331,38 @@ export class OrderService {
     return this.enrichOrdersWithShopProfiles(orders);
   }
 
+  async findByShopIdPaginated(
+    shopId: string,
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<PaginatedResponseDto<OrderResponseDto>> {
+    const skip = (page - 1) * limit;
+
+    const [orders, total] = await this.orderRepository.findAndCount({
+      where: { shopId },
+      relations: ['products', 'transitions', 'orderPostOffices', 'shipping'],
+      withDeleted: false,
+      skip,
+      take: limit,
+      order: { created_at: 'DESC' },
+    });
+
+    // Enrich with shop profiles
+    const enrichedOrders = await this.enrichOrdersWithShopProfiles(orders);
+
+    // Transform orders
+    const items = enrichedOrders.map((order) =>
+      this.transformToOrderResponseDto(order),
+    );
+
+    return new PaginatedResponseDto<OrderResponseDto>(
+      items,
+      total,
+      page,
+      limit,
+    );
+  }
+
   async findByOrderStatus(orderStatus: string): Promise<Order[]> {
     const orders = await this.orderRepository.find({
       where: { order_status: orderStatus as any },

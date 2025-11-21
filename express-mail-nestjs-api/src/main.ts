@@ -13,8 +13,14 @@ async function bootstrap() {
   // Serve static files from uploads directory
   app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
+  // Enable CORS with specific origins or allow all in development
+  const corsOrigins =
+    process.env.APP_ENV === 'production'
+      ? ['https://express-mail.work.gd', 'https://api.express-mail.work.gd']
+      : true;
+
   app.enableCors({
-    origin: true,
+    origin: corsOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
     credentials: true,
