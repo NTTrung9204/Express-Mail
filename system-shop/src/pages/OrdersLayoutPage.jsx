@@ -13,7 +13,15 @@ const OrdersLayoutPage = () => {
 
   const [activeTab, setActiveTab] = useState(0);
 
-  const { orders, loading, error, getOrdersByShopId } = useOrderStore();
+  const { 
+    orders, 
+    loading, 
+    error, 
+    pagination,
+    nextPage, 
+    prevPage,  
+    getOrdersByShopId 
+  } = useOrderStore();
 
   useEffect(() => {
     const index = ORDER_TABS.findIndex((t) => t.id === tabId);
@@ -44,7 +52,7 @@ const OrdersLayoutPage = () => {
   }, [orders, activeTab]);
 
   useEffect(() => {
-    getOrdersByShopId();
+    getOrdersByShopId(); 
   }, [getOrdersByShopId]);
 
   return (
@@ -70,7 +78,12 @@ const OrdersLayoutPage = () => {
         ) : filteredOrders.length === 0 ? (
           <EmptyState />
         ) : (
-          <Orders data={filteredOrders} />
+          <Orders 
+            data={filteredOrders} 
+            pagination={pagination}
+            nextPage={nextPage}
+            prevPage={prevPage}
+          />
         )}
       </div>
     </div>
