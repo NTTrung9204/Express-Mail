@@ -30,7 +30,7 @@ class _LaunchActivityState extends State<LaunchActivity>
     final prefs = await SharedPreferences.getInstance();
     final savedUsername = prefs.getString(Constants.username) ?? '';
     final savedPassword = prefs.getString(Constants.password) ?? '';
-    final autoLogin = prefs.getBool(Constants.auto_login) ?? false;
+    final autoLogin = prefs.getBool(Constants.auto_login) ?? true;
 
     await Future.delayed(const Duration(seconds: 5));
 
