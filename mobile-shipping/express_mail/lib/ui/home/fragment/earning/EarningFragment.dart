@@ -634,9 +634,11 @@ class _EarningFragmentState extends State<EarningFragment> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              status,
+              // status,
+              AppStrings.finish,
               style: TextStyle(
-                color: color,
+                // color: color,
+                color: AppColors.green_22C35D,
                 fontSize: 12,
                 fontFamily: "Inter_bold",
               ),

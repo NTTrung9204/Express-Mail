@@ -304,27 +304,27 @@ class _HistoryActivityState extends State<HistoryActivity> {
                       ),
                     ],
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 11,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color:
-                          order.order.lastShipping?.status.color ??
-                          AppColors.green_22C35D,
-                      borderRadius: BorderRadius.circular(9999),
-                    ),
-                    child: Text(
-                      order.order.lastShipping?.status.name ??
-                          AppStrings.delivered,
-                      style: const TextStyle(
-                        color: AppColors.white,
-                        fontSize: 12,
-                        fontFamily: "Inter_regular",
-                      ),
-                    ),
-                  ),
+                  // Container(
+                  //   padding: const EdgeInsets.symmetric(
+                  //     horizontal: 11,
+                  //     vertical: 5,
+                  //   ),
+                  //   decoration: BoxDecoration(
+                  //     color:
+                  //         order.order.lastShipping?.status.color ??
+                  //         AppColors.green_22C35D,
+                  //     borderRadius: BorderRadius.circular(9999),
+                  //   ),
+                  //   child: Text(
+                  //     order.order.lastShipping?.status.name ??
+                  //         AppStrings.delivered,
+                  //     style: const TextStyle(
+                  //       color: AppColors.white,
+                  //       fontSize: 12,
+                  //       fontFamily: "Inter_regular",
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -428,11 +428,11 @@ class _HistoryActivityState extends State<HistoryActivity> {
                         ),
                       ],
                     ),
-                    Container(
-                      width: 60,
-                      height: 20,
-                      color: Colors.grey.shade400,
-                    ),
+                    // Container(
+                    //   width: 60,
+                    //   height: 20,
+                    //   color: Colors.grey.shade400,
+                    // ),
                   ],
                 ),
                 const SizedBox(height: 14),
