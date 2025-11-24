@@ -25,6 +25,9 @@ export class CreateOrderWithFilesDto {
   @ApiProperty({ description: 'Receiver district', example: 'District 1' })
   receiver_district: string;
 
+  @ApiProperty({ description: 'Receiver name', example: 'John Doe' })
+  receiver_name: string;
+
   @ApiProperty({ description: 'Package length in cm', example: 30 })
   length: number;
 

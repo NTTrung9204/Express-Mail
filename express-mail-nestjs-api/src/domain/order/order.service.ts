@@ -135,6 +135,7 @@ export class OrderService {
         receiver_address: createOrderDto.receiver_address,
         receiver_coordinate: createOrderDto.receiver_coordinate,
         receiver_district: createOrderDto.receiver_district,
+        receiver_name: createOrderDto.receiver_name,
         length: createOrderDto.length,
         width: createOrderDto.width,
         height: createOrderDto.height,
