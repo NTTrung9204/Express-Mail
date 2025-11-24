@@ -17,8 +17,9 @@ export const orderService = {
     return response.data;
   },
 
-  getOrdersByShopId: async (shopId) => {
-    const response = await nestAPI.get(`/orders/shop/${shopId}`);
+  getOrdersByShopId: async (shopId, page = 1, limit = 5, filters = {}) => {
+    const params = { page, limit, ...filters };
+    const response = await nestAPI.get(`/orders/shop/${shopId}`, { params });
     return response.data;
   },
 
