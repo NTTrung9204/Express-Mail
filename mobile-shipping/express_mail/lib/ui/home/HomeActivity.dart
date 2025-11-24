@@ -1,3 +1,4 @@
+import 'package:express_mail/data/model/LoginResponse.dart';
 import 'package:flutter/material.dart';
 import 'package:express_mail/ui/home/fragment/earning/EarningFragment.dart';
 import 'package:express_mail/ui/home/fragment/home/HomeFragment.dart';
@@ -10,19 +11,20 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../resources/colors.dart';
 
 class HomeActivity extends StatelessWidget {
-  const HomeActivity({super.key});
+  final LoginResponse loginResponse;
+
+  const HomeActivity({super.key, required this.loginResponse});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: const HomeScreen(),
-    );
+    return HomeScreen(loginResponse: loginResponse);
   }
 }
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final LoginResponse loginResponse;
+
+  const HomeScreen({super.key, required this.loginResponse});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -31,12 +33,12 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _fragments = const [
-    HomeFragment(),
-    OrderFragment(),
-    MapFragment(),
-    EarningFragment(),
-    ProfileFragment(),
+  late final List<Widget> _fragments = [
+    HomeFragment(loginResponse: widget.loginResponse),
+    OrderFragment(loginResponse: widget.loginResponse),
+    // MapFragment(),
+    EarningFragment(loginResponse: widget.loginResponse),
+    ProfileFragment(loginResponse: widget.loginResponse),
   ];
 
   @override
@@ -57,10 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           border: Border(
-            top: BorderSide(
-              color: AppColors.gray_7B899D,
-              width: 1,
-            ),
+            top: BorderSide(color: AppColors.gray_7B899D, width: 1),
           ),
         ),
         child: BottomNavigationBar(
@@ -103,23 +102,23 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               label: AppStrings.order,
             ),
-            BottomNavigationBarItem(
-              icon: SvgPicture.asset(
-                "assets/images/ic_map.svg",
-                colorFilter: ColorFilter.mode(
-                  _selectedIndex == 2
-                      ? AppColors.blue_127AE2
-                      : AppColors.gray_7B899D,
-                  BlendMode.srcIn,
-                ),
-              ),
-              label: AppStrings.map,
-            ),
+            // BottomNavigationBarItem(
+            //   icon: SvgPicture.asset(
+            //     "assets/images/ic_map.svg",
+            //     colorFilter: ColorFilter.mode(
+            //       _selectedIndex == 2
+            //           ? AppColors.blue_127AE2
+            //           : AppColors.gray_7B899D,
+            //       BlendMode.srcIn,
+            //     ),
+            //   ),
+            //   label: AppStrings.map,
+            // ),
             BottomNavigationBarItem(
               icon: SvgPicture.asset(
                 "assets/images/ic_earning.svg",
                 colorFilter: ColorFilter.mode(
-                  _selectedIndex == 3
+                  _selectedIndex == 2
                       ? AppColors.blue_127AE2
                       : AppColors.gray_7B899D,
                   BlendMode.srcIn,
@@ -131,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: SvgPicture.asset(
                 "assets/images/ic_profile.svg",
                 colorFilter: ColorFilter.mode(
-                  _selectedIndex == 4
+                  _selectedIndex == 3
                       ? AppColors.blue_127AE2
                       : AppColors.gray_7B899D,
                   BlendMode.srcIn,

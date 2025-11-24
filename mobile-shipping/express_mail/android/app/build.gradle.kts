@@ -13,6 +13,16 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
+    }
+
+    android {
+        compileSdk = 36
+
+        defaultConfig {
+            minSdk = 24
+            targetSdk = 36
+        }
     }
 
     kotlinOptions {
@@ -28,6 +38,8 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        manifestPlaceholders["MAPS_API_KEY"] = project.properties["MAPS_API_KEY"].toString()
     }
 
     buildTypes {
@@ -41,4 +53,15 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    implementation("com.github.vietmap-company:maps-sdk-android:2.0.4")
+    implementation("com.github.vietmap-company:maps-sdk-plugin-localization-android:2.0.0")
+    implementation("com.github.vietmap-company:vietmap-services-geojson-android:1.0.0")
+    implementation("com.github.vietmap-company:vietmap-services-turf-android:1.0.2")
+    implementation("com.squareup.okhttp3:okhttp:4.9.3")
+    implementation("com.google.code.gson:gson:2.10.1")
+
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
 }

@@ -1,34 +1,26 @@
+import 'package:express_mail/data/model/ShippingOrder.dart';
+import 'package:express_mail/ui/map/MapActivity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:express_mail/data/model/DetailOrder.dart';
 import 'package:express_mail/resources/colors.dart';
 import 'package:express_mail/resources/strings.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PickUpLocation extends StatelessWidget {
-  final DetailOrder detailOrder;
+  final ShippingOrder detailOrder;
 
-  const PickUpLocation({
-    super.key,
-    required this.detailOrder,
-  });
+  const PickUpLocation({super.key, required this.detailOrder});
 
   @override
   Widget build(BuildContext context) {
-
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.symmetric(
-        horizontal: 18,
-        vertical: 8,
-      ),
+      margin: EdgeInsets.symmetric(horizontal: 18, vertical: 8),
       padding: EdgeInsets.all(25),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
-        border: BoxBorder.all(
-          color: AppColors.gray_DADFE7,
-          width: 1,
-        ),
+        border: BoxBorder.all(color: AppColors.gray_DADFE7, width: 1),
         boxShadow: [
           BoxShadow(
             color: AppColors.gray_DADFE7,
@@ -79,7 +71,7 @@ class PickUpLocation extends StatelessWidget {
               SizedBox(width: 5),
               Expanded(
                 child: Text(
-                  "${AppStrings.address}: ${detailOrder.shopOwner.address}, ${detailOrder.shopOwner.wardCommune}, ${detailOrder.shopOwner.provinceCity}",
+                  "${AppStrings.address}: ${detailOrder.shopProfile.address}",
                   style: TextStyle(
                     fontSize: 13,
                     fontFamily: "Inter_regular",
@@ -107,7 +99,7 @@ class PickUpLocation extends StatelessWidget {
               SizedBox(width: 5),
               Expanded(
                 child: Text(
-                  "${AppStrings.phone_number}: ${detailOrder.shopOwner.phone}",
+                  "${AppStrings.phone_number}: ${detailOrder.shopProfile.phoneNumber}",
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.gray_7B899D,
@@ -147,17 +139,23 @@ class PickUpLocation extends StatelessWidget {
                         horizontal: 4,
                       ),
                     ),
-                    onPressed: () {
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (context) => DetailOrderActivity(order: order),
-                      //   ),
-                      // );
+                    onPressed: () async {
+                      final Uri launchUri = Uri(
+                        scheme: 'tel',
+                        path: detailOrder.shopProfile.phoneNumber,
+                      );
+                      if (await canLaunchUrl(launchUri)) {
+                        await launchUrl(launchUri);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(AppStrings.unable_to_make_call),
+                          ),
+                        );
+                      }
                     },
                     child: Row(
-                      mainAxisAlignment:
-                      MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         SvgPicture.asset(
                           "assets/images/ic_phone.svg",
@@ -171,7 +169,7 @@ class PickUpLocation extends StatelessWidget {
                         SizedBox(width: 13),
                         Expanded(
                           child: Text(
-                            AppStrings.call_the_store,
+                            AppStrings.call,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -212,16 +210,15 @@ class PickUpLocation extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (context) => DetailOrderActivity(order: order),
-                      //   ),
-                      // );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => MapActivity(order: detailOrder, isDelivery: true,),
+                        ),
+                      );
                     },
                     child: Row(
-                      mainAxisAlignment:
-                      MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         SvgPicture.asset(
                           "assets/images/ic_guide.svg",
