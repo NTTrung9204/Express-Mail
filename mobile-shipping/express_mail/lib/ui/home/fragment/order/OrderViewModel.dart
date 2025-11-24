@@ -68,7 +68,24 @@ class OrderViewModel extends ChangeNotifier {
 
         for (var batch in data) {
           final plan = ShippingPlan.fromJson(Map<String, dynamic>.from(batch));
-          allPlans.add(plan);
+
+          final filteredOrders = plan.orders.where((order) {
+            final status = order.routeStep.status.toUpperCase();
+            return status != 'FAILED' && status != 'COMPLETED';
+          }).toList();
+
+          if (filteredOrders.isNotEmpty) {
+            allPlans.add(
+              ShippingPlan(
+                orders: filteredOrders,
+                geometry: plan.geometry,
+                mode: plan.mode,
+                distance: plan.distance,
+                duration: plan.duration,
+                time: plan.time,
+              ),
+            );
+          }
         }
         _allOrdersPickup = allPlans;
       } else {
@@ -111,7 +128,24 @@ class OrderViewModel extends ChangeNotifier {
 
         for (var batch in data) {
           final plan = ShippingPlan.fromJson(Map<String, dynamic>.from(batch));
-          allPlans.add(plan);
+
+          final filteredOrders = plan.orders.where((order) {
+            final status = order.routeStep.status.toUpperCase();
+            return status != 'FAILED' && status != 'COMPLETED';
+          }).toList();
+
+          if (filteredOrders.isNotEmpty) {
+            allPlans.add(
+              ShippingPlan(
+                orders: filteredOrders,
+                geometry: plan.geometry,
+                mode: plan.mode,
+                time: plan.time,
+                distance: plan.distance,
+                duration: plan.duration,
+              ),
+            );
+          }
         }
         _allOrdersDelivery = allPlans;
       } else {

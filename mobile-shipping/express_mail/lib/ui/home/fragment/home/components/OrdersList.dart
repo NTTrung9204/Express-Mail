@@ -6,6 +6,7 @@ import 'package:express_mail/resources/strings.dart';
 class OrdersList extends StatelessWidget {
   final List<ShippingOrder> orders;
   final bool isLoading;
+  final bool isDelivery;
   final Future<void> Function()? onRefresh;
   final Function(ShippingOrder)? onGuide;
   final Function(ShippingOrder)? onFinish;
@@ -14,6 +15,7 @@ class OrdersList extends StatelessWidget {
     super.key,
     required this.orders,
     required this.isLoading,
+    required this.isDelivery,
     this.onRefresh,
     this.onGuide,
     this.onFinish,
@@ -61,6 +63,7 @@ class OrdersList extends StatelessWidget {
                 return OrderItem(
                   isLoading: isLoading,
                   detailOrder: order,
+                  isDelivery: isDelivery,
                   onGuidePressed: order != null
                       ? () => onGuide?.call(order)
                       : null,

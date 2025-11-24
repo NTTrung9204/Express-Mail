@@ -1,8 +1,8 @@
-import 'package:express_mail/constants/Constants.dart';
 import 'package:express_mail/data/model/LoginResponse.dart';
+import 'package:express_mail/data/model/ShippingPlan.dart';
+import 'package:express_mail/ui/home/fragment/order/components/OrderPlan.dart';
 import 'package:flutter/material.dart';
 import 'OrderViewModel.dart';
-import 'components/OrderList.dart';
 import 'package:express_mail/resources/colors.dart';
 import 'package:express_mail/resources/strings.dart';
 
@@ -20,27 +20,18 @@ class _OrderFragmentState extends State<OrderFragment>
   late final OrderViewModel viewModel;
   late TabController _tabController;
 
-  int currentPageAll = 1;
-  int currentPagePickup = 1;
-  int currentPageShipping = 1;
-  int currentPageReturning = 1;
+  DateTime startDate = DateTime.now();
+  DateTime endDate = DateTime.now();
+
+  late TextEditingController fromController;
+  late TextEditingController toController;
 
   @override
   void initState() {
     super.initState();
     viewModel = OrderViewModel();
-    _tabController = TabController(length: 4, vsync: this);
-
-    viewModel.fetchPickupRequestOrders(widget.loginResponse);
-    viewModel.fetchShippingOrders(widget.loginResponse);
-    viewModel.fetchReturningOrders(widget.loginResponse);
-    viewModel.fetchAllOrders(widget.loginResponse);
-
-    _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) {
-        setState(() {});
-      }
-    });
+    _tabController = TabController(length: 2, vsync: this);
+    _fetchData();
   }
 
   @override
@@ -50,122 +41,311 @@ class _OrderFragmentState extends State<OrderFragment>
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.white_F8F7FC,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                _buildHeader(),
-                _buildTabBar(),
-                Expanded(
-                  child: Column(
-                    children: [
-                      Expanded(child: _buildTabBarView()),
-                      AnimatedBuilder(
-                        animation: viewModel,
-                        builder: (context, _) => _buildPaginationBar(),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            AnimatedBuilder(
-              animation: viewModel,
-              builder: (context, _) {
-                if (!viewModel.isCompletingOrder)
-                  return const SizedBox.shrink();
-                return Container(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  alignment: Alignment.center,
-                  child: const CircularProgressIndicator(
-                    strokeWidth: 3,
-                    color: AppColors.blue_127AE2,),
-                );
-              },
-            ),
-          ],
+  Future<void> _fetchData() async {
+    try {
+      await Future.wait([
+        viewModel.getListOrderPickup(
+          widget.loginResponse,
+          _formatDate(startDate),
+          _formatDate(endDate.add(const Duration(days: 1))),
         ),
-      ),
-    );
+        viewModel.getListOrderDelivery(
+          widget.loginResponse,
+          _formatDate(startDate),
+          _formatDate(endDate.add(const Duration(days: 1))),
+        ),
+      ]);
+    } catch (e) {
+      debugPrint("Fetch data error: $e");
+    }
   }
 
-  Widget _buildHeader() => Container(
-    padding: const EdgeInsets.all(16),
-    width: double.infinity,
-    decoration: const BoxDecoration(
-      color: AppColors.white,
-      border: Border(
-        bottom: BorderSide(color: AppColors.gray_DADFE7, width: 1),
-      ),
-    ),
-    child: const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          AppStrings.order,
-          style: TextStyle(
-            fontFamily: "Inter_bold",
-            fontSize: 23,
-            color: AppColors.blue_344256,
-          ),
-        ),
-        SizedBox(height: 8),
-        Text(
-          AppStrings.manage_orders,
-          style: TextStyle(
-            fontFamily: "Inter_regular",
-            fontSize: 15,
-            color: AppColors.gray_7B899D,
-          ),
-        ),
-      ],
-    ),
-  );
+  String _formatDate(DateTime date) {
+    return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+  }
 
-  Widget _buildTabBar() {
+  @override
+  Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: viewModel,
       builder: (context, _) {
-        return Container(
-          margin: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.white_EDEFF3,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: TabBar(
-            controller: _tabController,
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            indicatorColor: AppColors.blue_127AE2,
-            labelColor: AppColors.blue_344256,
-            unselectedLabelColor: AppColors.gray_7B899D,
-            indicatorSize: TabBarIndicatorSize.tab,
-            labelPadding: EdgeInsets.zero,
-            tabs: [
-              _buildTab("${AppStrings.all} (${viewModel.allCount})"),
-              _buildTab(
-                "${AppStrings.pickup_requested} (${viewModel.pickupRequestCount})",
-              ),
-              _buildTab("${AppStrings.shipping} (${viewModel.shippingCount})"),
-              _buildTab(
-                "${AppStrings.returning} (${viewModel.returningCount})",
-              ),
-            ],
+        return Scaffold(
+          backgroundColor: AppColors.white_F8F7FC,
+          body: SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(),
+                _buildTabBar(),
+                Expanded(child: _buildTabBarView()),
+              ],
+            ),
           ),
         );
       },
     );
   }
 
+  // ---------------------- HEADER -----------------------
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: AppColors.white,
+        border: Border(
+          bottom: BorderSide(color: AppColors.gray_DADFE7, width: 1),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                AppStrings.order,
+                style: TextStyle(
+                  fontFamily: "Inter_bold",
+                  fontSize: 23,
+                  color: AppColors.blue_344256,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                AppStrings.manage_orders,
+                style: TextStyle(
+                  fontFamily: "Inter_regular",
+                  fontSize: 15,
+                  color: AppColors.gray_7B899D,
+                ),
+              ),
+            ],
+          ),
+
+          GestureDetector(
+            onTap: () => _openDateFilterDialog(),
+            child: const Icon(
+              Icons.calendar_month,
+              size: 28,
+              color: AppColors.blue_344256,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------------------- CALENDAR DIALOG -----------------------
+  void _openDateFilterDialog() {
+    DateTime tempStart = startDate;
+    DateTime tempEnd = endDate;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setStateDialog) {
+          return AlertDialog(
+            backgroundColor: AppColors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            title: const Text(
+              AppStrings.choose_a_time_period,
+              style: TextStyle(
+                fontSize: 18,
+                fontFamily: "Inter_bold",
+                color: AppColors.black,
+              ),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // --- FROM DATE ---
+                Card(
+                  color: Colors.grey.shade100,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: tempStart,
+                        firstDate: DateTime(2020),
+                        lastDate: DateTime(2030),
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: const ColorScheme.light(
+                                primary: AppColors.blue_127AE2,
+                                onPrimary: Colors.white,
+                                onSurface: Colors.black,
+                              ),
+                              dialogBackgroundColor: Colors.white,
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (picked != null) {
+                        setStateDialog(() {
+                          tempStart = picked;
+                          if (tempEnd.isBefore(tempStart)) tempEnd = tempStart;
+                        });
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_today,
+                            size: 18,
+                            color: Colors.black,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            "${AppStrings.from}: ${_formatDate(tempStart)}",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontFamily: "Inter_regular",
+                              color: AppColors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // --- TO DATE ---
+                Card(
+                  color: Colors.grey.shade100,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: tempEnd,
+                        firstDate: tempStart,
+                        lastDate: DateTime(2030),
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: const ColorScheme.light(
+                                primary: AppColors.blue_127AE2,
+                                onPrimary: Colors.white,
+                                onSurface: Colors.black,
+                              ),
+                              dialogBackgroundColor: Colors.white,
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (picked != null) {
+                        setStateDialog(() {
+                          tempEnd = picked;
+                        });
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 14,
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.calendar_today,
+                            size: 18,
+                            color: Colors.black,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            "${AppStrings.to}: ${_formatDate(tempEnd)}",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontFamily: "Inter_regular",
+                              color: AppColors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  AppStrings.cancel,
+                  style: TextStyle(
+                    fontFamily: "Inter_regular",
+                    fontSize: 14,
+                    color: AppColors.black,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    startDate = tempStart;
+                    endDate = tempEnd;
+                  });
+                  Navigator.pop(context);
+                  _fetchData();
+                },
+                child: Text(
+                  AppStrings.confirm,
+                  style: TextStyle(
+                    fontFamily: "Inter_bold",
+                    fontSize: 14,
+                    color: AppColors.blue_127AE2,
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  // ---------------------- TAB BAR -----------------------
+
+  Widget _buildTabBar() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.white_EDEFF3,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        indicatorColor: AppColors.blue_127AE2,
+        labelColor: AppColors.blue_344256,
+        unselectedLabelColor: AppColors.gray_7B899D,
+        indicatorSize: TabBarIndicatorSize.tab,
+        tabs: [_buildTab(AppStrings.delivery), _buildTab(AppStrings.receive)],
+      ),
+    );
+  }
+
   Widget _buildTab(String text) {
     return Tab(
       child: Align(
-        alignment: Alignment.centerLeft,
+        alignment: Alignment.center,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12.0),
           child: Text(
@@ -181,319 +361,91 @@ class _OrderFragmentState extends State<OrderFragment>
     );
   }
 
+  // ---------------------- TAB VIEW -----------------------
+
   Widget _buildTabBarView() {
-    return AnimatedBuilder(
-      animation: viewModel,
-      builder: (context, _) {
-        return TabBarView(
-          controller: _tabController,
-          physics: const NeverScrollableScrollPhysics(),
-          children: [
-            RefreshIndicator(
-              color: Colors.blue,
-              backgroundColor: Colors.white,
-              strokeWidth: 2,
-              displacement: 5,
-              onRefresh: () async =>
-                  _fetchPageForCurrentTab(page: currentPageAll),
-              child: OrderList(
-                loginResponse: widget.loginResponse,
-                orders: viewModel.allOrders,
-                isLoading: viewModel.isLoadingAll,
-                onOrderFinished: (orderId) {
-                  _finishOrder(
-                    orderId,
-                    page: currentPageAll,
-                    totalPages: viewModel.allCount,
-                  );
-                },
+    return TabBarView(
+      controller: _tabController,
+      physics: const NeverScrollableScrollPhysics(),
+      children: [
+        RefreshIndicator(
+          color: Colors.blue,
+          backgroundColor: Colors.white,
+          strokeWidth: 2,
+          displacement: 5,
+          onRefresh: () async => _fetchData(),
+          child: _buildBatchList(
+            viewModel.ordersDelivery,
+            viewModel.isLoadingOrdersDelivery,
+            true,
+          ),
+        ),
+        RefreshIndicator(
+          color: Colors.blue,
+          backgroundColor: Colors.white,
+          strokeWidth: 2,
+          displacement: 5,
+          onRefresh: () async => _fetchData(),
+          child: _buildBatchList(
+            viewModel.ordersPickup,
+            viewModel.isLoadingOrdersPickup,
+            false,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ---------------------- LIST BATCH -----------------------
+  Widget _buildBatchList(
+    List<ShippingPlan> batches,
+    bool isLoading,
+    bool isDelivery,
+  ) {
+    if (batches.isEmpty && !isLoading) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(60),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AspectRatio(
+                aspectRatio: 1,
+                child: Image.asset(
+                  "assets/images/img_no_data.webp",
+                  fit: BoxFit.contain,
+                ),
               ),
-            ),
-            RefreshIndicator(
-              color: Colors.blue,
-              backgroundColor: Colors.white,
-              strokeWidth: 2,
-              displacement: 5,
-              onRefresh: () async =>
-                  _fetchPageForCurrentTab(page: currentPagePickup),
-              child: OrderList(
-                loginResponse: widget.loginResponse,
-                orders: viewModel.pickupRequestOrders,
-                isLoading: viewModel.isLoadingPickupRequest,
-                onOrderFinished: (orderId) {
-                  _finishOrder(
-                    orderId,
-                    page: currentPagePickup,
-                    totalPages: viewModel.pickupRequestCount,
-                  );
-                },
+              const SizedBox(height: 12),
+              const Text(
+                AppStrings.no_order_data,
+                style: TextStyle(color: Colors.black54, fontSize: 14),
+                textAlign: TextAlign.center,
               ),
-            ),
-            RefreshIndicator(
-              color: Colors.blue,
-              backgroundColor: Colors.white,
-              strokeWidth: 2,
-              displacement: 5,
-              onRefresh: () async =>
-                  _fetchPageForCurrentTab(page: currentPageShipping),
-              child: OrderList(
-                loginResponse: widget.loginResponse,
-                orders: viewModel.shippingOrders,
-                isLoading: viewModel.isLoadingShipping,
-                onOrderFinished: (orderId) {
-                  _finishOrder(
-                    orderId,
-                    page: currentPageShipping,
-                    totalPages: viewModel.shippingCount,
-                  );
-                },
-              ),
-            ),
-            RefreshIndicator(
-              color: Colors.blue,
-              backgroundColor: Colors.white,
-              strokeWidth: 2,
-              displacement: 5,
-              onRefresh: () async =>
-                  _fetchPageForCurrentTab(page: currentPageReturning),
-              child: OrderList(
-                loginResponse: widget.loginResponse,
-                orders: viewModel.returningOrders,
-                isLoading: viewModel.isLoadingReturning,
-                onOrderFinished: (orderId) {
-                  _finishOrder(
-                    orderId,
-                    page: currentPageReturning,
-                    totalPages: viewModel.returningCount,
-                  );
-                },
-              ),
-            ),
-          ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: batches.isEmpty || isLoading ? 5 : batches.length,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      itemBuilder: (context, index) {
+        final batch = isLoading ? null : batches[index];
+        return OrderPlan(
+          loginResponse: widget.loginResponse,
+          orderPlan: batch,
+          index: index + 1,
+          isShimmer: isLoading,
+          isDelivery: isDelivery,
+          onBatchEmpty: () {
+            setState(() {
+              batches.removeAt(index);
+            });
+          },
         );
       },
     );
-  }
-
-  Widget _buildPaginationBar() {
-    int currentPage;
-    int totalPages;
-
-    switch (_tabController.index) {
-      case 0:
-        currentPage = currentPageAll;
-        totalPages = viewModel.allTotalPages;
-        break;
-      case 1:
-        currentPage = currentPagePickup;
-        totalPages = viewModel.pickupTotalPages;
-        break;
-      case 2:
-        currentPage = currentPageShipping;
-        totalPages = viewModel.shippingTotalPages;
-        break;
-      case 3:
-        currentPage = currentPageReturning;
-        totalPages = viewModel.returningTotalPages;
-        break;
-      default:
-        currentPage = 1;
-        totalPages = 1;
-    }
-
-    if (totalPages <= 1) return const SizedBox.shrink();
-
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    const iconWidth = 30.0; // <<, <, >, >>
-    final availableWidth = screenWidth - iconWidth * 4;
-
-    const pageButtonWidth = 30.0;
-    final maxPageButtons = availableWidth ~/ pageButtonWidth;
-
-    final visiblePageCount = maxPageButtons.clamp(3, 7);
-
-    int startPage = currentPage - visiblePageCount ~/ 2;
-    int endPage = startPage + visiblePageCount - 1;
-
-    if (startPage < 1) {
-      endPage += 1 - startPage;
-      startPage = 1;
-    }
-    if (endPage > totalPages) {
-      startPage -= endPage - totalPages;
-      endPage = totalPages;
-    }
-    if (startPage < 1) startPage = 1;
-
-    List<Widget> buttons = [];
-
-    // <<, <
-    buttons.addAll([
-      IconButton(
-        icon: const Icon(Icons.first_page, size: 20),
-        color: currentPage > 1 ? Colors.black : Colors.grey,
-        onPressed: currentPage > 1 ? () => _onPageButtonPressed(1) : null,
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-      ),
-      IconButton(
-        icon: const Icon(Icons.chevron_left, size: 20),
-        color: currentPage > 1 ? Colors.black : Colors.grey,
-        onPressed: currentPage > 1
-            ? () => _onPageButtonPressed(currentPage - 1)
-            : null,
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-      ),
-    ]);
-
-    for (int i = startPage; i <= endPage; i++) {
-      bool isCurrent = i == currentPage;
-      buttons.add(
-        SizedBox(
-          width: pageButtonWidth,
-          child: TextButton(
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.zero,
-              minimumSize: const Size(0, 0),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            onPressed: isCurrent ? null : () => _onPageButtonPressed(i),
-            child: Text(
-              '$i',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                fontSize: 14,
-                color: isCurrent ? Colors.blue : Colors.black,
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    // >, >>
-    buttons.addAll([
-      IconButton(
-        icon: const Icon(Icons.chevron_right, size: 20),
-        color: currentPage < totalPages ? Colors.black : Colors.grey,
-        onPressed: currentPage < totalPages
-            ? () => _onPageButtonPressed(currentPage + 1)
-            : null,
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-      ),
-      IconButton(
-        icon: const Icon(Icons.last_page, size: 20),
-        color: currentPage < totalPages ? Colors.black : Colors.grey,
-        onPressed: currentPage < totalPages
-            ? () => _onPageButtonPressed(totalPages)
-            : null,
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-      ),
-    ]);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Container(
-        width: double.infinity,
-        margin: EdgeInsetsGeometry.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: buttons,
-        ),
-      ),
-    );
-  }
-
-  void _onPageButtonPressed(int page) {
-    switch (_tabController.index) {
-      case 0:
-        currentPageAll = page;
-        break;
-      case 1:
-        currentPagePickup = page;
-        break;
-      case 2:
-        currentPageShipping = page;
-        break;
-      case 3:
-        currentPageReturning = page;
-        break;
-    }
-    _fetchPageForCurrentTab(page: page);
-    setState(() {});
-  }
-
-  void _fetchPageForCurrentTab({int? page}) {
-    switch (_tabController.index) {
-      case 0:
-        currentPageAll = page ?? currentPageAll;
-        viewModel.fetchAllOrders(widget.loginResponse, page: currentPageAll);
-        break;
-      case 1:
-        currentPagePickup = page ?? currentPagePickup;
-        viewModel.fetchPickupRequestOrders(
-          widget.loginResponse,
-          page: currentPagePickup,
-        );
-        break;
-      case 2:
-        currentPageShipping = page ?? currentPageShipping;
-        viewModel.fetchShippingOrders(
-          widget.loginResponse,
-          page: currentPageShipping,
-        );
-        break;
-      case 3:
-        currentPageReturning = page ?? currentPageReturning;
-        viewModel.fetchReturningOrders(
-          widget.loginResponse,
-          page: currentPageReturning,
-        );
-        break;
-    }
-  }
-
-  void _finishOrder(
-    int orderId, {
-    required int page,
-    required int totalPages,
-  }) async {
-    int currentPage = page;
-    bool success = await viewModel.completeOrderById(
-      widget.loginResponse,
-      orderId,
-      currentPageAll,
-      currentPagePickup,
-      currentPageShipping,
-      currentPageReturning,
-    );
-    if (success) {
-      int newTotalPages = ((totalPages - 1) / Constants.limit).ceil();
-      if (currentPage > newTotalPages) currentPage = newTotalPages;
-      _fetchPageForCurrentTab(page: currentPage);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            AppStrings.order_completion_failed,
-            style: TextStyle(
-              fontFamily: "Inter_regular",
-              fontSize: 14,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      );
-    }
   }
 }

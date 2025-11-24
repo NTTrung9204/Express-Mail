@@ -10,6 +10,7 @@ import 'package:shimmer/shimmer.dart';
 class OrderItem extends StatelessWidget {
   final ShippingOrder? detailOrder;
   final bool isLoading;
+  final bool isDelivery;
   final VoidCallback? onGuidePressed;
   final VoidCallback? onFinishPressed;
 
@@ -17,6 +18,7 @@ class OrderItem extends StatelessWidget {
     super.key,
     this.detailOrder,
     this.isLoading = false,
+    required this.isDelivery,
     this.onGuidePressed,
     this.onFinishPressed,
   });
@@ -148,9 +150,8 @@ class OrderItem extends StatelessWidget {
             const SizedBox(width: 5),
             Expanded(
               child: Text(
-                order.shippingStatus == ShippingStatus.SHIPPING
-                    ? "${AppStrings.delivery} ${order.receiverAddress}, ${order.receiverWardCommune}, ${order.receiverProvinceCity}"
-                    : "${AppStrings.get_goods} ${order.receiverAddress}, ${order.receiverWardCommune}, ${order.receiverProvinceCity}",
+                "${order.shippingStatus == ShippingStatus.SHIPPING ? AppStrings.delivery : AppStrings.get_goods}: "
+                "${!isDelivery ? order.shopProfile.address : "${order.receiverAddress}, ${order.receiverWardCommune}, ${order.receiverProvinceCity}"}",
                 style: const TextStyle(
                   fontSize: 13,
                   color: AppColors.gray_7B899D,
@@ -176,7 +177,8 @@ class OrderItem extends StatelessWidget {
             const SizedBox(width: 5),
             Expanded(
               child: Text(
-                "${AppStrings.phone_number}: ${order.receiverPhone}",
+                "${AppStrings.phone_number}: "
+                "${isDelivery ? order.receiverPhone : order.shopProfile.phoneNumber}",
                 style: const TextStyle(
                   fontSize: 13,
                   color: AppColors.gray_7B899D,
