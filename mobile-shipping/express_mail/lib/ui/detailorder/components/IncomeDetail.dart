@@ -1,12 +1,12 @@
+import 'package:express_mail/data/model/ShippingOrder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:express_mail/data/model/DetailOrder.dart';
 import 'package:express_mail/resources/colors.dart';
 import 'package:express_mail/resources/strings.dart';
 import 'package:intl/intl.dart';
 
 class IncomeDetail extends StatelessWidget {
-  final DetailOrder detailOrder;
+  final ShippingOrder detailOrder;
 
   const IncomeDetail({super.key, required this.detailOrder});
 
@@ -70,7 +70,7 @@ class IncomeDetail extends StatelessWidget {
               ),
               SizedBox(width: 8),
               Text(
-                "${NumberFormat.decimalPattern('vi').format(detailOrder.order.cod)}đ",
+                "${NumberFormat.decimalPattern('vi').format(detailOrder.cod)}đ",
                 style: TextStyle(
                   fontSize: 13,
                   fontFamily: "Inter_regular",
@@ -95,7 +95,7 @@ class IncomeDetail extends StatelessWidget {
               ),
               SizedBox(width: 8),
               Text(
-                "${NumberFormat.decimalPattern('vi').format(detailOrder.order.shippingCost)}đ",
+                "${NumberFormat.decimalPattern('vi').format(detailOrder.shippingCost)}đ",
                 style: TextStyle(
                   fontSize: 13,
                   fontFamily: "Inter_regular",
@@ -122,7 +122,7 @@ class IncomeDetail extends StatelessWidget {
               ),
               SizedBox(width: 8),
               Text(
-                "${NumberFormat.decimalPattern('vi').format(detailOrder.order.cod + detailOrder.order.shippingCost)}đ",
+                "${NumberFormat.decimalPattern('vi').format(detailOrder.cod + detailOrder.shippingCost)}đ",
                 style: TextStyle(
                   fontSize: 13,
                   fontFamily: "Inter_regular",
