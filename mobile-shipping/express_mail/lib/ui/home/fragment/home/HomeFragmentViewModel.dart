@@ -1,6 +1,6 @@
 import 'dart:convert';
-import 'package:express_mail/data/enum/ShippingStatus.dart';
 import 'package:express_mail/data/model/LoginResponse.dart';
+import 'package:express_mail/data/model/ShippingOrder.dart';
 import 'package:express_mail/resources/strings.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -9,43 +9,67 @@ import 'package:express_mail/data/model/DetailOrder.dart';
 import 'package:intl/intl.dart';
 
 class HomeFragmentViewModel extends ChangeNotifier {
-  bool _isLoadingOrders = false;
+  bool _isLoadingOrdersPickup = false;
 
-  bool get isLoadingOrders => _isLoadingOrders;
+  bool get isLoadingOrdersPickup => _isLoadingOrdersPickup;
+
+  bool _isLoadingOrdersDelivery = false;
+
+  bool get isLoadingOrdersDelivery => _isLoadingOrdersDelivery;
 
   bool _isLoadingFinishedOrders = true;
 
   bool get isLoadingFinishedOrders => _isLoadingFinishedOrders;
 
-  List<DetailOrder> _allOrders = [];
-  List<DetailOrder> _visibleOrders = [];
+  List<ShippingOrder> _allOrdersPickup = [];
+  List<ShippingOrder> _visibleOrdersPickup = [];
 
-  List<DetailOrder> get orders => _visibleOrders;
+  List<ShippingOrder> get ordersPickup => _visibleOrdersPickup;
+
+  List<ShippingOrder> _allOrdersDelivery = [];
+  List<ShippingOrder> _visibleOrdersDelivery = [];
+
+  List<ShippingOrder> get ordersDelivery => _visibleOrdersDelivery;
 
   List<DetailOrder> finishOrders = [];
   int totalOrders = 0;
   double totalIncome = 0;
 
-  String? _errorMessage;
+  String? _errorMessagePickup;
 
-  String? get errorMessage => _errorMessage;
+  String? get errorMessagePickup => _errorMessagePickup;
 
-  void _setError(String message) {
-    _errorMessage = message;
+  String? _errorMessageDelivery;
+
+  String? get errorMessageDelivery => _errorMessageDelivery;
+
+  String? _errorMessageFinish;
+
+  String? get errorMessageFinish => _errorMessageFinish;
+
+  void _setErrorPickup(String message) {
+    _errorMessagePickup = message;
     notifyListeners();
   }
 
-  Future<void> getListOrder(
-    LoginResponse loginResponse, {
-    int page = 1,
-    int limit = Constants.maxLimit,
-  }) async {
-    _isLoadingOrders = true;
-    _errorMessage = null;
+  void _setErrorDelivery(String message) {
+    _errorMessageDelivery = message;
+    notifyListeners();
+  }
+
+  Future<void> getListOrderPickup(LoginResponse loginResponse) async {
+    _isLoadingOrdersPickup = true;
+    _errorMessagePickup = null;
     notifyListeners();
 
+    final now = DateTime.now();
+    final tomorrow = now.add(const Duration(days: 1));
+
+    final fromStr = DateFormat('yyyy-MM-dd').format(now);
+    final toStr = DateFormat('yyyy-MM-dd').format(tomorrow);
+
     final url =
-        '${Constants.shipperOrderUrl}${loginResponse.user.id}?page=$page&limit=$limit';
+        '${Constants.baseUrlTrung}/plan/shipping-plan?shipper_id=${loginResponse.user.id}&mode=pickup&start_date=${fromStr}&end_date=${toStr}';
 
     try {
       final response = await http.get(
@@ -57,36 +81,48 @@ class HomeFragmentViewModel extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final List<dynamic> orderData = data['data']?['data'] ?? [];
+        final data = jsonDecode(response.body) as List<dynamic>;
 
-        _allOrders = orderData
-            .map((e) => DetailOrder.fromJson(Map<String, dynamic>.from(e)))
-            .where((order) {
-              final isFinished = order.status == ShippingStatus.FINISHED;
-              return !isFinished;
-            })
-            .toList();
+        List<ShippingOrder> lastBatchOrders = [];
+        for (int i = data.length - 1; i >= 0; i--) {
+          final batch = data[i];
+          if (batch['orders'] != null && (batch['orders'] as List).isNotEmpty) {
+            lastBatchOrders = (batch['orders'] as List)
+                .map(
+                  (e) => ShippingOrder.fromJson(Map<String, dynamic>.from(e)),
+                )
+                .where((order) {
+                  final status = order.routeStep.status.toUpperCase();
+                  return status != "FAILED" && status != "COMPLETED";
+                })
+                .toList();
 
-        _visibleOrders = _allOrders.take(5).toList();
+            if (lastBatchOrders.isNotEmpty) {
+              break;
+            }
+          }
+        }
+
+        _allOrdersPickup = lastBatchOrders;
+        _visibleOrdersPickup = _allOrdersPickup.take(5).toList();
       } else {
-        _allOrders = [];
-        _visibleOrders = [];
-        _setError(AppStrings.error_loading_order_list);
+        _allOrdersPickup = [];
+        _visibleOrdersPickup = [];
+        _setErrorPickup(AppStrings.error_loading_order_list);
       }
     } catch (e) {
-      _allOrders = [];
-      _visibleOrders = [];
-      _setError('${AppStrings.connection_error}: $e');
+      _allOrdersPickup = [];
+      _visibleOrdersPickup = [];
+      _setErrorPickup('${AppStrings.connection_error}: $e');
     } finally {
-      _isLoadingOrders = false;
+      _isLoadingOrdersPickup = false;
       notifyListeners();
     }
   }
 
-  Future<void> fetchFinishedOrdersToday(LoginResponse loginResponse) async {
-    _isLoadingFinishedOrders = true;
-    _errorMessage = null;
+  Future<void> getListOrderDelivery(LoginResponse loginResponse) async {
+    _isLoadingOrdersDelivery = true;
+    _errorMessageDelivery = null;
     notifyListeners();
 
     final now = DateTime.now();
@@ -95,6 +131,79 @@ class HomeFragmentViewModel extends ChangeNotifier {
     final fromStr = DateFormat('yyyy-MM-dd').format(now);
     final toStr = DateFormat('yyyy-MM-dd').format(tomorrow);
 
+    final url =
+        '${Constants.baseUrlTrung}/plan/shipping-plan?shipper_id=${loginResponse.user.id}&mode=delivery&start_date=${fromStr}&end_date=${toStr}';
+
+    try {
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${loginResponse.access}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as List<dynamic>;
+
+        List<ShippingOrder> lastBatchOrders = [];
+        for (int i = data.length - 1; i >= 0; i--) {
+          final batch = data[i];
+          if (batch['orders'] != null && (batch['orders'] as List).isNotEmpty) {
+            lastBatchOrders = (batch['orders'] as List)
+                .map(
+                  (e) => ShippingOrder.fromJson(Map<String, dynamic>.from(e)),
+                )
+                .where((order) {
+                  final status = order.routeStep.status.toUpperCase();
+                  return status != "FAILED" && status != "COMPLETED";
+                })
+                .toList();
+
+            if (lastBatchOrders.isNotEmpty) {
+              break;
+            }
+          }
+        }
+
+        _allOrdersDelivery = lastBatchOrders;
+        _visibleOrdersDelivery = _allOrdersDelivery.take(5).toList();
+      } else {
+        _allOrdersDelivery = [];
+        _visibleOrdersDelivery = [];
+        _setErrorDelivery(AppStrings.error_loading_order_list);
+      }
+    } catch (e) {
+      _allOrdersDelivery = [];
+      _visibleOrdersDelivery = [];
+      _setErrorDelivery('${AppStrings.connection_error}: $e');
+    } finally {
+      _isLoadingOrdersDelivery = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchFinishedOrdersToday(LoginResponse loginResponse) async {
+    _isLoadingFinishedOrders = true;
+    _errorMessageFinish = null;
+    notifyListeners();
+
+    final now = DateTime.now();
+    late DateTime from;
+    late DateTime to;
+
+    from = DateTime(now.year, now.month, now.day, 0, 0, 0);
+    to = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      23,
+      59,
+      59,
+    ).add(const Duration(days: 1));
+
+    final fromStr = DateFormat('yyyy-MM-dd').format(from);
+    final toStr = DateFormat('yyyy-MM-dd').format(to);
     final url =
         "${Constants.shipperOrderUrl}${loginResponse.user.id}?status=FINISHED&from=$fromStr&to=$toStr&page=1&limit=${Constants.maxLimit}";
     try {
@@ -140,7 +249,8 @@ class HomeFragmentViewModel extends ChangeNotifier {
 
   Future<bool> completeOrder(
     LoginResponse loginResponse,
-    DetailOrder order,
+    ShippingOrder order,
+    String status,
   ) async {
     _isCompletingOrder = true;
     notifyListeners();
@@ -156,9 +266,10 @@ class HomeFragmentViewModel extends ChangeNotifier {
           'accept': 'application/json',
         },
         body: jsonEncode({
-          "orderId": order.order.id,
-          "status": "FINISHED",
+          "orderId": order.id,
+          "status": status,
           "shipperId": loginResponse.user.id.toString(),
+          "routeStepId": int.parse(order.routeStep.id.toString()),
         }),
       );
 
@@ -174,7 +285,4 @@ class HomeFragmentViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
-
-  String formatCurrency(double value) =>
-      "${NumberFormat.decimalPattern('vi').format(value)}đ";
 }
