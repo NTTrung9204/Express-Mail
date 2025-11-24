@@ -5,6 +5,7 @@ import 'package:express_mail/resources/colors.dart';
 import 'package:express_mail/resources/strings.dart';
 import 'package:express_mail/data/model/LoginResponse.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 
 class OrderPlan extends StatefulWidget {
@@ -12,6 +13,8 @@ class OrderPlan extends StatefulWidget {
   final ShippingPlan? orderPlan;
   final int index;
   final bool isShimmer;
+  final bool isDelivery;
+  final VoidCallback? onBatchEmpty;
 
   const OrderPlan({
     super.key,
@@ -19,6 +22,8 @@ class OrderPlan extends StatefulWidget {
     required this.orderPlan,
     required this.index,
     required this.isShimmer,
+    required this.isDelivery,
+    this.onBatchEmpty,
   });
 
   @override
@@ -40,10 +45,14 @@ class _OrderPlanState extends State<OrderPlan> {
               loginResponse: widget.loginResponse,
               orders: widget.orderPlan!.orders,
               geometry: widget.orderPlan!.geometry,
+              isDelivery: widget.isDelivery,
             ),
           ),
         ).then((_) {
           if (mounted) setState(() {});
+          if (mounted && widget.orderPlan!.orders.isEmpty) {
+            widget.onBatchEmpty?.call();
+          }
         });
       },
       child: Container(
@@ -83,14 +92,16 @@ class _OrderPlanState extends State<OrderPlan> {
                     runSpacing: 8,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      _infoItem(
-                        Icons.date_range_outlined,
-                        "${AppStrings.batch} ${widget.index}",
-                      ),
-                      _infoItem(
-                        Icons.access_time,
-                        "${AppStrings.batch} ${widget.index}",
-                      ),
+                      if (widget.orderPlan!.time.isNotEmpty) ...[
+                        _infoItem(
+                          Icons.date_range_outlined,
+                          _formatDate(widget.orderPlan!.time),
+                        ),
+                        _infoItem(
+                          Icons.access_time,
+                          _formatTime(widget.orderPlan!.time),
+                        ),
+                      ],
                       _infoItemSvg(
                         "assets/images/ic_delivered.svg",
                         "${widget.orderPlan!.orders.length} ${AppStrings.orders}",
@@ -182,11 +193,7 @@ class _OrderPlanState extends State<OrderPlan> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 120,
-                    height: 15,
-                    color: Colors.grey.shade300,
-                  ),
+                  Container(width: 120, height: 15, color: Colors.grey.shade300),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 12,
@@ -217,5 +224,23 @@ class _OrderPlanState extends State<OrderPlan> {
         Container(width: width, height: height, color: Colors.grey.shade300),
       ],
     );
+  }
+
+  String _formatDate(String timeStr) {
+    try {
+      DateTime dt = DateTime.parse(timeStr).toLocal();
+      return DateFormat('dd/MM/yyyy').format(dt);
+    } catch (_) {
+      return '-';
+    }
+  }
+
+  String _formatTime(String timeStr) {
+    try {
+      DateTime dt = DateTime.parse(timeStr).toLocal();
+      return DateFormat('HH:mm').format(dt);
+    } catch (_) {
+      return '-';
+    }
   }
 }
