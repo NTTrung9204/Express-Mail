@@ -41,7 +41,7 @@ class _ProfileFragmentState extends State<ProfileFragment> {
 
   Future<void> _loadAutoLogin() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedValue = prefs.getBool(Constants.auto_login) ?? false;
+    final savedValue = prefs.getBool(Constants.auto_login) ?? true;
     setState(() {
       autoLogin = savedValue;
     });
