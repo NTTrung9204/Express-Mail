@@ -213,24 +213,36 @@ export class OrderController {
   }
 
   @Get('shop/:shopId')
-  @ApiOperation({ summary: 'Get orders by shop ID' })
-  @ApiParam({ name: 'shopId', description: 'Shop ID', example: 'SHOP001' })
+  @ApiOperation({ summary: 'Get orders by shop ID (paginated)' })
+  @ApiParam({ name: 'shopId', description: 'Shop ID', example: '56' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Items per page',
+    example: 10,
+  })
   @ApiResponse({
     status: 200,
     description: 'Orders found for the shop',
-    type: [OrderResponseDto],
+    type: PaginatedResponseDto<OrderResponseDto>,
   })
   async findByShopId(
     @Param('shopId') shopId: string,
-  ): Promise<ApiResponseDto<OrderResponseDto[]>> {
-    const orders = await this.orderService.findByShopId(shopId);
-    return new ApiResponseDto(
-      true,
-      'Orders retrieved successfully',
-      orders.map((order) =>
-        this.orderService.transformToOrderResponseDto(order),
-      ),
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ): Promise<ApiResponseDto<PaginatedResponseDto<OrderResponseDto>>> {
+    const paginated = await this.orderService.findByShopIdPaginated(
+      shopId,
+      page,
+      limit,
     );
+    return new ApiResponseDto(true, 'Orders retrieved successfully', paginated);
   }
 
   @Get('shipper/:shipperId')

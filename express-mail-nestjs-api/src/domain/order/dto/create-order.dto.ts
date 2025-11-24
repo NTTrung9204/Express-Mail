@@ -93,6 +93,12 @@ export class CreateOrderDto {
   @MaxLength(100)
   receiver_district: string;
 
+  @ApiProperty({ description: 'Receiver name', example: 'John Doe' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  receiver_name: string;
+
   @ApiProperty({ description: 'Package length in cm', example: 30 })
   @Transform(({ value }) => {
     if (typeof value === 'number') return value;

@@ -49,6 +49,9 @@ export class Order {
   @Column({ length: 100 })
   receiver_district: string;
 
+  @Column({ length: 100 })
+  receiver_name: string;
+
   @Column('float')
   length: number;
 

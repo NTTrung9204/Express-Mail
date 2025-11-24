@@ -1,16 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Visibility, Replay, Search } from "@mui/icons-material";
-import OrderDetailModal from "../../components/orders/failed_orders/OrderDetailModal";
-import ConfirmResendModal from "../../components/orders/failed_orders/ConfirmResendModal";
+import { Visibility, CheckCircle, Search } from "@mui/icons-material";
 import Pagination from "../../components/common/Pagination";
 import { ordersAPI } from "../../api/ordersAPI";
 import { toast } from "react-toastify";
 import authAPI from "../../api/authAPI";
 
-const FailedOrders = () => {
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [openDetail, setOpenDetail] = useState(false);
-  const [openConfirm, setOpenConfirm] = useState(false);
+const InComingOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -26,11 +21,11 @@ const FailedOrders = () => {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const response = await ordersAPI.getFailedOrders(postOfficeId, page, limit);
+      const response = await ordersAPI.getInComingOrders(postOfficeId, page, limit);
       
       if (response.success) {
         setOrders(response.data.data || []);
-        setTotal(response.data.total || response.data.meta?.total || 0);
+        setTotal(response.data.meta.total || 0);
       } else {
         toast.error("Lỗi khi lấy danh sách đơn hàng");
       }
@@ -86,10 +81,10 @@ const FailedOrders = () => {
                   <tr>
                     <th className="text-left p-3">Mã đơn</th>
                     <th className="text-left p-3">Người gửi</th>
-                    <th className="text-left p-3">Người nhận</th>
+                    <th className="text-left p-3">Tỉnh/Thành nhận</th>
                     <th className="text-left p-3">COD</th>
-                    <th className="text-left p-3">Lý do thất bại</th>
-                    <th className="text-left p-3">Ngày thất bại</th>
+                    <th className="text-left p-3">Phí vận chuyển</th>
+                    <th className="text-left p-3">Trạng thái</th>
                     <th className="text-center p-3">Hành động</th>
                   </tr>
                 </thead>
@@ -102,32 +97,31 @@ const FailedOrders = () => {
                     >
                       <td className="p-3 font-semibold">{order.code}</td>
                       <td className="p-3">{order.shopProfile?.username || "N/A"}</td>
-                      <td className="p-3">Anonymous</td>
+                      <td className="p-3">{order.receiver_province_city || "N/A"}</td>
                       <td className="p-3">{(order.cod || 0).toLocaleString('vi-VN')} đ</td>
+                      <td className="p-3">{(order.shipping_cost || 0).toLocaleString('vi-VN')} đ</td>
                       <td className="p-3">
-                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                          {order.shipping_status || "Không xác định"}
+                        <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600">
+                          Đang đến
                         </span>
                       </td>
-                      <td className="p-3">{new Date(order.updated_at).toLocaleDateString('vi-VN')}</td>
                       <td className="p-3 text-center space-x-2">
                         <button
                           onClick={() => {
-                            setSelectedOrder(order);
-                            setOpenDetail(true);
+                            // Handle view detail
                           }}
                           className="border border-orange-200 text-orange-700 hover:bg-orange-50 text-sm transition px-3 py-1 rounded-lg items-center gap-1 inline-flex cursor-pointer"
                         >
                           <Visibility fontSize="small" /> Chi tiết
                         </button>
+
                         <button
                           onClick={() => {
-                            setSelectedOrder(order);
-                            setOpenConfirm(true);
+                            // Handle confirm arrival
                           }}
                           className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg items-center gap-1 inline-flex cursor-pointer"
                         >
-                          <Replay fontSize="small" /> Giao lại
+                          <CheckCircle fontSize="small" /> Xác nhận đã đến
                         </button>
                       </td>
                     </tr>
@@ -146,12 +140,8 @@ const FailedOrders = () => {
           </>
         )}
       </div>
-
-      {/* Hai modal */}
-      <OrderDetailModal open={openDetail} onClose={() => setOpenDetail(false)} order={selectedOrder}/>
-      <ConfirmResendModal open={openConfirm} onClose={() => setOpenConfirm(false)} order={selectedOrder}/>
     </div>
   );
 };
 
-export default FailedOrders;
+export default InComingOrders;

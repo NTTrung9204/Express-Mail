@@ -31,7 +31,7 @@ const RequestOrders = () => {
       
       if (response.success) {
         setOrders(response.data.data || []);
-        setTotal(response.data.meta.total || 0);
+        setTotal(response.data.total || response.data.meta?.total || 0);
       } else {
         toast.error("Lỗi khi lấy danh sách đơn hàng");
       }
