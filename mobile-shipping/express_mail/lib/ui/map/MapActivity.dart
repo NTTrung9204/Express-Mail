@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:ffi';
 import 'dart:typed_data';
+import 'package:express_mail/data/model/ShippingOrder.dart';
 import 'package:express_mail/resources/colors.dart';
 import 'package:express_mail/resources/strings.dart';
 import 'package:flutter/material.dart';
@@ -7,12 +9,12 @@ import 'package:flutter/services.dart';
 import 'package:vietmap_flutter_gl/vietmap_flutter_gl.dart';
 import 'package:express_mail/constants/Constants.dart';
 import 'package:express_mail/ui/map/MapViewModel.dart';
-import 'package:express_mail/data/model/DetailOrder.dart';
 
 class MapActivity extends StatefulWidget {
-  final DetailOrder order;
+  final ShippingOrder order;
+  final bool isDelivery;
 
-  const MapActivity({super.key, required this.order});
+  const MapActivity({super.key, required this.order, this.isDelivery = false});
 
   @override
   State<MapActivity> createState() => _MapActivityState();
@@ -104,12 +106,22 @@ class _MapActivityState extends State<MapActivity> {
   Future<void> _initData() async {
     _currentLocation = await viewModel.getCurrentLocation();
     if (_currentLocation == null) return;
+    if (!widget.isDelivery) {
+      final parts = widget.order.receiverCoordinate.split(',');
+      if (parts.length == 2) {
+        final lat = double.tryParse(parts[0].trim());
+        final lng = double.tryParse(parts[1].trim());
+        if (lat != null && lng != null) {
+          _location = LatLng(lat, lng);
+        }
+      }
+    } else {
+      final latStr = widget.order.shopProfile.latitude;
+      final lngStr = widget.order.shopProfile.longitude;
 
-    final parts = widget.order.order.receiverCoordinate.split(',');
-    if (parts.length == 2) {
-      final lat = double.tryParse(parts[0].trim());
-      final lng = double.tryParse(parts[1].trim());
-      if (lat != null && lng != null) {
+      if (latStr != null && lngStr != null) {
+        final lat = double.parse(latStr);
+        final lng = double.parse(lngStr);
         _location = LatLng(lat, lng);
       }
     }

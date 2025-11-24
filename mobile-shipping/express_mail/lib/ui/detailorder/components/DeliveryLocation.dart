@@ -1,34 +1,26 @@
+import 'package:express_mail/data/model/ShippingOrder.dart';
+import 'package:express_mail/ui/map/MapActivity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:express_mail/data/model/DetailOrder.dart';
 import 'package:express_mail/resources/colors.dart';
 import 'package:express_mail/resources/strings.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DeliveryLocation extends StatelessWidget {
-  final DetailOrder detailOrder;
+  final ShippingOrder detailOrder;
 
-  const DeliveryLocation({
-    super.key,
-    required this.detailOrder,
-  });
+  const DeliveryLocation({super.key, required this.detailOrder});
 
   @override
   Widget build(BuildContext context) {
-
     return Container(
       width: double.infinity,
-      margin: EdgeInsets.symmetric(
-        horizontal: 18,
-        vertical: 8,
-      ),
+      margin: EdgeInsets.symmetric(horizontal: 18, vertical: 8),
       padding: EdgeInsets.all(25),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(12),
-        border: BoxBorder.all(
-          color: AppColors.gray_DADFE7,
-          width: 1,
-        ),
+        border: BoxBorder.all(color: AppColors.gray_DADFE7, width: 1),
         boxShadow: [
           BoxShadow(
             color: AppColors.gray_DADFE7,
@@ -79,7 +71,7 @@ class DeliveryLocation extends StatelessWidget {
               SizedBox(width: 5),
               Expanded(
                 child: Text(
-                  "${AppStrings.address}: ${detailOrder.order.receiverAddress}, ${detailOrder.order.receiverWardCommune}, ${detailOrder.order.receiverProvinceCity}",
+                  "${AppStrings.address}: ${detailOrder.receiverAddress}, ${detailOrder.receiverWardCommune}, ${detailOrder.receiverProvinceCity}",
                   style: TextStyle(
                     fontSize: 13,
                     fontFamily: "Inter_regular",
@@ -107,7 +99,7 @@ class DeliveryLocation extends StatelessWidget {
               SizedBox(width: 5),
               Expanded(
                 child: Text(
-                  "${AppStrings.phone_number}: ${detailOrder.order.receiverPhone}",
+                  "${AppStrings.phone_number}: ${detailOrder.receiverPhone}",
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.gray_7B899D,
@@ -124,21 +116,23 @@ class DeliveryLocation extends StatelessWidget {
             children: [
               Expanded(
                 child: Container(
-                  padding: EdgeInsetsDirectional.symmetric(
-                    vertical: 0,
-                    horizontal: 10,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 10),
                   margin: EdgeInsets.only(right: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.yellow_F8C630,
-                    border: BoxBorder.all(
-                      color: AppColors.white_F8F7FC,
-                      width: 1,
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.yellow_ECB50B,
+                        AppColors.yellow_F8C630,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
+                    border: Border.all(color: AppColors.white_F8F7FC, width: 1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: TextButton(
                     style: TextButton.styleFrom(
+                      backgroundColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -147,17 +141,24 @@ class DeliveryLocation extends StatelessWidget {
                         horizontal: 4,
                       ),
                     ),
-                    onPressed: () {
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (context) => DetailOrderActivity(order: order),
-                      //   ),
-                      // );
+                    onPressed: () async {
+                      final Uri launchUri = Uri(
+                        scheme: 'tel',
+                        path: detailOrder.shopProfile.phoneNumber,
+                      );
+                      if (await canLaunchUrl(launchUri)) {
+                        await launchUrl(launchUri);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(AppStrings.unable_to_make_call),
+                          ),
+                        );
+                      }
                     },
                     child: Row(
-                      mainAxisAlignment:
-                      MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         SvgPicture.asset(
                           "assets/images/ic_phone.svg",
@@ -168,12 +169,13 @@ class DeliveryLocation extends StatelessWidget {
                           width: 15,
                           height: 15,
                         ),
-                        SizedBox(width: 13),
-                        Expanded(
+                        SizedBox(width: 8),
+                        Flexible(
                           child: Text(
-                            AppStrings.call_customers,
+                            AppStrings.call,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontFamily: "Inter_regular",
                               fontSize: 13,
@@ -195,10 +197,7 @@ class DeliveryLocation extends StatelessWidget {
                   margin: EdgeInsets.only(right: 6),
                   decoration: BoxDecoration(
                     color: AppColors.gray_EDEFF3,
-                    border: BoxBorder.all(
-                      color: AppColors.white_F8F7FC,
-                      width: 1,
-                    ),
+                    border: Border.all(color: AppColors.white_F8F7FC, width: 1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: TextButton(
@@ -212,16 +211,15 @@ class DeliveryLocation extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (context) => DetailOrderActivity(order: order),
-                      //   ),
-                      // );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => MapActivity(order: detailOrder),
+                        ),
+                      );
                     },
                     child: Row(
-                      mainAxisAlignment:
-                      MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         SvgPicture.asset(
                           "assets/images/ic_guide.svg",
@@ -232,12 +230,13 @@ class DeliveryLocation extends StatelessWidget {
                           width: 15,
                           height: 15,
                         ),
-                        SizedBox(width: 13),
-                        Expanded(
+                        SizedBox(width: 8),
+                        Flexible(
                           child: Text(
                             AppStrings.guide,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontFamily: "Inter_regular",
                               fontSize: 13,
