@@ -1,81 +1,41 @@
 import { nestJSAPI } from "./axiosInstances";
 
-
 export const ordersAPI = {
-  // Get pickup orders
-  getPickupOrders: async (postOfficeId, page = 1, limit = 10, fromDate = null, toDate = null) => {
+  // Get orders by post office and status
+  getOrdersByStatus: async (postOfficeId, status, page = 1, limit = 10) => {
     const params = {
-      postOfficeId,
+      status,
       page,
       limit,
     };
 
-    if (fromDate) {
-      params.fromDate = fromDate;
-    }
-    if (toDate) {
-      params.toDate = toDate;
-    }
-
-    const response = await nestJSAPI.get('/orders/pickup', { params });
+    const response = await nestJSAPI.get(`/orders/post-office/${postOfficeId}`, { params });
     return response.data;
   },
 
-  // Get received orders
-  getReceivedOrders: async (postOfficeId, page = 1, limit = 10, fromDate = null, toDate = null) => {
-    const params = {
-      postOfficeId,
-      page,
-      limit,
-    };
-
-    if (fromDate) {
-      params.fromDate = fromDate;
-    }
-    if (toDate) {
-      params.toDate = toDate;
-    }
-
-    const response = await nestJSAPI.get('/orders/received', { params });
-    return response.data;
+  // Get pickup orders (PICKUP_REQUESTED status)
+  getPickupOrders: async (postOfficeId, page = 1, limit = 10) => {
+    return ordersAPI.getOrdersByStatus(postOfficeId, 'PICKUP_REQUESTED', page, limit);
   },
 
-  // Get failed orders
-  getFailedOrders: async (postOfficeId, page = 1, limit = 10, fromDate = null, toDate = null) => {
-    const params = {
-      postOfficeId,
-      page,
-      limit,
-    };
-
-    if (fromDate) {
-      params.fromDate = fromDate;
-    }
-    if (toDate) {
-      params.toDate = toDate;
-    }
-
-    const response = await nestJSAPI.get('/orders/failed', { params });
-    return response.data;
+  // Get received orders (IN_WAREHOUSE status)
+  getReceivedOrders: async (postOfficeId, page = 1, limit = 10) => {
+    return ordersAPI.getOrdersByStatus(postOfficeId, 'IN_WAREHOUSE', page, limit);
   },
 
-  // Get classified orders
-  getClassifiedOrders: async (postOfficeId, page = 1, limit = 10, fromDate = null, toDate = null) => {
-    const params = {
-      postOfficeId,
-      page,
-      limit,
-    };
+  // Get failed orders (TRANSITING status)
+  getFailedOrders: async (postOfficeId, page = 1, limit = 10) => {
+    return ordersAPI.getOrdersByStatus(postOfficeId, 'TRANSITING', page, limit);
+  },
 
-    if (fromDate) {
-      params.fromDate = fromDate;
-    }
-    if (toDate) {
-      params.toDate = toDate;
-    }
+  // Get classified orders (CLASSIFIED status)
+  getClassifiedOrders: async (postOfficeId, page = 1, limit = 10) => {
+    return ordersAPI.getOrdersByStatus(postOfficeId, 'CLASSIFIED', page, limit);
+  },
 
-    const response = await nestJSAPI.get('/orders/classified', { params });
-    return response.data;
+  // Get in-coming orders (IN_COMING status)
+  getInComingOrders: async (postOfficeId, page = 1, limit = 10) => {
+    return ordersAPI.getOrdersByStatus(postOfficeId, 'IN_COMING', page, limit);
   },
 
   // Get order by ID

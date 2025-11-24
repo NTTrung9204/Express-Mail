@@ -9,6 +9,7 @@ import Orders from "./pages/orders/Orders";
 import ReceivedOrders from "./pages/orders/ReceivedOrders";
 import FailedOrders from "./pages/orders/FailedOrders";
 import RequestOrders from "./pages/orders/RequestOrders";
+import InComingOrders from "./pages/orders/InComingOrders";
 import OrderHistory from "./pages/orders/OrderHistory";
 import ClassifiedOrders from "./pages/orders/ClassifiedOrders";
 import Staffs from "./pages/Staffs";
@@ -42,6 +43,7 @@ export default function App() {
             <Route path="failed" element={<FailedOrders />} />
             <Route path="request" element={<RequestOrders />} />
             <Route path="classified" element={<ClassifiedOrders />} />
+            <Route path="incoming" element={<InComingOrders />} />
           </Route>
 
           <Route path="staffs" element={<Staffs />} />

@@ -8,6 +8,7 @@ export enum PostOfficeOrderStatus {
   PICKUP_REQUESTED = 'PICKUP_REQUESTED',
   CLASSIFIED = 'CLASSIFIED',
   TRANSITING = 'TRANSITING',
+  IN_COMING = 'IN_COMING',
 }
 
 export class PostOfficeOrdersQueryDto extends PaginationDto {

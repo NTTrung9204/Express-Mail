@@ -571,78 +571,68 @@ export class OrderService {
   ): Promise<PaginatedResponseDto<OrderResponseDto>> {
     const page = options.page || 1;
     const limit = options.limit || 10;
-    let orderIds: number[] = [];
 
-    if (status === PostOfficeOrderStatus.TRANSITING) {
-      // Handle TRANSITING status
-      const transitingOrders = await this.orderTransitionRepository
-        .createQueryBuilder('ot')
-        .select('DISTINCT ot.order_id', 'order_id')
-        .where('ot.next_post_office = :postOfficeId', { postOfficeId })
-        .andWhere('ot.status = :status', {
-          status: OrderTransitionStatus.TRANSITING,
-        })
-        .getRawMany();
+    // Fetch all orders with relations
+    const allOrders = await this.orderRepository.find({
+      where: {},
+      relations: ['products', 'shipping', 'transitions', 'orderPostOffices'],
+      withDeleted: false,
+    });
 
-      if (transitingOrders.length > 0) {
-        const orderIdsToCheck = transitingOrders.map((t) => t.order_id);
+    // Filter orders: get the latest event from all sources and check its status
+    let filteredOrders = allOrders.filter((order) => {
+      if (!status) return true;
 
-        // Get all DONE transitions for these orders
-        const doneTransitions = await this.orderTransitionRepository
-          .createQueryBuilder('ot')
-          .select('ot.order_id', 'order_id')
-          .where('ot.order_id IN (:...orderIds)', { orderIds: orderIdsToCheck })
-          .andWhere('ot.next_post_office = :postOfficeId', { postOfficeId })
-          .andWhere('ot.status = :status', {
-            status: OrderTransitionStatus.DONE,
-          })
-          .getRawMany();
+      // Get latest event from all 3 sources
+      const latestEvent = this.getLatestEventAcrossAllSources(
+        order,
+        postOfficeId,
+      );
 
-        // Filter out orders that have DONE status
-        const doneOrderIds = new Set(doneTransitions.map((t) => t.order_id));
-        orderIds = orderIdsToCheck.filter(
-          (orderId) => !doneOrderIds.has(orderId),
-        );
+      if (!latestEvent) return false;
+
+      // Get the status of the latest event
+      const eventStatus = latestEvent.status;
+      if (status === PostOfficeOrderStatus.IN_COMING && postOfficeId == latestEvent?.nextPostOfficeId) {
+        return true;
       }
-    } else {
-      // Handle other statuses (IN_WAREHOUSE, PICKUP_REQUESTED, CLASSIFIED)
-      const latestRecords = await this.orderPostOfficeRepository
-        .createQueryBuilder('opo')
-        .innerJoin(
-          (qb) =>
-            qb
-              .select('sub.order_id', 'order_id')
-              .addSelect('MAX(sub.created_at)', 'max_created_at')
-              .from(OrderPostOffice, 'sub')
-              .where('sub.postOfficeId = :postOfficeId', { postOfficeId })
-              .groupBy('sub.order_id'),
-          'latest',
-          'latest.order_id = opo.order_id AND latest.max_created_at = opo.created_at',
-        )
-        .where('opo.postOfficeId = :postOfficeId', { postOfficeId })
-        .andWhere('opo.status = :status', { status })
-        .getRawMany();
 
-      orderIds = latestRecords.map((record) => record.opo_order_id);
-    }
+      if (status === PostOfficeOrderStatus.CLASSIFIED && postOfficeId == latestEvent?.currentPostOfficeId) {
+        return true;
+      }
 
-    // Count total records
-    const total = orderIds.length;
+      // Check if the latest event's status matches the requested status
+      const matches = String(eventStatus) === String(status);
+      return matches;
+    });
+
+    // Sort by latest event timestamp (descending - newest first)
+    filteredOrders = filteredOrders.sort((a, b) => {
+      const latestEventA = this.getLatestEventAcrossAllSources(a, postOfficeId);
+      const latestEventB = this.getLatestEventAcrossAllSources(b, postOfficeId);
+
+      const timestampA = latestEventA
+        ? new Date(latestEventA.created_at || latestEventA.createdAt).getTime()
+        : 0;
+      const timestampB = latestEventB
+        ? new Date(latestEventB.created_at || latestEventB.createdAt).getTime()
+        : 0;
+
+      return timestampB - timestampA;
+    });
+
+    // Get total count before pagination
+    const total = filteredOrders.length;
 
     // Apply pagination
-    const paginatedOrderIds = orderIds.slice((page - 1) * limit, page * limit);
-
-    // Fetch full order details for paginated IDs
-    const orders =
-      paginatedOrderIds.length > 0
-        ? await this.orderRepository.find({
-            where: { id: In(paginatedOrderIds) },
-            relations: ['products', 'shipping', 'orderPostOffices'],
-          })
-        : [];
+    const paginatedOrders = filteredOrders.slice(
+      (page - 1) * limit,
+      page * limit,
+    );
 
     // Enrich orders with shop profiles
-    const enrichedOrders = await this.enrichOrdersWithShopProfiles(orders);
+    const enrichedOrders =
+      await this.enrichOrdersWithShopProfiles(paginatedOrders);
 
     // Transform orders and return paginated response
     const items = enrichedOrders.map((order) =>
@@ -655,6 +645,50 @@ export class OrderService {
       page,
       limit,
     );
+  }
+
+  private getLatestEventAcrossAllSources(
+    order: Order,
+    postOfficeId: number,
+  ): any {
+    const allRelevantEvents: any[] = [];
+
+    // Add orderPostOffices events for this post office
+    if (order.orderPostOffices) {
+      allRelevantEvents.push(
+        ...order.orderPostOffices.filter(
+          (opo) => String(opo.postOfficeId) === String(postOfficeId),
+        ),
+      );
+    }
+
+    // Add shipping events
+    if (order.shipping) {
+      allRelevantEvents.push(...order.shipping);
+    }
+
+    // Add transitions events for this post office
+    // Include TRANSITING transitions where currentPostOfficeId or nextPostOfficeId matches
+    if (order.transitions) {
+      allRelevantEvents.push(
+        ...order.transitions.filter(
+          (trans) =>
+            String(trans.status) === 'TRANSITING' &&
+            (String(trans.currentPostOfficeId) === String(postOfficeId) ||
+              String(trans.nextPostOfficeId) === String(postOfficeId)) ||
+              String(trans.currentPostOfficeId) === String(postOfficeId),
+        ),
+      );
+    }
+
+    if (allRelevantEvents.length === 0) return null;
+
+    // Sort by created_at/createdAt and return the latest
+    return allRelevantEvents.sort(
+      (a, b) =>
+        new Date(b.created_at || b.createdAt).getTime() -
+        new Date(a.created_at || a.createdAt).getTime(),
+    )[0];
   }
 
   async findPickupOrders(
