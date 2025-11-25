@@ -64,6 +64,34 @@ const RequestOrders = () => {
     return "Chờ xử lý";
   };
 
+  // Format time for route step
+  const formatRouteStepTime = (routeSteps) => {
+    if (!routeSteps || routeSteps.length === 0) {
+      return "Chưa có";
+    }
+    // Get first route step
+    const firstStep = routeSteps[0];
+    if (!firstStep.createdAt) {
+      return "Chưa có";
+    }
+    
+    // Parse the ISO date string and convert to Vietnam time (UTC+7)
+    const utcDate = new Date(firstStep.createdAt);
+    const vietnamDate = new Date(utcDate.getTime() + 14 * 60 * 60 * 1000);
+    
+    // Format date as DD/MM/YYYY
+    const day = String(vietnamDate.getUTCDate()).padStart(2, '0');
+    const month = String(vietnamDate.getUTCMonth() + 1).padStart(2, '0');
+    const year = vietnamDate.getUTCFullYear();
+    
+    // Format time as HH:MM:SS
+    const hours = String(vietnamDate.getUTCHours()).padStart(2, '0');
+    const minutes = String(vietnamDate.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(vietnamDate.getUTCSeconds()).padStart(2, '0');
+    
+    return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+  };
+
   // Filter orders based on search term
   const filteredOrders = orders.filter((order) =>
     order.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -182,6 +210,7 @@ const RequestOrders = () => {
                     <th className="text-left p-3">Người nhận</th>
                     <th className="text-left p-3">COD</th>
                     <th className="text-left p-3">Trạng thái</th>
+                    <th className="text-left p-3">Kế hoạch lấy hàng</th>
                     <th className="text-center p-3">Hành động</th>
                   </tr>
                 </thead>
@@ -214,6 +243,17 @@ const RequestOrders = () => {
                         >
                           {getStatusDisplay(order)}
                         </span>
+                      </td>
+                      <td className="p-3">
+                        {order.routeSteps && order.routeSteps.length > 0 ? (
+                          <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-medium">
+                            {formatRouteStepTime(order.routeSteps)}
+                          </span>
+                        ) : (
+                          <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                            Chưa có
+                          </span>
+                        )}
                       </td>
                       <td className="p-3 text-center space-x-2">
                         <button
