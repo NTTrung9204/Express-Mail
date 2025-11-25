@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Dashboard, LocalShipping, Inventory2, People } from "@mui/icons-material";
+import { Dashboard, LocalShipping, Inventory2, People, RouteOutlined } from "@mui/icons-material";
 import LogoutIcon from '@mui/icons-material/Logout';
 import { toast } from "react-toastify";
 import authAPI from "../../api/authAPI";
@@ -66,6 +66,17 @@ const Sidebar = () => {
             }
           >
             <Inventory2 className="mr-3 text-base" /> Quản lý Đơn hàng
+          </NavLink>
+        </li>
+
+        <li>
+          <NavLink
+            to="/post-office/delivery-plans"
+            className={({ isActive }) =>
+              `${linkClasses} ${isActive ? activeClasses : ""}`
+            }
+          >
+            <RouteOutlined className="mr-3 text-base" /> Kế hoạch giao hàng
           </NavLink>
         </li>
 

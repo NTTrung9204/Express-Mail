@@ -12,6 +12,7 @@ import RequestOrders from "./pages/orders/RequestOrders";
 import InComingOrders from "./pages/orders/InComingOrders";
 import OrderHistory from "./pages/orders/OrderHistory";
 import ClassifiedOrders from "./pages/orders/ClassifiedOrders";
+import DeliveryPlans from "./pages/orders/DeliveryPlans";
 import Staffs from "./pages/Staffs";
 import { ProtectedRoute, PublicRoute } from "./components/ProtectedRoute";
 import authAPI from "./api/authAPI";
@@ -46,6 +47,7 @@ export default function App() {
             <Route path="incoming" element={<InComingOrders />} />
           </Route>
 
+          <Route path="delivery-plans" element={<DeliveryPlans />} />
           <Route path="staffs" element={<Staffs />} />
         </Route>
 
