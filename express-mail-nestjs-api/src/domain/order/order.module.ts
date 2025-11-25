@@ -14,6 +14,7 @@ import { Product } from '../product/entities/product.entity';
 import { DjangoService } from 'src/common/services/django.service';
 import { CommonModule } from 'src/common/module/common.module';
 import { FileUploadService } from 'src/common/services/file-upload.service';
+import { RouteStep } from '../plan/entities/route-step.entity';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { FileUploadService } from 'src/common/services/file-upload.service';
       OrderPostOffice,
       Shipping,
       Product,
+      RouteStep,
     ]),
     forwardRef(() => ProductModule),
     JwtModule.register({

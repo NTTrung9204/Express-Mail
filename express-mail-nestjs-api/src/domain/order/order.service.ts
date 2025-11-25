@@ -29,6 +29,7 @@ import { OrderPostOfficeDto } from './dto/order-post-office.dto';
 import { Shipping } from '../shipping/entities/shipping.entity';
 import { OrderResponseDto } from './dto/order-response.dto';
 import { ShopProfileDto } from '../shop/dto/shop-profile.dto';
+import { RouteStep } from '../plan/entities/route-step.entity';
 
 @Injectable()
 export class OrderService {
@@ -41,13 +42,18 @@ export class OrderService {
     private readonly orderPostOfficeRepository: Repository<OrderPostOffice>,
     @InjectRepository(Shipping)
     private readonly shippingRepository: Repository<Shipping>,
+    @InjectRepository(RouteStep)
+    private readonly routeStepRepository: Repository<RouteStep>,
     @Inject(forwardRef(() => ProductService))
     private readonly productService: ProductService,
     private readonly djangoService: DjangoService,
     private readonly fileUploadService: FileUploadService,
   ) {}
 
-  transformToOrderResponseDto(order: Order): OrderResponseDto {
+  transformToOrderResponseDto(
+    order: Order,
+    routeSteps?: RouteStep[],
+  ): OrderResponseDto {
     return {
       ...order,
       shipping: order.shipping?.map((ship: Shipping) => ({
@@ -58,6 +64,24 @@ export class OrderService {
         createdAt: ship.createdAt,
         updatedAt: ship.updatedAt,
       })),
+      routeSteps: routeSteps
+        ? routeSteps.map((routeStep) => ({
+            id: routeStep.id,
+            stepOrder: routeStep.stepOrder,
+            type: routeStep.type,
+            jobId: routeStep.jobId,
+            lat: routeStep.lat,
+            lng: routeStep.lng,
+            arrival: routeStep.arrival,
+            duration: routeStep.duration,
+            distance: routeStep.distance,
+            load: routeStep.load,
+            serviceTime: routeStep.serviceTime,
+            waitingTime: routeStep.waitingTime,
+            status: routeStep.status,
+            createdAt: routeStep.createdAt,
+          }))
+        : undefined,
       deleted_at: order.deleted_at ?? undefined,
     } as OrderResponseDto;
   }
@@ -593,11 +617,17 @@ export class OrderService {
 
       // Get the status of the latest event
       const eventStatus = latestEvent.status;
-      if (status === PostOfficeOrderStatus.IN_COMING && postOfficeId == latestEvent?.nextPostOfficeId) {
+      if (
+        status === PostOfficeOrderStatus.IN_COMING &&
+        postOfficeId == latestEvent?.nextPostOfficeId
+      ) {
         return true;
       }
 
-      if (status === PostOfficeOrderStatus.CLASSIFIED && postOfficeId == latestEvent?.currentPostOfficeId) {
+      if (
+        status === PostOfficeOrderStatus.CLASSIFIED &&
+        postOfficeId == latestEvent?.currentPostOfficeId
+      ) {
         return true;
       }
 
@@ -634,9 +664,27 @@ export class OrderService {
     const enrichedOrders =
       await this.enrichOrdersWithShopProfiles(paginatedOrders);
 
+    // Fetch route steps if status is PICKUP_REQUESTED
+    const routeStepMap = new Map<number, RouteStep[]>();
+    if (status === PostOfficeOrderStatus.PICKUP_REQUESTED) {
+      const orderIds = enrichedOrders.map((order) => order.id);
+      if (orderIds.length > 0) {
+        const routeSteps = await this.routeStepRepository.find({
+          where: { jobId: In(orderIds) },
+        });
+        routeSteps.forEach((step) => {
+          if (step.jobId !== null) {
+            const steps = routeStepMap.get(step.jobId) ?? [];
+            steps.push(step);
+            routeStepMap.set(step.jobId, steps);
+          }
+        });
+      }
+    }
+
     // Transform orders and return paginated response
     const items = enrichedOrders.map((order) =>
-      this.transformToOrderResponseDto(order),
+      this.transformToOrderResponseDto(order, routeStepMap.get(order.id)),
     );
 
     return new PaginatedResponseDto<OrderResponseDto>(
@@ -673,10 +721,10 @@ export class OrderService {
       allRelevantEvents.push(
         ...order.transitions.filter(
           (trans) =>
-            String(trans.status) === 'TRANSITING' &&
-            (String(trans.currentPostOfficeId) === String(postOfficeId) ||
-              String(trans.nextPostOfficeId) === String(postOfficeId)) ||
-              String(trans.currentPostOfficeId) === String(postOfficeId),
+            (String(trans.status) === 'TRANSITING' &&
+              (String(trans.currentPostOfficeId) === String(postOfficeId) ||
+                String(trans.nextPostOfficeId) === String(postOfficeId))) ||
+            String(trans.currentPostOfficeId) === String(postOfficeId),
         ),
       );
     }
