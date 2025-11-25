@@ -74,11 +74,22 @@ export class PlanService {
       );
     }
 
+    // Get post office coordinates from Django API (with caching)
+    const coordinates = await this.djangoService.getPostOfficeCoordinates(
+      dto.post_office_id,
+    );
+
+    if (!coordinates.latitude || !coordinates.longitude) {
+      throw new BadRequestException(
+        `Post office ${dto.post_office_id} has missing coordinates`,
+      );
+    }
+
     // Build vehicles array
     const vehicles = Array.from({ length: dto.vehicles }, (_, index) => ({
       id: index,
-      start: [dto.longitude, dto.latitude] as [string, string],
-      end: [dto.longitude, dto.latitude] as [string, string],
+      start: [coordinates.longitude, coordinates.latitude] as [string, string],
+      end: [coordinates.longitude, coordinates.latitude] as [string, string],
       profile: 'bike',
     }));
 
