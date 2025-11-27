@@ -56,6 +56,53 @@ export class OrderPostOfficeResponseDto {
   updated_at: Date;
 }
 
+export class RouteStepResponseDto {
+  @ApiProperty({ description: 'Route step ID', example: 1 })
+  id: number;
+
+  @ApiProperty({ description: 'Step order in route', example: 1 })
+  stepOrder: number;
+
+  @ApiProperty({ description: 'Step type', example: 'JOB' })
+  type: string;
+
+  @ApiProperty({ description: 'Job ID (Order ID)', example: 1 })
+  jobId: number;
+
+  @ApiProperty({ description: 'Latitude', example: 10.762622 })
+  lat: number;
+
+  @ApiProperty({ description: 'Longitude', example: 106.660172 })
+  lng: number;
+
+  @ApiProperty({ description: 'Arrival time', example: 100.5 })
+  arrival: number;
+
+  @ApiProperty({ description: 'Duration', example: 50.0 })
+  duration: number;
+
+  @ApiProperty({ description: 'Distance', example: 2.5 })
+  distance: number;
+
+  @ApiProperty({ description: 'Load', example: 1 })
+  load: number;
+
+  @ApiProperty({ description: 'Service time', example: 10.0 })
+  serviceTime: number;
+
+  @ApiProperty({ description: 'Waiting time', example: 0.0 })
+  waitingTime: number;
+
+  @ApiProperty({ description: 'Route step status', example: 'PENDING' })
+  status: string;
+
+  @ApiProperty({
+    description: 'Creation date',
+    example: '2024-01-01T00:00:00.000Z',
+  })
+  createdAt: Date;
+}
+
 export class OrderResponseDto {
   @ApiProperty({ description: 'Order ID', example: 1 })
   id: number;
@@ -169,4 +216,35 @@ export class OrderResponseDto {
     type: ShopProfileDto,
   })
   shopProfile?: ShopProfileDto;
+
+  @ApiPropertyOptional({
+    description: 'Route step information if order is planned for delivery',
+    type: RouteStepResponseDto,
+  })
+  routeStep?: RouteStepResponseDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Indicates if order is ready for delivery (current post office distance to receiver is under 30km)',
+    example: true,
+  })
+  isReadyForDelivery?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Distance in kilometers from current post office to receiver',
+    example: 25.5,
+  })
+  distanceToReceiver?: number;
+
+  @ApiPropertyOptional({
+    description: 'Distance in kilometers from nearest post office to receiver',
+    example: 20.3,
+  })
+  nearestPostOfficeDistance?: number;
+
+  @ApiPropertyOptional({
+    description: 'ID of the nearest post office to receiver',
+    example: 5,
+  })
+  nearestPostOfficeId?: number;
 }

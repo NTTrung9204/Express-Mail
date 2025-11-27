@@ -1,15 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { OrderResponseDto } from 'src/domain/order/dto/order-response.dto';
-import { RouteStep } from '../entities/route-step.entity';
 
-export class OrderWithRouteStepDto extends OrderResponseDto {
-  @ApiProperty({
-    description: 'Route step information',
-    type: Object,
-    required: false,
-  })
-  routeStep?: RouteStep;
-}
+export class OrderWithRouteStepDto extends OrderResponseDto {}
 
 export class ResShippingPlanDto {
   @ApiProperty({

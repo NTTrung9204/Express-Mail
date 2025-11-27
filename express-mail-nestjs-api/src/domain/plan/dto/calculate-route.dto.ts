@@ -1,12 +1,4 @@
-import {
-  IsNumber,
-  IsArray,
-  IsEnum,
-  IsNotEmpty,
-  IsString,
-  Min,
-  ArrayMinSize,
-} from 'class-validator';
+import { IsNumber, IsArray, IsEnum, Min, ArrayMinSize } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export enum RouteMode {
@@ -15,22 +7,6 @@ export enum RouteMode {
 }
 
 export class CalculateRouteDto {
-  @ApiProperty({
-    description: 'Longitude of the post office',
-    example: '108.247899',
-  })
-  @IsString()
-  @IsNotEmpty()
-  longitude: string;
-
-  @ApiProperty({
-    description: 'Latitude of the post office',
-    example: '16.078840',
-  })
-  @IsString()
-  @IsNotEmpty()
-  latitude: string;
-
   @ApiProperty({
     description: 'Post office ID',
     example: 1,
