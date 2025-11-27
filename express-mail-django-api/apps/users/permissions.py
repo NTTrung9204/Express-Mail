@@ -19,3 +19,31 @@ class ProfileObjectPermission(permissions.BasePermission):
             return True
 
         return obj == user
+
+
+class ViewShipperProfilePermission(permissions.BasePermission):
+    """
+    Permission class check if user has users.view_shipperprofile permission.
+    """
+
+    def has_permission(self, request, view):
+        """
+        Check if user has users.view_shipperprofile permission.
+        """
+
+        user = request.user
+        return user.has_perm("users.view_shipperprofile")
+
+
+class ViewPostOfficeStaffProfilePermission(permissions.BasePermission):
+    """
+    Permission class check if user has users.view_postofficestaffprofile permission.
+    """
+
+    def has_permission(self, request, view):
+        """
+        Check if user has users.view_postofficestaffprofile permission.
+        """
+
+        user = request.user
+        return user.has_perm("users.view_postofficestaffprofile")
