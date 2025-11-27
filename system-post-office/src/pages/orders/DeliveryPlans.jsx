@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Visibility, Timeline, LocalShipping, EventNote } from "@mui/icons-material";
+import { Visibility, Timeline, LocalShipping, EventNote, ExpandMore, ExpandLess, PersonAdd } from "@mui/icons-material";
 import RouteDetailModal from "../../components/orders/delivery_plans/RouteDetailModal";
+import AssignShipperModal from "../../components/orders/delivery_plans/AssignShipperModal";
 import Pagination from "../../components/common/Pagination";
 import plansAPI from "../../api/plansAPI";
 import authAPI from "../../api/authAPI";
@@ -15,6 +16,9 @@ const DeliveryPlans = () => {
   const [mode, setMode] = useState("pickup");
   const [openRouteDetail, setOpenRouteDetail] = useState(false);
   const [selectedVehicleRouteId, setSelectedVehicleRouteId] = useState(null);
+  const [expandedPlans, setExpandedPlans] = useState(new Set());
+  const [openAssignShipper, setOpenAssignShipper] = useState(false);
+  const [selectedVehicleRouteForAssign, setSelectedVehicleRouteForAssign] = useState(null);
 
   // Get post office ID from user data
   const user = authAPI.getUser();
@@ -173,34 +177,73 @@ const DeliveryPlans = () => {
 
                     {/* Vehicle Routes */}
                     <div className="border-t border-orange-200 pt-4">
-                      <p className="text-sm font-semibold text-[#4b1d09] mb-3">Các tuyến đường xe:</p>
-                      <div className="space-y-2">
-                        {plan.vehicleRoutes.map((route) => (
-                          <div key={route.id} className="flex items-center justify-between bg-gray-50 p-3 rounded border border-gray-200">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-semibold text-[#4b1d09]">
-                                  Tuyến {route.vehicleId ? `xe ${route.vehicleId}` : "chưa gán"}
-                                </span>
-                                <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">
-                                  {route.routeSteps.filter((s) => s.type === "job").length} điểm
-                                </span>
+                      <button
+                        onClick={() => {
+                          const newExpanded = new Set(expandedPlans);
+                          if (newExpanded.has(plan.id)) {
+                            newExpanded.delete(plan.id);
+                          } else {
+                            newExpanded.add(plan.id);
+                          }
+                          setExpandedPlans(newExpanded);
+                        }}
+                        className="w-full flex items-center justify-between p-3 hover:bg-orange-50 rounded-lg transition cursor-pointer font-semibold text-[#4b1d09]"
+                      >
+                        <span className="flex items-center gap-2">
+                          Các đợt giao hàng ({plan.vehicleRoutes.length})
+                        </span>
+                        {expandedPlans.has(plan.id) ? (
+                          <ExpandLess fontSize="small" />
+                        ) : (
+                          <ExpandMore fontSize="small" />
+                        )}
+                      </button>
+
+                      {expandedPlans.has(plan.id) && (
+                        <div className="mt-3 space-y-2 pl-3">
+                          {plan.vehicleRoutes.map((route) => (
+                            <div
+                              key={route.id}
+                              className="flex items-center justify-between bg-gray-50 p-3 rounded border border-gray-200 hover:shadow-sm transition"
+                            >
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-semibold text-[#4b1d09]">
+                                    Đợt giao hàng {route.vehicleId ? `xe ${route.vehicleId}` : "chưa gán"}
+                                  </span>
+                                  <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">
+                                    {route.routeSteps.filter((s) => s.type === "job").length} điểm
+                                  </span>
+                                </div>
+                                <div className="flex gap-4 text-xs text-gray-600">
+                                  <span>KM: {formatDistance(route.distance)}</span>
+                                  <span>Thời gian: {formatTime(route.duration)}</span>
+                                  <span>Chi phí: {route.cost.toLocaleString("vi-VN")} đ</span>
+                                </div>
                               </div>
-                              <div className="flex gap-4 text-xs text-gray-600">
-                                <span>KM: {formatDistance(route.distance)}</span>
-                                <span>Thời gian: {formatTime(route.duration)}</span>
-                                <span>Chi phí: {route.cost.toLocaleString("vi-VN")} đ</span>
+                              <div className="ml-4 flex gap-2">
+                                {!route.vehicleId && (
+                                  <button
+                                    onClick={() => {
+                                      setSelectedVehicleRouteForAssign(route.id);
+                                      setOpenAssignShipper(true);
+                                    }}
+                                    className="px-3 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg text-sm font-medium inline-flex items-center gap-2 transition cursor-pointer"
+                                  >
+                                    <PersonAdd fontSize="small" /> Gán
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleViewRoute(route.id)}
+                                  className="px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium inline-flex items-center gap-2 transition cursor-pointer"
+                                >
+                                  <Visibility fontSize="small" /> Chi tiết
+                                </button>
                               </div>
                             </div>
-                            <button
-                              onClick={() => handleViewRoute(route.id)}
-                              className="ml-4 px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium inline-flex items-center gap-2 transition cursor-pointer"
-                            >
-                              <Visibility fontSize="small" /> Chi tiết
-                            </button>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -223,6 +266,14 @@ const DeliveryPlans = () => {
         open={openRouteDetail}
         onClose={() => setOpenRouteDetail(false)}
         vehicleRouteId={selectedVehicleRouteId}
+      />
+
+      {/* Assign Shipper Modal */}
+      <AssignShipperModal
+        open={openAssignShipper}
+        onClose={() => setOpenAssignShipper(false)}
+        vehicleRouteId={selectedVehicleRouteForAssign}
+        onAssignSuccess={() => fetchPlans()}
       />
     </div>
   );
