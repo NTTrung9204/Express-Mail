@@ -46,8 +46,15 @@ export class PlanController {
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   async calculateRoute(
     @Body() calculateRouteDto: CalculateRouteDto,
-  ): Promise<RoutePlan> {
-    return this.planService.calculateRoute(calculateRouteDto);
+  ): Promise<ApiResponseDto<RoutePlan>> {
+    const result = await this.planService.calculateRoute(calculateRouteDto);
+    return new ApiResponseDto(
+      true,
+      'Route calculated successfully',
+      result,
+      undefined,
+      201,
+    );
   }
 
   @Get('route-plans')
@@ -123,8 +130,17 @@ export class PlanController {
   @ApiResponse({ status: 400, description: 'Vehicle route already assigned' })
   async assignVehicleRoutes(
     @Body() assignVehicleRoutesDto: AssignVehicleRoutesDto,
-  ): Promise<VehicleRoute[]> {
-    return this.planService.assignVehicleRoutes(assignVehicleRoutesDto);
+  ): Promise<ApiResponseDto<VehicleRoute[]>> {
+    const result = await this.planService.assignVehicleRoutes(
+      assignVehicleRoutesDto,
+    );
+    return new ApiResponseDto(
+      true,
+      'Vehicle routes assigned successfully',
+      result,
+      undefined,
+      201,
+    );
   }
 
   @Get('shipping-plan')
@@ -140,7 +156,12 @@ export class PlanController {
   })
   async getShippingPlan(
     @Query() query: GetShippingPlanDto,
-  ): Promise<ResShippingPlanDto[]> {
-    return this.planService.getShippingPlan(query);
+  ): Promise<ApiResponseDto<ResShippingPlanDto[]>> {
+    const result = await this.planService.getShippingPlan(query);
+    return new ApiResponseDto(
+      true,
+      'Shipping route steps retrieved successfully',
+      result,
+    );
   }
 }

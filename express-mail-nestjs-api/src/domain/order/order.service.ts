@@ -50,9 +50,135 @@ export class OrderService {
     private readonly fileUploadService: FileUploadService,
   ) {}
 
+  private calculateDistance(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+  ): number {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  private async checkIsReadyForDelivery(
+    order: Order,
+    currentPostOfficeId: number,
+  ): Promise<{
+    isReady: boolean;
+    distanceToReceiver: number;
+    nearestPostOfficeDistance: number;
+    nearestPostOfficeId: number;
+  }> {
+    try {
+      // Extract receiver coordinates
+      const receiverCoords = order.receiver_coordinate?.split(',');
+      if (!receiverCoords || receiverCoords.length < 2) {
+        return {
+          isReady: false,
+          distanceToReceiver: 0,
+          nearestPostOfficeDistance: 0,
+          nearestPostOfficeId: currentPostOfficeId,
+        };
+      }
+
+      const receiverLat = parseFloat(receiverCoords[0]);
+      const receiverLon = parseFloat(receiverCoords[1]);
+
+      if (isNaN(receiverLat) || isNaN(receiverLon)) {
+        return {
+          isReady: false,
+          distanceToReceiver: 0,
+          nearestPostOfficeDistance: 0,
+          nearestPostOfficeId: currentPostOfficeId,
+        };
+      }
+
+      // Fetch current post office coordinates
+      const currentPoCoords =
+        await this.djangoService.getPostOfficeCoordinates(currentPostOfficeId);
+      if (!currentPoCoords.latitude || !currentPoCoords.longitude) {
+        return {
+          isReady: false,
+          distanceToReceiver: 0,
+          nearestPostOfficeDistance: 0,
+          nearestPostOfficeId: currentPostOfficeId,
+        };
+      }
+
+      const currentPoLat = parseFloat(currentPoCoords.latitude);
+      const currentPoLon = parseFloat(currentPoCoords.longitude);
+      const currentDistance = this.calculateDistance(
+        currentPoLat,
+        currentPoLon,
+        receiverLat,
+        receiverLon,
+      );
+
+      // Fetch all post offices
+      const allPostOffices = await this.djangoService.fetchAllPostOffices();
+
+      // Find the minimum distance among all post offices and track the nearest post office ID
+      let nearestDistance = currentDistance;
+      let nearestPostOfficeId = currentPostOfficeId;
+      for (const postOffice of allPostOffices) {
+        const poLat = parseFloat(postOffice.latitude);
+        const poLon = parseFloat(postOffice.longitude);
+
+        if (isNaN(poLat) || isNaN(poLon)) {
+          continue;
+        }
+
+        const distance = this.calculateDistance(
+          poLat,
+          poLon,
+          receiverLat,
+          receiverLon,
+        );
+
+        if (distance < nearestDistance) {
+          nearestDistance = distance;
+          nearestPostOfficeId = postOffice.id;
+        }
+      }
+
+      // Consider ready for delivery if current post office distance is under 30km
+      const isReady = currentDistance < 30;
+
+      return {
+        isReady,
+        distanceToReceiver: Math.round(currentDistance * 100) / 100,
+        nearestPostOfficeDistance: Math.round(nearestDistance * 100) / 100,
+        nearestPostOfficeId,
+      };
+    } catch (error) {
+      console.error('Error checking if order is ready for delivery:', error);
+      return {
+        isReady: false,
+        distanceToReceiver: 0,
+        nearestPostOfficeDistance: 0,
+        nearestPostOfficeId: currentPostOfficeId,
+      };
+    }
+  }
+
   transformToOrderResponseDto(
     order: Order,
     routeSteps?: RouteStep[],
+    readinessInfo?: {
+      isReady: boolean;
+      distanceToReceiver: number;
+      nearestPostOfficeDistance: number;
+      nearestPostOfficeId: number;
+    },
   ): OrderResponseDto {
     return {
       ...order,
@@ -82,6 +208,10 @@ export class OrderService {
             createdAt: routeStep.createdAt,
           }))
         : undefined,
+      isReadyForDelivery: readinessInfo?.isReady,
+      distanceToReceiver: readinessInfo?.distanceToReceiver,
+      nearestPostOfficeDistance: readinessInfo?.nearestPostOfficeDistance,
+      nearestPostOfficeId: readinessInfo?.nearestPostOfficeId,
       deleted_at: order.deleted_at ?? undefined,
     } as OrderResponseDto;
   }
@@ -682,9 +812,33 @@ export class OrderService {
       }
     }
 
+    // Check if orders are ready for delivery if status is IN_WAREHOUSE
+    const readinessMap = new Map<
+      number,
+      {
+        isReady: boolean;
+        distanceToReceiver: number;
+        nearestPostOfficeDistance: number;
+        nearestPostOfficeId: number;
+      }
+    >();
+    if (status === PostOfficeOrderStatus.IN_WAREHOUSE) {
+      for (const order of enrichedOrders) {
+        const readinessInfo = await this.checkIsReadyForDelivery(
+          order,
+          postOfficeId,
+        );
+        readinessMap.set(order.id, readinessInfo);
+      }
+    }
+
     // Transform orders and return paginated response
     const items = enrichedOrders.map((order) =>
-      this.transformToOrderResponseDto(order, routeStepMap.get(order.id)),
+      this.transformToOrderResponseDto(
+        order,
+        routeStepMap.get(order.id),
+        readinessMap.get(order.id),
+      ),
     );
 
     return new PaginatedResponseDto<OrderResponseDto>(

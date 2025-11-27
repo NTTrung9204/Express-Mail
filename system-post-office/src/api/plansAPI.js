@@ -29,6 +29,19 @@ const plansAPI = {
       throw error;
     }
   },
+
+  // Assign vehicle routes to shippers
+  assignVehicleRoutes: async (assignments) => {
+    try {
+      const response = await nestJSAPI.post("/plan/assign-vehicle-routes", {
+        assignments,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error assigning vehicle routes:", error);
+      throw error;
+    }
+  },
 };
 
 export default plansAPI;

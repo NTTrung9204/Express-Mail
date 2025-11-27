@@ -222,4 +222,29 @@ export class OrderResponseDto {
     type: RouteStepResponseDto,
   })
   routeStep?: RouteStepResponseDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Indicates if order is ready for delivery (current post office distance to receiver is under 30km)',
+    example: true,
+  })
+  isReadyForDelivery?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Distance in kilometers from current post office to receiver',
+    example: 25.5,
+  })
+  distanceToReceiver?: number;
+
+  @ApiPropertyOptional({
+    description: 'Distance in kilometers from nearest post office to receiver',
+    example: 20.3,
+  })
+  nearestPostOfficeDistance?: number;
+
+  @ApiPropertyOptional({
+    description: 'ID of the nearest post office to receiver',
+    example: 5,
+  })
+  nearestPostOfficeId?: number;
 }

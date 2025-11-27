@@ -70,6 +70,8 @@ GROUP_PERMISSIONS_MAP = {
     ],
     Groups.POST_OFFICE_MANAGER.value: [
         "routing.call_vrp",
+        "users.view_shipperprofile",
+        "users.view_postofficestaffprofile",
     ],
     Groups.POST_OFFICE_STAFF.value: [
         "routing.call_vrp",

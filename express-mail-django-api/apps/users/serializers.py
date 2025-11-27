@@ -333,3 +333,29 @@ class ShopRegisterSerializer(serializers.Serializer):
 
     user = UserRegisterSerializer()
     profile = ShopProfileRegisterSerializer()
+
+
+class UserShipperProfileSerializer(serializers.ModelSerializer):
+    """
+    User with shipper profile serializer.
+    """
+
+    profile = ShipperProfileSerializer(read_only=True, source="shipper_profile")
+
+    class Meta:
+        model = User
+        fields = ["id", "first_name", "last_name", "username", "email", "profile"]
+
+
+class UserPostOfficeStaffProfileSerializer(serializers.ModelSerializer):
+    """
+    User with post office staff profile serializer.
+    """
+
+    profile = PostOfficeStaffProfileSerializer(
+        read_only=True, source="post_office_staff_profile"
+    )
+
+    class Meta:
+        model = User
+        fields = ["id", "first_name", "last_name", "username", "email", "profile"]

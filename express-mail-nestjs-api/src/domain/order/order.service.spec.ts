@@ -8,6 +8,7 @@ import { OrderPostOffice } from './entities/post-office-order.entity';
 import { Shipping } from '../shipping/entities/shipping.entity';
 import { DjangoService } from 'src/common/services/django.service';
 import { FileUploadService } from 'src/common/services/file-upload.service';
+import { RouteStep } from '../plan/entities/route-step.entity';
 
 describe('OrderService', () => {
   let service: OrderService;
@@ -30,6 +31,10 @@ describe('OrderService', () => {
         },
         {
           provide: getRepositoryToken(Shipping),
+          useValue: {},
+        },
+        {
+          provide: getRepositoryToken(RouteStep),
           useValue: {},
         },
         {

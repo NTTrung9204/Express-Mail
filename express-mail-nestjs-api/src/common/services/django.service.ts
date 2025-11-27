@@ -450,4 +450,67 @@ export class DjangoService {
       throw error;
     }
   }
+
+  async fetchAllPostOffices(): Promise<
+    Array<{
+      id: number;
+      name: string;
+      address: string;
+      wardCommune: number;
+      provinceCity: number;
+      district: number;
+      latitude: string;
+      longitude: string;
+    }>
+  > {
+    const cacheKey = 'all_post_offices';
+
+    // Try to get from Redis cache first
+    try {
+      const cached = await this.redis.get(cacheKey);
+      if (cached) {
+        this.logger.debug('All post offices found in cache');
+        return JSON.parse(cached);
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Failed to get post offices from cache: ${error.message}`,
+      );
+    }
+
+    try {
+      // Call Django API to get all post offices
+      const response = await this.fetchWithAuth(
+        '/api/v1/post-offices?page_size=100',
+        {
+          method: 'GET',
+        },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `HTTP ${response.status}: ${errorText} - Failed to fetch post offices`,
+        );
+      }
+
+      const data = await response.json();
+      const postOffices = data.results || [];
+
+      try {
+        // Cache for 1 hour
+        await this.redis.setex(cacheKey, 3600, JSON.stringify(postOffices));
+        this.logger.debug(
+          `Cached ${postOffices.length} post offices for 1 hour`,
+        );
+      } catch (cacheError) {
+        this.logger.warn(`Failed to cache post offices: ${cacheError.message}`);
+      }
+
+      return postOffices;
+    } catch (error) {
+      this.logger.error('Failed to fetch all post offices:', error);
+      throw error;
+    }
+  }
 }
