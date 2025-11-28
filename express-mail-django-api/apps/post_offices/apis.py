@@ -44,8 +44,7 @@ class PostOfficeViewSet(ModelViewSet, BaseAPIViewSet):
 
         post_office = self.get_object()
         users = User.objects.filter(shipper_profile__post_office=post_office)
-        serializer = UserShipperProfileSerializer(users, many=True)
-        return self.response_ok(serializer.data)
+        return self.response_pagination(request, users, UserShipperProfileSerializer)
 
     @extend_schema(request=None, responses=UserPostOfficeStaffProfileSerializer)
     @action(
@@ -64,5 +63,6 @@ class PostOfficeViewSet(ModelViewSet, BaseAPIViewSet):
 
         post_office = self.get_object()
         users = User.objects.filter(post_office_staff_profile__post_office=post_office)
-        serializer = UserPostOfficeStaffProfileSerializer(users, many=True)
-        return self.response_ok(serializer.data)
+        return self.response_pagination(
+            request, users, UserPostOfficeStaffProfileSerializer
+        )
