@@ -16,7 +16,6 @@ from apps.users.serializers import (
     UserPostOfficeStaffProfileSerializer,
 )
 from shared.apis import BaseAPIViewSet
-from shared.pagination import BasePagination
 from shared.permissions import FullDjangoModelPermissions
 
 
@@ -31,13 +30,12 @@ class PostOfficeViewSet(ModelViewSet, BaseAPIViewSet):
     permission_classes = [FullDjangoModelPermissions]
     filterset_class = PostOfficeFilter
 
-    @extend_schema(request=None, responses=UserShipperProfileSerializer(many=True))
+    @extend_schema(request=None, responses=UserShipperProfileSerializer)
     @action(
         detail=True,
         methods=["get"],
         url_path="shippers",
         permission_classes=[ViewShipperProfilePermission, PostOfficeObjectPermissions],
-        pagination_class=BasePagination,
     )
     def get_shippers(self, request, pk=None):
         """
@@ -46,11 +44,10 @@ class PostOfficeViewSet(ModelViewSet, BaseAPIViewSet):
 
         post_office = self.get_object()
         users = User.objects.filter(shipper_profile__post_office=post_office)
-        return self.response_pagination(request, users, UserShipperProfileSerializer)
+        serializer = UserShipperProfileSerializer(users, many=True)
+        return self.response_ok(serializer.data)
 
-    @extend_schema(
-        request=None, responses=UserPostOfficeStaffProfileSerializer(many=True)
-    )
+    @extend_schema(request=None, responses=UserPostOfficeStaffProfileSerializer)
     @action(
         detail=True,
         methods=["get"],
@@ -67,6 +64,5 @@ class PostOfficeViewSet(ModelViewSet, BaseAPIViewSet):
 
         post_office = self.get_object()
         users = User.objects.filter(post_office_staff_profile__post_office=post_office)
-        return self.response_pagination(
-            request, users, UserPostOfficeStaffProfileSerializer
-        )
+        serializer = UserPostOfficeStaffProfileSerializer(users, many=True)
+        return self.response_ok(serializer.data)
