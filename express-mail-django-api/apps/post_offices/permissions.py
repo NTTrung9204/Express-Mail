@@ -17,3 +17,31 @@ class PostOfficeObjectPermissions(permissions.BasePermission):
             return False
 
         return user.post_office_manager_profile.post_office == obj
+
+
+class AddShipperToPostOfficePermissions(permissions.BasePermission):
+    """
+    Permissions class to check if a user has permission to add a shipper to post office.
+    """
+
+    def has_permission(self, request, view):
+        """
+        Check if user has permission to add a shipper to post office.
+        """
+
+        user = request.user
+        return user.has_perm("post_offices.add_shipper")
+
+
+class AddStaffToPostOfficePermissions(permissions.BasePermission):
+    """
+    Permissions class to check if a user has permission to add a staff to post office.
+    """
+
+    def has_permission(self, request, view):
+        """
+        Check if user has permission to add a staff to post office.
+        """
+
+        user = request.user
+        return user.has_perm("post_offices.add_staff")
