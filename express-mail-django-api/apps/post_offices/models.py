@@ -22,3 +22,7 @@ class PostOffice(BaseModel):
         """
 
         db_table = "post_offices"
+        permissions = [
+            ("add_shipper", "Can add shipper to post office"),
+            ("add_staff", "Can add staff to post office"),
+        ]
