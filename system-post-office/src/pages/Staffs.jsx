@@ -1,48 +1,275 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
-import { PersonOff, Add, Search } from "@mui/icons-material";
+import { PersonOff, Add, Security } from "@mui/icons-material";
 import ConfirmModal from "../components/staffs/ConfirmModal";
+import Pagination from "../components/common/Pagination";
+import PermissionModal from "../components/staffs/PermissionModal";
+import { getStaffsByPostOfficeId, createStaff } from "../api/staffAPI";
+import { fetchUserPostOfficeId } from '../api/profileAPI';
+import authAPI from "../api/authAPI";
 
 const Staffs = () => {
   const [showModal, setShowModal] = useState(false);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const [selectedStaff, setSelectedStaff] = useState(null);
   const [modalContent, setModalContent] = useState({ title: "", message: "" });
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    role: "",
+    username: "",
     password: "",
+    confirmPassword: "",
+    firstName: "",
+    lastName: "",
+    email: "",
   });
+  const [formErrors, setFormErrors] = useState({});
+  const [staffs, setStaffs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [total, setTotal] = useState(0);
+  const [postOfficeId, setPostOfficeId] = useState(null);
 
-  const employees = [
-    { name: "Nguyễn Văn A", email: "staff1@example.com", role: "Nhân viên kho", status: "Hoạt động" },
-    { name: "Trần Thị B", email: "staff2@example.com", role: "Nhân viên giao nhận", status: "Hoạt động" },
-    { name: "Lê Văn C", email: "staff3@example.com", role: "Quản lý ca", status: "Vô hiệu" },
-  ];
+  const fetchStaffs = useCallback(async (id, currentPage = page, currentLimit = limit) => {
+    if (!id) return;
 
-  const handleDisable = (name) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await getStaffsByPostOfficeId(id, currentPage, currentLimit);
+      if (response) {
+        setStaffs(response.results || []);
+        setTotal(response.count || 0);
+      } else {
+        setError("Không thể tải dữ liệu nhân viên.");
+      }
+    } catch (e) {
+      console.error("Lỗi khi tải nhân viên:", e);
+      toast.error("Đã xảy ra lỗi khi kết nối API.");
+      setError("Đã xảy ra lỗi khi kết nối API.");
+    } finally {
+      setLoading(false);
+    }
+  }, [page, limit]);
+
+  useEffect(() => {
+    const fetchAllData = async () => {
+      setLoading(true);
+      
+      const user = authAPI.getUser();
+      const userId = user?.id; 
+
+      if (!userId) {
+        setError("Không tìm thấy User ID. Vui lòng đăng nhập lại.");
+        setLoading(false);
+        return;
+      }
+
+      const id = await fetchUserPostOfficeId(userId);
+      
+      if (id) {
+        setPostOfficeId(id);
+        fetchStaffs(id, 1, limit);
+        setPage(1);
+      } else {
+        setError("Không thể xác định ID Bưu cục của người dùng.");
+        setLoading(false);
+      }
+    };
+
+    fetchAllData();
+  }, []);
+
+  useEffect(() => {
+    if (postOfficeId) {
+      fetchStaffs(postOfficeId, page, limit);
+    }
+  }, [page, limit, postOfficeId, fetchStaffs]);
+
+  const handleDisable = (staff) => {
     setModalContent({
       title: "Xác nhận vô hiệu hóa",
-      message: `Bạn có chắc chắn muốn vô hiệu hóa tài khoản của ${name} không?`,
+      message: `Bạn có chắc chắn muốn vô hiệu hóa tài khoản của ${staff.firstName} ${staff.lastName} không?`,
     });
+    setSelectedStaff(staff);
     setShowModal(true);
   };
 
   const confirmAction = () => {
     setShowModal(false);
     toast.success("Tài khoản đã được vô hiệu hóa!");
+    if (postOfficeId) fetchStaffs(postOfficeId, page, limit);
+  };
+
+  const handleOpenPermission = (staff) => {
+    setSelectedStaff(staff);
+    setShowPermissionModal(true);
+  };
+
+  // Validators
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validateField = (name, value) => {
+    let error = "";
+
+    switch (name) {
+      case "username":
+        if (!value.trim()) {
+          error = "Username không được để trống";
+        } else if (value.length < 3) {
+          error = "Username phải có ít nhất 3 ký tự";
+        }
+        break;
+
+      case "password":
+        if (!value) {
+          error = "Mật khẩu không được để trống";
+        } else if (value.length < 6) {
+          error = "Mật khẩu phải có ít nhất 6 ký tự";
+        }
+        break;
+
+      case "confirmPassword":
+        if (!value) {
+          error = "Vui lòng xác nhận mật khẩu";
+        } else if (value !== formData.password) {
+          error = "Mật khẩu xác nhận không khớp";
+        }
+        break;
+
+      case "firstName":
+        if (!value.trim()) {
+          error = "Họ không được để trống";
+        }
+        break;
+
+      case "lastName":
+        if (!value.trim()) {
+          error = "Tên không được để trống";
+        }
+        break;
+
+      case "email":
+        if (!value.trim()) {
+          error = "Email không được để trống";
+        } else if (!validateEmail(value)) {
+          error = "Email không hợp lệ";
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    return error;
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    
+    // Validate realtime
+    const error = validateField(name, value);
+    setFormErrors(prev => ({
+      ...prev,
+      [name]: error
+    }));
+
+    // Revalidate confirmPassword if password changes
+    if (name === "password" && formData.confirmPassword) {
+      const confirmError = formData.confirmPassword !== value 
+        ? "Mật khẩu xác nhận không khớp" 
+        : "";
+      setFormErrors(prev => ({
+        ...prev,
+        confirmPassword: confirmError
+      }));
+    }
   };
 
-  const isFormValid =
-    formData.name && formData.email && formData.role && formData.password;
+  const isFormValid = () => {
+    const hasAllFields = 
+      formData.username &&
+      formData.password &&
+      formData.confirmPassword &&
+      formData.firstName &&
+      formData.lastName &&
+      formData.email;
+    
+    const hasNoErrors = Object.values(formErrors).every(error => !error);
+    
+    return hasAllFields && hasNoErrors;
+  };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    toast.success("Tạo tài khoản nhân viên thành công!");
-    setFormData({ name: "", email: "", role: "", password: "" });
+
+    if (!postOfficeId) {
+      toast.error("Không xác định được Bưu cục!");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await createStaff(postOfficeId, formData);
+      toast.success("Tạo tài khoản nhân viên thành công!");
+      
+      // Reset form
+      setFormData({
+        username: "",
+        password: "",
+        confirmPassword: "",
+        firstName: "",
+        lastName: "",
+        email: "",
+      });
+      setFormErrors({});
+      
+      // Refresh staff list
+      fetchStaffs(postOfficeId, page, limit);
+    } catch (error) {
+      console.error("Error creating staff:", error);
+      
+      // Handle API error response
+      if (error.response?.data?.errors) {
+        const apiErrors = error.response.data.errors;
+        const newErrors = {};
+        
+        // Parse user errors
+        if (apiErrors.user) {
+          if (apiErrors.user.username) {
+            newErrors.username = apiErrors.user.username[0];
+          }
+          if (apiErrors.user.email) {
+            newErrors.email = apiErrors.user.email[0];
+          }
+          if (apiErrors.user.password) {
+            newErrors.password = apiErrors.user.password[0];
+          }
+          if (apiErrors.user.firstName) {
+            newErrors.firstName = apiErrors.user.firstName[0];
+          }
+          if (apiErrors.user.lastName) {
+            newErrors.lastName = apiErrors.user.lastName[0];
+          }
+        }
+        
+        setFormErrors(newErrors);
+        toast.error(error.response.data.message || "Kiểm tra dữ liệu thất bại.");
+      } else {
+        const errorMessage = error.response?.data?.message || 
+                            error.response?.data?.error ||
+                            "Đã xảy ra lỗi khi tạo tài khoản!";
+        toast.error(errorMessage);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -50,7 +277,7 @@ const Staffs = () => {
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-[#4b1d09]">Quản lý Nhân viên</h1>
         <p className="text-base text-[#7a4a32] mt-1">
-          Quản lý tài khoản nhân viên trong hệ thống
+          Quản lý tài khoản nhân viên trong hệ thống (ID Bưu cục: {postOfficeId || 'Đang tải...'})
         </p>
       </div>
 
@@ -59,143 +286,230 @@ const Staffs = () => {
           Danh sách tài khoản Nhân viên
         </h2>
 
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Tìm kiếm theo tên hoặc email..."
-            className="w-full border border-orange-200 rounded-lg pl-10 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-400"
-          />
-        </div>
+        {loading && (
+          <div className="text-center py-10 text-[#7a4a32]">Đang tải danh sách Nhân viên...</div>
+        )}
 
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left border-b border-orange-100 text-[#4b1d09]">
-              <th className="py-2 w-1/5">Tên</th>
-              <th className="py-2 w-1/5">Email</th>
-              <th className="py-2 w-1/5">Vai trò</th>
-              <th className="py-2 w-1/5">Trạng thái</th>
-              <th className="py-2 w-1/5 text-right pr-4">Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            {employees.map((emp, index) => (
-              <tr
-                key={index}
-                className="border-b border-orange-50 hover:bg-orange-50 transition-colors"
-              >
-                <td className="py-3">{emp.name}</td>
-                <td>{emp.email}</td>
-                <td>{emp.role}</td>
-                <td>
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      emp.status === "Hoạt động"
-                        ? "bg-orange-500 text-white"
-                        : "bg-orange-100 text-orange-500"
-                    }`}
-                  >
-                    {emp.status}
-                  </span>
-                </td>
-                <td className="text-right pr-4">
-                  <button
-                    onClick={() => handleDisable(emp.name)}
-                    className={`flex items-center gap-1 px-3 py-1 rounded-md text-white text-xs ml-auto transition ${
-                      emp.status === "Hoạt động"
-                        ? "bg-red-500 hover:bg-red-600 cursor-pointer"
-                        : "bg-gray-400 cursor-not-allowed"
-                    }`}
-                    disabled={emp.status !== "Hoạt động"}
-                  >
-                    <PersonOff fontSize="small" /> Vô hiệu hóa
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {error && (
+          <div className="text-center py-10 text-red-500 border border-red-200 bg-red-50 rounded-lg">{error}</div>
+        )}
+
+        {!loading && !error && (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-center border-b border-orange-100 text-[#4b1d09]">
+                    <th className="py-2 px-2">Tên</th>
+                    <th className="py-2 px-2">Username</th>
+                    <th className="py-2 px-2">Email</th>
+                    <th className="py-2 px-2">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {staffs.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="text-center py-8 text-gray-500">
+                        Không có nhân viên nào
+                      </td>
+                    </tr>
+                  ) : (
+                    staffs.map((staff) => (
+                      <tr
+                        key={staff.id}
+                        className="border-b border-orange-50 hover:bg-orange-50 transition-colors"
+                      >
+                        <td className="py-3 px-2 text-center">
+                          {staff.firstName} {staff.lastName}
+                        </td>
+                        <td className="px-2 text-center">{staff.username}</td>
+                        <td className="px-2 text-center">{staff.email}</td>
+                        <td className="px-2">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => handleOpenPermission(staff)}
+                              className="flex items-center gap-1 px-3 py-1 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs transition cursor-pointer"
+                            >
+                              <Security fontSize="small" /> Phân quyền
+                            </button>
+                            <button
+                              onClick={() => handleDisable(staff)}
+                              className="flex items-center gap-1 px-3 py-1 rounded-md bg-red-500 hover:bg-red-600 text-white text-xs transition cursor-pointer"
+                            >
+                              <PersonOff fontSize="small" /> Vô hiệu hóa
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {total > 0 && (
+              <Pagination
+                page={page}
+                limit={limit}
+                total={total}
+                onPageChange={setPage}
+                onLimitChange={setLimit}
+              />
+            )}
+          </>
+        )}
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white shadow-md rounded-xl p-5 border border-orange-100"
-      >
+      <div className="bg-white shadow-md rounded-xl p-5 border border-orange-100">
         <h2 className="text-lg font-semibold text-[#4b1d09] mb-4">
           Tạo tài khoản Nhân viên
         </h2>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm mb-1">Họ và tên</label>
-            <input
-              name="name"
-              type="text"
-              placeholder="Nhập họ và tên"
-              required
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-400"
-            />
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm mb-1">
+                Username <span className="text-red-500">*</span>
+              </label>
+              <input
+                name="username"
+                type="text"
+                placeholder="Nhập username"
+                value={formData.username}
+                onChange={handleChange}
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                  formErrors.username
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-orange-200 focus:ring-orange-400"
+                }`}
+              />
+              {formErrors.username && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.username}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm mb-1">
+                Email <span className="text-red-500">*</span>
+              </label>
+              <input
+                name="email"
+                type="email"
+                placeholder="Nhập email"
+                value={formData.email}
+                onChange={handleChange}
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                  formErrors.email
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-orange-200 focus:ring-orange-400"
+                }`}
+              />
+              {formErrors.email && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm mb-1">
+                Họ <span className="text-red-500">*</span>
+              </label>
+              <input
+                name="firstName"
+                type="text"
+                placeholder="Nhập họ"
+                value={formData.firstName}
+                onChange={handleChange}
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                  formErrors.firstName
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-orange-200 focus:ring-orange-400"
+                }`}
+              />
+              {formErrors.firstName && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.firstName}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm mb-1">
+                Tên <span className="text-red-500">*</span>
+              </label>
+              <input
+                name="lastName"
+                type="text"
+                placeholder="Nhập tên"
+                value={formData.lastName}
+                onChange={handleChange}
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                  formErrors.lastName
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-orange-200 focus:ring-orange-400"
+                }`}
+              />
+              {formErrors.lastName && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.lastName}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm mb-1">
+                Mật khẩu <span className="text-red-500">*</span>
+              </label>
+              <input
+                name="password"
+                type="password"
+                placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
+                value={formData.password}
+                onChange={handleChange}
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                  formErrors.password
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-orange-200 focus:ring-orange-400"
+                }`}
+              />
+              {formErrors.password && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.password}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm mb-1">
+                Xác nhận mật khẩu <span className="text-red-500">*</span>
+              </label>
+              <input
+                name="confirmPassword"
+                type="password"
+                placeholder="Nhập lại mật khẩu"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                  formErrors.confirmPassword
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-orange-200 focus:ring-orange-400"
+                }`}
+              />
+              {formErrors.confirmPassword && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.confirmPassword}</p>
+              )}
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm mb-1">Email</label>
-            <input
-              name="email"
-              type="email"
-              placeholder="Nhập email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-400"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm mb-1">Vai trò</label>
-            <select
-              name="role"
-              required
-              value={formData.role}
-              onChange={handleChange}
-              className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-400"
+          <div className="flex justify-end mt-5">
+            <button
+              type="submit"
+              disabled={!isFormValid() || isSubmitting}
+              className={`flex items-center gap-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                isFormValid() && !isSubmitting
+                  ? "bg-orange-500 hover:bg-orange-600 text-white cursor-pointer"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
             >
-              <option value="">Chọn vai trò</option>
-              <option>Nhân viên kho</option>
-              <option>Nhân viên giao nhận</option>
-              <option>Quản lý ca</option>
-            </select>
+              <Add fontSize="small" /> 
+              {isSubmitting ? "Đang tạo..." : "Tạo tài khoản"}
+            </button>
           </div>
-
-          <div>
-            <label className="block text-sm mb-1">Mật khẩu</label>
-            <input
-              name="password"
-              type="password"
-              placeholder="Nhập mật khẩu"
-              required
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-400"
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-end mt-5">
-          <button
-            type="submit"
-            disabled={!isFormValid}
-            className={`flex items-center gap-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-              isFormValid
-                ? "bg-orange-500 hover:bg-orange-600 text-white"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
-          >
-            <Add fontSize="small" /> Tạo tài khoản
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
 
       <ConfirmModal
         isOpen={showModal}
@@ -203,6 +517,16 @@ const Staffs = () => {
         message={modalContent.message}
         onConfirm={confirmAction}
         onCancel={() => setShowModal(false)}
+      />
+
+      <PermissionModal
+        isOpen={showPermissionModal}
+        staff={selectedStaff}
+        onClose={() => setShowPermissionModal(false)}
+        onSave={(permissions) => {
+          toast.success("Cập nhật quyền thành công!");
+          setShowPermissionModal(false);
+        }}
       />
     </div>
   );
