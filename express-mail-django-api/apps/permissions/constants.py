@@ -5,6 +5,7 @@ class ExternalModels(EnumChoices):
     ORDER = ("order_external_app", "order")
     PRODUCT = ("product_external_app", "product")
     SHIPPING = ("shipping_external_app", "shipping")
+    PLAN = ("plan_external_app", "plan")
 
 
 class Groups(EnumChoices):
@@ -30,6 +31,40 @@ ROLE_GROUP_MAP = {
     Roles.POST_OFFICE_STAFF.value: [Groups.POST_OFFICE_STAFF.value],
     Roles.SHOP.value: [Groups.SHOP.value],
     Roles.SHIPPER.value: [Groups.SHIPPER.value],
+}
+
+EXTERNAL_MODEL_PERMISSIONS = {
+    ExternalModels.ORDER.name: [
+        ("can_create_order", "Can create order"),
+        ("can_view_all_orders", "Can view all orders"),
+        ("can_view_pickup_orders", "Can view pickup orders"),
+        ("can_view_order_by_code", "Can view order by code"),
+        ("can_view_shop_orders", "Can view shop orders"),
+        ("can_view_shipper_assigned_orders", "Can view shipper assigned orders"),
+        ("can_view_orders_by_status", "Can view orders by status"),
+        ("can_view_orders_by_shipping_status", "Can view orders by shipping status"),
+        ("can_view_order_details", "Can view order details"),
+        ("can_update_order", "Can update order"),
+        ("can_soft_delete_order", "Can soft delete order"),
+        ("can_transition_order", "Can transition order"),
+        (
+            "can_create_order_post_office_association",
+            "Can create order post office association",
+        ),
+        ("can_view_orders_by_post_office", "Can view orders by post office"),
+    ],
+    ExternalModels.PRODUCT.name: [],
+    ExternalModels.SHIPPING.name: [],
+    ExternalModels.PLAN.name: [
+        ("can_calculate_optimal_route", "Can calculate optimal route"),
+        ("can_view_route_plans", "Can view route plans"),
+        ("can_view_vehicle_route_by_id", "Can view vehicle route by id"),
+        (
+            "can_assign_vehicle_routes_to_shippers",
+            "Can assign vehicle routes to shippers",
+        ),
+        ("can_view_shipping_plan", "Can view shipping plan"),
+    ],
 }
 
 GROUP_PERMISSIONS_MAP = {
@@ -67,6 +102,11 @@ GROUP_PERMISSIONS_MAP = {
         "shipping.view_shippingrate",
         "shipping.change_shippingrate",
         "shipping.change_shippingrate_status",
+        "plan_external_app.can_calculate_optimal_route",
+        "plan_external_app.can_view_route_plans",
+        "plan_external_app.can_view_vehicle_route_by_id",
+        "plan_external_app.can_assign_vehicle_routes_to_shippers",
+        "plan_external_app.can_view_shipping_plan",
     ],
     Groups.POST_OFFICE_MANAGER.value: [
         "routing.call_vrp",
@@ -74,10 +114,59 @@ GROUP_PERMISSIONS_MAP = {
         "users.view_postofficestaffprofile",
         "post_offices.add_shipper",
         "post_offices.add_staff",
+        "order_external_app.can_create_order",
+        "order_external_app.can_view_all_orders",
+        "order_external_app.can_view_pickup_orders",
+        "order_external_app.can_view_order_by_code",
+        "order_external_app.can_view_shop_orders",
+        "order_external_app.can_view_shipper_assigned_orders",
+        "order_external_app.can_view_orders_by_status",
+        "order_external_app.can_view_orders_by_shipping_status",
+        "order_external_app.can_view_order_details",
+        "order_external_app.can_update_order",
+        "order_external_app.can_soft_delete_order",
+        "order_external_app.can_transition_order",
+        "order_external_app.can_create_order_post_office_association",
+        "order_external_app.can_view_orders_by_post_office",
     ],
     Groups.POST_OFFICE_STAFF.value: [
         "routing.call_vrp",
+        "order_external_app.can_create_order",
+        "order_external_app.can_view_all_orders",
+        "order_external_app.can_view_pickup_orders",
+        "order_external_app.can_view_order_by_code",
+        "order_external_app.can_view_shop_orders",
+        "order_external_app.can_view_shipper_assigned_orders",
+        "order_external_app.can_view_orders_by_status",
+        "order_external_app.can_view_orders_by_shipping_status",
+        "order_external_app.can_view_order_details",
+        "order_external_app.can_update_order",
+        "order_external_app.can_soft_delete_order",
+        "order_external_app.can_transition_order",
+        "order_external_app.can_create_order_post_office_association",
+        "order_external_app.can_view_orders_by_post_office",
+        "plan_external_app.can_calculate_optimal_route",
+        "plan_external_app.can_view_route_plans",
+        "plan_external_app.can_view_vehicle_route_by_id",
+        "plan_external_app.can_assign_vehicle_routes_to_shippers",
+        "plan_external_app.can_view_shipping_plan",
     ],
-    Groups.SHOP.value: [],
-    Groups.SHIPPER.value: [],
+    Groups.SHOP.value: [
+        "order_external_app.can_create_order",
+        "order_external_app.can_view_all_orders",
+        "order_external_app.can_view_pickup_orders",
+        "order_external_app.can_view_order_by_code",
+        "order_external_app.can_view_order_details",
+        "order_external_app.can_update_order",
+        "order_external_app.can_soft_delete_order",
+    ],
+    Groups.SHIPPER.value: [
+        "order_external_app.can_view_pickup_orders",
+        "order_external_app.can_view_order_by_code",
+        "order_external_app.can_view_shop_orders",
+        "order_external_app.can_view_shipper_assigned_orders",
+        "order_external_app.can_view_orders_by_status",
+        "order_external_app.can_view_order_details",
+        "order_external_app.can_update_order",
+    ],
 }
