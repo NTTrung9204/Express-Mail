@@ -9,7 +9,7 @@ class AccessTokenWhiteList(BaseModel):
     Model to store whitelisted access tokens for users.
     """
 
-    token = models.CharField(max_length=512, unique=True)
+    token = models.TextField(unique=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
