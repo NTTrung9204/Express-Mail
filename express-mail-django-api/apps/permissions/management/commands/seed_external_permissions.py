@@ -3,15 +3,15 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import Permission
 from django.db import transaction
 
-from apps.permissions.constants import ExternalModels
+from apps.permissions.constants import ExternalModels, EXTERNAL_MODEL_PERMISSIONS
 
 
 class Command(BaseCommand):
     """
-    Management command to seed basic permissions for external models.
+    Management command to seed permissions for external models.
     """
 
-    help = "Seed add/change/delete/view permissions for external ContentTypes"
+    help = "Seed permissions (basic and custom) for external ContentTypes"
 
     @transaction.atomic
     def handle(self, *args, **options):
@@ -19,28 +19,31 @@ class Command(BaseCommand):
         Handle the command execution: Seed permissions.
         """
 
-        basic_perms = ["add", "change", "delete", "view"]
+        for choice in ExternalModels:
+            app_label, model = choice.value
 
-        for app_label, model in ExternalModels.values():
             try:
                 content_type = ContentType.objects.get(app_label=app_label, model=model)
             except ContentType.DoesNotExist:
-                self.stdout.write(
-                    self.style.ERROR(f"ContentType not found: {app_label}.{model}")
-                )
                 continue
 
-            for perm in basic_perms:
-                codename = f"{perm}_{model}"
-                name = f"Can {perm} {model}"
+            Permission.objects.filter(content_type=content_type).delete()
 
-                permission, created = Permission.objects.get_or_create(
+        for choice in ExternalModels:
+            app_label, model = choice.value
+
+            try:
+                content_type = ContentType.objects.get(app_label=app_label, model=model)
+            except ContentType.DoesNotExist:
+                continue
+
+            for codename, name in EXTERNAL_MODEL_PERMISSIONS.get(choice.name, []):
+                Permission.objects.create(
                     codename=codename,
                     content_type=content_type,
-                    defaults={"name": name},
+                    name=name,
                 )
 
-                if created:
-                    self.stdout.write(self.style.SUCCESS(f"Created permission: {name}"))
-
-        self.stdout.write(self.style.SUCCESS("Successfully seeded all permissions!"))
+        self.stdout.write(
+            self.style.SUCCESS("Successfully seeded all external permissions!")
+        )
