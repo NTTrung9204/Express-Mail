@@ -6,6 +6,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.exceptions import TokenError
 from apps.jwt_auth.models import AccessTokenWhiteList
 from apps.permissions.constants import Roles
+from services.permissions.permission_services import PermissionService
 from shared.messages import ERROR_MESSAGES
 
 
@@ -55,6 +56,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         token = super().get_token(user)
         token["role"] = user.role
+        permissions = user.get_all_permissions()
+        token["permissions"] = (
+            PermissionService.encrypt_permissions(permissions) if permissions else ""
+        )
         if user.role == Roles.SHOP.value:
             token["post_office_id"] = (
                 user.shop_profile.post_office.id

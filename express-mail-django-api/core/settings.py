@@ -334,3 +334,6 @@ CACHES = {
         },
     },
 }
+
+# Encrypt
+ENCRYPT_PASSWORD = os.getenv("ENCRYPT_PASSWORD")

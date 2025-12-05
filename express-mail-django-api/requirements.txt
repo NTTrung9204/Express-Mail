@@ -50,3 +50,5 @@ urllib3==2.5.0
 uvicorn==0.34.0
 watchfiles==1.1.0
 websockets==15.0.1
+brotli==1.2.0
+pycryptodome==3.23.0
