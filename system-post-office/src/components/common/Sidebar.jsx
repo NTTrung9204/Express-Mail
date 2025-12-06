@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { Dashboard, LocalShipping, Inventory2, People, RouteOutlined } from "@mui/icons-material";
 import LogoutIcon from '@mui/icons-material/Logout';
 import { toast } from "react-toastify";
@@ -8,13 +8,14 @@ import authAPI from "../../api/authAPI";
 
 const Sidebar = () => {
   const location = useLocation();
-  const navigate = useNavigate();
+    const API_URL = import.meta.env.VITE_API_URL;
+
 
   const handleLogout = async () => {
     try {
       await authAPI.logout();
       toast.success("Đã đăng xuất");
-      navigate('/post-office/login');
+      window.location.href = `${API_URL}/admin/login`;
     } catch (error) {
       console.error('Logout error:', error);
       toast.error("Lỗi khi đăng xuất");
