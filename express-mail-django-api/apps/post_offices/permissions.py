@@ -1,7 +1,7 @@
 from rest_framework import permissions
 
 
-class PostOfficeObjectPermissions(permissions.BasePermission):
+class PostOfficeObjectPermission(permissions.BasePermission):
     """
     Permissions class to check if a user has access
     to a specific PostOffice object.
@@ -19,7 +19,7 @@ class PostOfficeObjectPermissions(permissions.BasePermission):
         return user.post_office_manager_profile.post_office == obj
 
 
-class AddShipperToPostOfficePermissions(permissions.BasePermission):
+class AddShipperToPostOfficePermission(permissions.BasePermission):
     """
     Permissions class to check if a user has permission to add a shipper to post office.
     """
@@ -33,7 +33,7 @@ class AddShipperToPostOfficePermissions(permissions.BasePermission):
         return user.has_perm("post_offices.add_shipper")
 
 
-class AddStaffToPostOfficePermissions(permissions.BasePermission):
+class AddStaffToPostOfficePermission(permissions.BasePermission):
     """
     Permissions class to check if a user has permission to add a staff to post office.
     """
@@ -45,3 +45,17 @@ class AddStaffToPostOfficePermissions(permissions.BasePermission):
 
         user = request.user
         return user.has_perm("post_offices.add_staff")
+
+
+class EditPostOfficeUserPermission(permissions.BasePermission):
+    """
+    Permissions class to check if a user has permission to edit user of a post office..
+    """
+
+    def has_permission(self, request, view):
+        """
+        Check if user has permission to edit user of a post office.
+        """
+
+        user = request.user
+        return user.has_perm("post_offices.edit_user")

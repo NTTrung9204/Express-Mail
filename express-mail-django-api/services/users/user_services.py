@@ -88,3 +88,12 @@ class UserService:
 
         user.set_password(new_password)
         user.save()
+
+    @staticmethod
+    def change_status(user, is_active):
+        """
+        Change user status(active/inactive).
+        """
+
+        user.is_active = is_active
+        user.save()

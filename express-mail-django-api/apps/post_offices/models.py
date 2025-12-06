@@ -25,4 +25,5 @@ class PostOffice(BaseModel):
         permissions = [
             ("add_shipper", "Can add shipper to post office"),
             ("add_staff", "Can add staff to post office"),
+            ("edit_user", "Can edit user of a post office"),
         ]

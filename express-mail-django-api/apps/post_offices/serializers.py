@@ -3,6 +3,7 @@ from rest_framework import serializers
 from apps.post_offices.models import PostOffice
 from apps.users.models import ShipperProfile, PostOfficeStaffProfile
 from apps.users.serializers import UserRegisterSerializer
+from apps.users.models import User
 
 
 class PostOfficeSerializer(serializers.ModelSerializer):
@@ -79,3 +80,12 @@ class AddStaffToPostOfficeSerializer(serializers.Serializer):
 
     user = UserRegisterSerializer()
     profile = StaffProfileToAddToPostOfficeSerializer()
+
+
+class ChangePostOfficeUserStatusRequestSerializer(serializers.Serializer):
+    """
+    Serializer class for change post office user status.
+    """
+
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    is_active = serializers.BooleanField()
