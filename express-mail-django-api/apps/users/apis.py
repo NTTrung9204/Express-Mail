@@ -23,6 +23,7 @@ from apps.users.serializers import (
     GetNameListRequestSerializer,
     GetNameListResponseSerializer,
     ShopRegisterSerializer,
+    ChangeUserStatusRequestSerializer,
 )
 from apps.users.throttling import (
     OTPRequestThrottle,
@@ -172,6 +173,27 @@ class UserViewSet(ModelViewSet, BaseAPIViewSet):
             data=ShopRegisterSerializer(instance=shop_register_data).data,
             status_code=status.HTTP_201_CREATED,
         )
+
+    @extend_schema(
+        request=ChangeUserStatusRequestSerializer,
+        responses={status.HTTP_200_OK: OpenApiResponse()},
+    )
+    @action(methods=["put"], detail=True, url_path="status")
+    def change_user_status(self, request, pk=None):
+        """
+        Change user status(active/inactive).
+        """
+
+        user = self.get_object()
+
+        serializer = ChangeUserStatusRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+        is_active = validated_data["is_active"]
+
+        UserService.change_status(user, is_active)
+
+        return self.response_ok()
 
 
 @extend_schema(tags=["Reset Password"])

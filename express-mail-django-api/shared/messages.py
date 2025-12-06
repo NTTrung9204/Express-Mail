@@ -19,6 +19,7 @@ _ERROR_MESSAGES = {
         "no_post_office_near_by": "No post office near by this location.",
         "no_post_office_exist": "No post office exist.",
         "invalid_credentials": "Invalid credentials.",
+        "user_not_belong_to_post_office": "User is not belong to post office.",
     },
     "vi": {
         "common": {
@@ -37,6 +38,7 @@ _ERROR_MESSAGES = {
         "no_post_office_near_by": "Không có bưu cục nào gần đây.",
         "no_post_office_exist": "Không tồn tại bưu cục nào trên hệ thống.",
         "invalid_credentials": "Thông tin xác thực không hợp lệ.",
+        "user_not_belong_to_post_office": "Người dùng không thuộc bưu cục này.",
     },
 }
 

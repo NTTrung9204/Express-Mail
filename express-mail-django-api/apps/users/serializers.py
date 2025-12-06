@@ -52,9 +52,10 @@ class UserSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "role",
+            "is_active",
             "exclude_permissions",
         ]
-        read_only_fields = ["role", "exclude_permissions"]
+        read_only_fields = ["role", "exclude_permissions", "is_active"]
 
 
 class BaseProfileSerializer(serializers.ModelSerializer):
@@ -344,7 +345,16 @@ class UserShipperProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "first_name", "last_name", "username", "email", "profile"]
+        fields = [
+            "id",
+            "first_name",
+            "last_name",
+            "username",
+            "email",
+            "profile",
+            "is_active",
+        ]
+        read_only_fields = ["id", "is_active"]
 
 
 class UserPostOfficeStaffProfileSerializer(serializers.ModelSerializer):
@@ -358,4 +368,21 @@ class UserPostOfficeStaffProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "first_name", "last_name", "username", "email", "profile"]
+        fields = [
+            "id",
+            "first_name",
+            "last_name",
+            "username",
+            "email",
+            "profile",
+            "is_active",
+        ]
+        read_only_fields = ["id", "is_active"]
+
+
+class ChangeUserStatusRequestSerializer(serializers.Serializer):
+    """
+    Serializer for change user status request.
+    """
+
+    is_active = serializers.BooleanField()
