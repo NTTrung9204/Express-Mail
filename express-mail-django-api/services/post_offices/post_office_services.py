@@ -37,6 +37,7 @@ class PostOfficeService:
         """
         Check if user (manager, staff, shipper) belongs to a given post office.
         """
+
         return User.objects.filter(
             Q(id=user.id),
             Q(post_office_manager_profile__post_office=post_office)

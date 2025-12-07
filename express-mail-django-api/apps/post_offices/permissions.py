@@ -3,7 +3,7 @@ from rest_framework import permissions
 
 class PostOfficeObjectPermission(permissions.BasePermission):
     """
-    Permissions class to check if a user has access
+    Permission class to check if a user has access
     to a specific PostOffice object.
     """
 
@@ -21,7 +21,7 @@ class PostOfficeObjectPermission(permissions.BasePermission):
 
 class AddShipperToPostOfficePermission(permissions.BasePermission):
     """
-    Permissions class to check if a user has permission to add a shipper to post office.
+    Permission class to check if a user has permission to add a shipper to post office.
     """
 
     def has_permission(self, request, view):
@@ -35,7 +35,7 @@ class AddShipperToPostOfficePermission(permissions.BasePermission):
 
 class AddStaffToPostOfficePermission(permissions.BasePermission):
     """
-    Permissions class to check if a user has permission to add a staff to post office.
+    Permission class to check if a user has permission to add a staff to post office.
     """
 
     def has_permission(self, request, view):
@@ -49,7 +49,7 @@ class AddStaffToPostOfficePermission(permissions.BasePermission):
 
 class EditPostOfficeUserPermission(permissions.BasePermission):
     """
-    Permissions class to check if a user has permission to edit user of a post office..
+    Permission class to check if a user has permission to edit user of a post office..
     """
 
     def has_permission(self, request, view):
@@ -59,3 +59,17 @@ class EditPostOfficeUserPermission(permissions.BasePermission):
 
         user = request.user
         return user.has_perm("post_offices.edit_user")
+
+
+class DeletePostOfficeUserPermission(permissions.BasePermission):
+    """
+    Permission class to check if a user has permission to delete user of a post office.
+    """
+
+    def has_permission(self, request, view):
+        """
+        Check if user has permission to delete user of a post office.
+        """
+
+        user = request.user
+        return user.has_perm("post_offices.delete_user")

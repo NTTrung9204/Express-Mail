@@ -26,4 +26,5 @@ class PostOffice(BaseModel):
             ("add_shipper", "Can add shipper to post office"),
             ("add_staff", "Can add staff to post office"),
             ("edit_user", "Can edit user of a post office"),
+            ("delete_user", "Can delete user of a post office"),
         ]

@@ -110,6 +110,7 @@ GROUP_PERMISSIONS_MAP = {
         "post_offices.add_shipper",
         "post_offices.add_staff",
         "post_offices.edit_user",
+        "post_offices.delete_user",
         "order_external_app.can_create_order",
         "order_external_app.can_view_all_orders",
         "order_external_app.can_view_pickup_orders",
