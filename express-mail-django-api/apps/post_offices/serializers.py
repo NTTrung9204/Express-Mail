@@ -29,14 +29,14 @@ class PostOfficeSerializer(serializers.ModelSerializer):
         ]
 
 
-class ShipperProfileToAddToPostOfficeSerializer(serializers.ModelSerializer):
+class PostOfficeShipperProfileSerializer(serializers.ModelSerializer):
     """
-    Serializer for shipper who will be added to a post office.
+    Serializer for shipper in a post office..
     """
 
     class Meta:
         """
-        Meta class for ShipperProfileToAddToPostOfficeSerializer.
+        Meta class for PostOfficeShipperProfileSerializer.
         """
 
         model = ShipperProfile
@@ -50,36 +50,62 @@ class ShipperProfileToAddToPostOfficeSerializer(serializers.ModelSerializer):
         ]
 
 
-class StaffProfileToAddToPostOfficeSerializer(serializers.ModelSerializer):
+class PostOfficeStaffProfileSerializer(serializers.ModelSerializer):
     """
-    Serializer for staff who will be added to a post office.
+    Serializer for staff in a post office.
     """
 
     class Meta:
         """
-        Meta class for StaffProfileToAddToPostOfficeSerializer.
+        Meta class for PostOfficeStaffSerializer.
         """
 
         model = PostOfficeStaffProfile
         fields = []
 
 
-class AddShipperToPostOfficeSerializer(serializers.Serializer):
+class ShipperInPostOfficeSerializer(serializers.Serializer):
     """
     Serializer class for add shipper to post office.
     """
 
     user = UserRegisterSerializer()
-    profile = ShipperProfileToAddToPostOfficeSerializer()
+    profile = PostOfficeShipperProfileSerializer()
+
+    def get_fields(self):
+        """
+        Init instance for nested model serializer if updating is happening.
+        """
+
+        fields = super().get_fields()
+
+        if self.instance:
+            fields["user"].instance = self.instance.get("user")
+            fields["profile"].instance = self.instance.get("profile")
+
+        return fields
 
 
-class AddStaffToPostOfficeSerializer(serializers.Serializer):
+class StaffInPostOfficeSerializer(serializers.Serializer):
     """
     Serializer class for add staff to post office.
     """
 
     user = UserRegisterSerializer()
-    profile = StaffProfileToAddToPostOfficeSerializer()
+    profile = PostOfficeStaffProfileSerializer()
+
+    def get_fields(self):
+        """
+        Init instance for nested model serializer if updating is happening.
+        """
+
+        fields = super().get_fields()
+
+        if self.instance:
+            fields["user"].instance = self.instance.get("user")
+            fields["profile"].instance = self.instance.get("profile")
+
+        return fields
 
 
 class ChangePostOfficeUserStatusRequestSerializer(serializers.Serializer):

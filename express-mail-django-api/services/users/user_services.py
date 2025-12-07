@@ -53,6 +53,14 @@ class UserService:
         return user
 
     @staticmethod
+    def delete(user):
+        """
+        Soft delete user.
+        """
+
+        user.delete()
+
+    @staticmethod
     def detach_profile(user, related_profile_name):
         """
         Detach a profile out of user.
