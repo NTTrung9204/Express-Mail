@@ -101,7 +101,7 @@ export const useOrderStore = () => {
       }
     } catch (err) {
       console.error('API Error:', err);
-      setError(err.response?.data?.message || err.message || "Lỗi kết nối server");
+      setError(err.response?.data?.message || err.message || "Lỗi kết nối server ");
       setOrders([]);
       setPagination(initialPagination);
     } finally {
