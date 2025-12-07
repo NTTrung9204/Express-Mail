@@ -5,6 +5,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import status
 
+from apps.permissions.constants import Groups
 from apps.post_offices.filters import PostOfficeFilter
 from apps.post_offices.models import PostOffice
 from apps.post_offices.permissions import (
@@ -29,6 +30,7 @@ from apps.users.serializers import (
     UserShipperProfileSerializer,
     UserPostOfficeStaffProfileSerializer,
 )
+from services.groups.group_services import GroupService
 from services.post_offices.post_office_services import PostOfficeService
 from services.profiles.profile_services import ProfileService
 from services.users.user_services import UserService
@@ -100,6 +102,8 @@ class PostOfficeViewSet(ModelViewSet, BaseAPIViewSet):
                 profile_validated_data
             )
 
+            user.groups.add(GroupService.get_group_by_name(Groups.SHIPPER.value))
+
             return self.response_created(
                 ShipperInPostOfficeSerializer(
                     {"user": user, "profile": shipper_profile}
@@ -160,6 +164,10 @@ class PostOfficeViewSet(ModelViewSet, BaseAPIViewSet):
 
             staff_profile = ProfileService.create_post_office_staff_profile(
                 profile_data
+            )
+
+            user.groups.add(
+                GroupService.get_group_by_name(Groups.POST_OFFICE_STAFF.value)
             )
 
             return self.response_created(
