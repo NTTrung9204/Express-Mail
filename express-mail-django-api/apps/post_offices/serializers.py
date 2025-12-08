@@ -50,7 +50,7 @@ class PostOfficeShipperProfileSerializer(serializers.ModelSerializer):
         ]
 
 
-class PostOfficeStaffProfileSerializer(serializers.ModelSerializer):
+class StaffInProfileSerializer(serializers.ModelSerializer):
     """
     Serializer for staff in a post office.
     """
@@ -92,7 +92,7 @@ class StaffInPostOfficeSerializer(serializers.Serializer):
     """
 
     user = UserRegisterSerializer()
-    profile = PostOfficeStaffProfileSerializer()
+    profile = StaffInProfileSerializer()
 
     def get_fields(self):
         """

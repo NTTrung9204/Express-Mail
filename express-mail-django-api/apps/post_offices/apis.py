@@ -50,133 +50,6 @@ class PostOfficeViewSet(ModelViewSet, BaseAPIViewSet):
     filterset_class = PostOfficeFilter
 
     @extend_schema(
-        request=ShipperInPostOfficeSerializer,
-        responses={
-            status.HTTP_200_OK: UserShipperProfileSerializer(many=True),
-            status.HTTP_201_CREATED: ShipperInPostOfficeSerializer,
-        },
-    )
-    @transaction.atomic
-    @action(
-        detail=True,
-        methods=["get", "post"],
-        url_path="shippers",
-        permission_classes=[],
-        filterset_class=[],
-    )
-    def shippers(self, request, pk=None):
-        """
-        API endpoint interact with shipper in post office.
-        """
-
-        post_office = self.get_object()
-
-        method_permissions = {
-            "GET": [ViewShipperProfilePermission, PostOfficeObjectPermission],
-            "POST": [AddShipperToPostOfficePermission, PostOfficeObjectPermission],
-        }
-        for perm in method_permissions[request.method]:
-            p = perm()
-            if not p.has_permission(request, self) or not p.has_object_permission(
-                request, self, post_office
-            ):
-                self.permission_denied(request)
-
-        if request.method == "GET":
-            users = User.objects.filter(shipper_profile__post_office=post_office)
-            return self.response_pagination(
-                request, users, UserShipperProfileSerializer
-            )
-
-        elif request.method == "POST":
-            serializer = ShipperInPostOfficeSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            validated_data = serializer.validated_data
-
-            user_validated_data = validated_data["user"]
-            profile_validated_data = validated_data["profile"]
-
-            user = UserService.create(user_validated_data)
-            profile_validated_data.update({"post_office": post_office, "user": user})
-            shipper_profile = ProfileService.create_shipper_profile(
-                profile_validated_data
-            )
-
-            user.groups.add(GroupService.get_group_by_name(Groups.SHIPPER.value))
-
-            return self.response_created(
-                ShipperInPostOfficeSerializer(
-                    {"user": user, "profile": shipper_profile}
-                ).data
-            )
-
-    @extend_schema(
-        request=StaffInPostOfficeSerializer,
-        responses={
-            status.HTTP_200_OK: UserPostOfficeStaffProfileSerializer(many=True),
-            status.HTTP_201_CREATED: StaffInPostOfficeSerializer,
-        },
-    )
-    @transaction.atomic
-    @action(
-        detail=True,
-        methods=["get", "post"],
-        url_path="staffs",
-        permission_classes=[],
-        filterset_class=[],
-    )
-    def staffs(self, request, pk=None):
-        """
-        API endpoint interact with staff in post office.
-        """
-
-        post_office = self.get_object()
-
-        method_permissions = {
-            "GET": [ViewPostOfficeStaffProfilePermission, PostOfficeObjectPermission],
-            "POST": [PostOfficeObjectPermission, AddStaffToPostOfficePermission],
-        }
-
-        for perm_class in method_permissions[request.method]:
-            if not perm_class().has_object_permission(request, self, post_office):
-                self.permission_denied(request)
-
-        if request.method == "GET":
-            users = User.objects.filter(
-                post_office_staff_profile__post_office=post_office
-            )
-            return self.response_pagination(
-                request, users, UserPostOfficeStaffProfileSerializer
-            )
-
-        elif request.method == "POST":
-            serializer = StaffInPostOfficeSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            validated_data = serializer.validated_data
-
-            user_data = validated_data["user"]
-            profile_data = validated_data["profile"]
-
-            user = UserService.create(user_data)
-
-            profile_data["post_office"] = post_office
-            profile_data["user"] = user
-
-            staff_profile = ProfileService.create_post_office_staff_profile(
-                profile_data
-            )
-
-            user.groups.add(
-                GroupService.get_group_by_name(Groups.POST_OFFICE_STAFF.value)
-            )
-
-            return self.response_created(
-                StaffInPostOfficeSerializer(
-                    {"user": user, "profile": staff_profile}
-                ).data
-            )
-
-    @extend_schema(
         request=ChangePostOfficeUserStatusRequestSerializer,
         responses={status.HTTP_200_OK: OpenApiResponse()},
     )
@@ -208,24 +81,130 @@ class PostOfficeViewSet(ModelViewSet, BaseAPIViewSet):
         UserService.change_status(user, is_active)
         return self.response_ok()
 
-    @extend_schema(
-        request=ShipperInPostOfficeSerializer, responses=ShipperInPostOfficeSerializer
-    )
     @action(
-        methods=["put"],
+        methods=["delete"],
         detail=True,
-        url_path=r"shippers/(?P<user_id>\d+)",
-        permission_classes=[PostOfficeObjectPermission, EditPostOfficeUserPermission],
+        url_path=r"users/(?P<user_id>\d+)",
+        permission_classes=[PostOfficeObjectPermission, DeletePostOfficeUserPermission],
     )
-    def update_shippers(self, request, pk=None, user_id=None):
+    def delete_post_office_user(self, request, pk=None, user_id=None):
+        """
+        Delete post office user.
+        """
+
+        post_office = self.get_object()
+        user = get_object_or_404(User, id=user_id)
+        if not PostOfficeService.check_user_belong_to_post_office(user, post_office):
+            return self.response_error(
+                "user_not_belong_to_post_office", status_code=status.HTTP_404_NOT_FOUND
+            )
+
+        UserService.delete(user)
+
+        return self.response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=["PostOffice > Shippers"])
+class PostOfficeShipperViewSet(BaseAPIViewSet):
+    """
+    ViewSet to manage Shippers under a Post Office.
+    """
+
+    queryset = User.objects.all()
+
+    def get_post_office(self):
+        """
+        Helper method to fetch the parent PostOffice object.
+        """
+
+        return get_object_or_404(PostOffice, pk=self.kwargs["post_office_pk"])
+
+    def get_queryset(self):
+        """
+        Get shipper queryset for post office.
+        """
+
+        return (
+            super()
+            .get_queryset()
+            .filter(shipper_profile__post_office=self.get_post_office())
+        )
+
+    def initial(self, request, *args, **kwargs):
+        """
+        This is used to check object-level permissions on the nested PostOffice.
+        """
+
+        super().initial(request, *args, **kwargs)
+
+        po = self.get_post_office()
+        perm = PostOfficeObjectPermission()
+        if not perm.has_object_permission(request, self, po):
+            self.permission_denied(request)
+
+    def get_permissions(self):
+        """
+        Return action-specific permissions.
+        """
+
+        action_permissions = {
+            "list": [ViewShipperProfilePermission],
+            "create": [AddShipperToPostOfficePermission],
+        }
+        perms = action_permissions.get(self.action, [])
+        return [p() for p in perms]
+
+    @extend_schema(
+        responses=UserShipperProfileSerializer(many=True),
+    )
+    def list(self, request, post_office_pk=None):
+        """
+        List all shippers under the given post office.
+        """
+
+        users = self.get_queryset()
+        return self.response_pagination(request, users, UserShipperProfileSerializer)
+
+    @extend_schema(
+        request=ShipperInPostOfficeSerializer,
+        responses=ShipperInPostOfficeSerializer,
+    )
+    @transaction.atomic
+    def create(self, request, post_office_pk=None):
+        """
+        Add a new shipper to the given post office.
+        """
+
+        post_office = self.get_post_office()
+
+        serializer = ShipperInPostOfficeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+
+        user_data = validated_data["user"]
+        profile_data = validated_data["profile"]
+
+        user = UserService.create(user_data)
+        profile_data.update({"post_office": post_office, "user": user})
+        shipper_profile = ProfileService.create_shipper_profile(profile_data)
+
+        user.groups.add(GroupService.get_group_by_name(Groups.SHIPPER.value))
+
+        response_data = ShipperInPostOfficeSerializer(
+            {"user": user, "profile": shipper_profile}
+        ).data
+        return self.response_created(response_data)
+
+    @extend_schema(
+        request=ShipperInPostOfficeSerializer,
+        responses=ShipperInPostOfficeSerializer,
+    )
+    def update(self, request, post_office_pk=None, pk=None):
         """
         Update shipper of a post office
         """
 
-        post_office = self.get_object()
-        shipper = get_object_or_404(
-            User, id=user_id, shipper_profile__post_office=post_office
-        )
+        shipper = self.get_object()
 
         serializer = ShipperInPostOfficeSerializer(
             instance={
@@ -252,23 +231,127 @@ class PostOfficeViewSet(ModelViewSet, BaseAPIViewSet):
         )
 
     @extend_schema(
-        request=StaffInPostOfficeSerializer, responses=StaffInPostOfficeSerializer
+        request=None,
+        responses=ShipperInPostOfficeSerializer,
     )
-    @action(
-        methods=["put"],
-        detail=True,
-        url_path=r"staffs/(?P<user_id>\d+)",
-        permission_classes=[PostOfficeObjectPermission, EditPostOfficeUserPermission],
-    )
-    def update_post_office_staff(self, request, pk=None, user_id=None):
+    def retrieve(self, request, post_office_pk=None, pk=None):
         """
-        Update staff of a post office
+        Retrieve a shipper post office.
         """
 
-        post_office = self.get_object()
-        staff = get_object_or_404(
-            User, id=user_id, post_office_staff_profile__post_office=post_office
+        shipper = self.get_object()
+        return self.response_ok(
+            ShipperInPostOfficeSerializer(
+                instance={"user": shipper, "profile": shipper.shipper_profile}
+            ).data
         )
+
+
+@extend_schema(tags=["PostOffice > Staffs"])
+class PostOfficeStaffViewSet(BaseAPIViewSet):
+    """
+    ViewSet to manage Staffs under a Post Office.
+    """
+
+    queryset = User.objects.all()
+
+    def get_post_office(self):
+        """
+        Helper method to fetch the parent PostOffice object.
+        """
+
+        return get_object_or_404(PostOffice, pk=self.kwargs["post_office_pk"])
+
+    def get_queryset(self):
+        """
+        Get staff queryset for post office.
+        """
+
+        return (
+            super()
+            .get_queryset()
+            .filter(post_office_staff_profile__post_office=self.get_post_office())
+        )
+
+    def initial(self, request, *args, **kwargs):
+        """
+        This is used to check object-level permissions on the nested PostOffice.
+        """
+
+        super().initial(request, *args, **kwargs)
+
+        po = self.get_post_office()
+        perm = PostOfficeObjectPermission()
+        if not perm.has_object_permission(request, self, po):
+            self.permission_denied(request)
+
+    def get_permissions(self):
+        """
+        Return action-specific permissions.
+        """
+
+        action_permissions = {
+            "list": [ViewPostOfficeStaffProfilePermission],
+            "create": [AddStaffToPostOfficePermission],
+        }
+        perms = action_permissions.get(self.action, [])
+        return [p() for p in perms]
+
+    @extend_schema(
+        responses=UserPostOfficeStaffProfileSerializer(many=True),
+    )
+    def list(self, request, post_office_pk=None):
+        """
+        List all staffs under the given post office.
+        """
+
+        users = self.get_queryset()
+        return self.response_pagination(
+            request, users, UserPostOfficeStaffProfileSerializer
+        )
+
+    @extend_schema(
+        request=StaffInPostOfficeSerializer,
+        responses=StaffInPostOfficeSerializer,
+    )
+    @transaction.atomic
+    def create(self, request, post_office_pk=None):
+        """
+        Add a new staff to the given post office.
+        """
+
+        post_office = self.get_post_office()
+
+        serializer = StaffInPostOfficeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+
+        user_data = validated_data["user"]
+        profile_data = validated_data["profile"]
+
+        user = UserService.create(user_data)
+
+        profile_data["post_office"] = post_office
+        profile_data["user"] = user
+
+        staff_profile = ProfileService.create_post_office_staff_profile(profile_data)
+
+        user.groups.add(GroupService.get_group_by_name(Groups.POST_OFFICE_STAFF.value))
+
+        return self.response_created(
+            StaffInPostOfficeSerializer({"user": user, "profile": staff_profile}).data
+        )
+
+    @extend_schema(
+        request=StaffInPostOfficeSerializer,
+        responses=StaffInPostOfficeSerializer,
+    )
+    def update(self, request, post_office_pk=None, pk=None):
+        """
+        Update staff of a post office.
+        """
+
+        staff = self.get_object()
 
         serializer = StaffInPostOfficeSerializer(
             instance={
@@ -294,24 +377,18 @@ class PostOfficeViewSet(ModelViewSet, BaseAPIViewSet):
             ).data
         )
 
-    @action(
-        methods=["delete"],
-        detail=True,
-        url_path=r"users/(?P<user_id>\d+)",
-        permission_classes=[PostOfficeObjectPermission, DeletePostOfficeUserPermission],
+    @extend_schema(
+        request=None,
+        responses=StaffInPostOfficeSerializer,
     )
-    def delete_post_office_user(self, request, pk=None, user_id=None):
+    def retrieve(self, request, post_office_pk=None, pk=None):
         """
-        Delete post office user.
+        Retrieve a staff post office.
         """
 
-        post_office = self.get_object()
-        user = get_object_or_404(User, id=user_id)
-        if not PostOfficeService.check_user_belong_to_post_office(user, post_office):
-            return self.response_error(
-                "user_not_belong_to_post_office", status_code=status.HTTP_404_NOT_FOUND
-            )
-
-        UserService.delete(user)
-
-        return self.response(status_code=status.HTTP_204_NO_CONTENT)
+        staff = self.get_object()
+        return self.response_ok(
+            StaffInPostOfficeSerializer(
+                instance={"user": staff, "profile": staff.post_office_staff_profile}
+            ).data
+        )
