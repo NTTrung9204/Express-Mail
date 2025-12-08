@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { FileService } from './file.service';
-import { FileController } from './file.controller';
+import { WebhookController } from './webhook.controller';
 import { CommonModule } from 'src/common/module/common.module';
 
 @Module({
@@ -12,7 +11,7 @@ import { CommonModule } from 'src/common/module/common.module';
     }),
     CommonModule,
   ],
-  providers: [FileService],
-  controllers: [FileController],
+  controllers: [WebhookController],
+  exports: [],
 })
-export class FileModule {}
+export class WebhookModule {}

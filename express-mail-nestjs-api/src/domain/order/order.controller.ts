@@ -35,20 +35,24 @@ import { OrderQueryDto } from './dto/order-query.dto';
 import { ShipperOrderQueryDto } from './dto/shipper-order-query.dto';
 import { ApiResponseDto } from 'src/common/dto/api-response.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { AuthJwtRequest } from 'src/common/@type/jwt-payload.type';
+import { PermissionGuard } from 'src/common/guards/permission.guard';
+import { RequirePermission } from 'src/common/decorators/require-permission.decorator';
+import { PermissionEnum } from 'src/common/enums/permission.enum';
 import { PaginatedResponseDto } from 'src/common/dto/paginated-response.dto';
 import { TransitionOrderDto } from './dto/transition-order.dto';
 import { OrderPostOfficeDto } from './dto/order-post-office.dto';
 import { PostOfficeOrderStatus } from './dto/post-office-orders-query.dto';
+import { AuthJwtRequest } from 'src/common/@type/jwt-payload.type';
 
 @ApiTags('Orders')
 @Controller('orders')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionGuard)
 @ApiBearerAuth('JWT-auth')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Post()
+  @RequirePermission(PermissionEnum.CAN_CREATE_ORDER)
   @UseInterceptors(FilesInterceptor('product_images', 100))
   @ApiOperation({ summary: 'Create a new order with products and images' })
   @ApiConsumes('multipart/form-data')
@@ -59,6 +63,7 @@ export class OrderController {
     type: OrderResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Permission denied' })
   async create(
     @Body() createOrderDto: CreateOrderDto,
     @UploadedFiles() files: Express.Multer.File[],
@@ -79,6 +84,7 @@ export class OrderController {
   }
 
   @Get()
+  @RequirePermission(PermissionEnum.CAN_VIEW_ALL_ORDERS)
   @ApiOperation({ summary: 'Get all orders with optional filters' })
   @ApiQuery({
     name: 'code',
@@ -105,6 +111,7 @@ export class OrderController {
     description: 'List of orders',
     type: [OrderResponseDto],
   })
+  @ApiResponse({ status: 403, description: 'Forbidden - Permission denied' })
   @ApiQuery({ name: 'page', required: false, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, description: 'Items per page' })
   async findAll(
@@ -130,6 +137,7 @@ export class OrderController {
   }
 
   @Get('pickup')
+  @RequirePermission(PermissionEnum.CAN_VIEW_PICKUP_ORDERS)
   @ApiOperation({
     summary: 'Get orders that need to be picked up by post office',
   })
@@ -167,6 +175,7 @@ export class OrderController {
     description: 'List of pickup orders',
     type: PaginatedResponseDto<OrderResponseDto>,
   })
+  @ApiResponse({ status: 403, description: 'Forbidden - Permission denied' })
   async findPickupOrders(
     @Query('postOfficeId') postOfficeId: string,
     @Query('page') page: number = 1,
@@ -193,6 +202,7 @@ export class OrderController {
   }
 
   @Get('code/:code')
+  @RequirePermission(PermissionEnum.CAN_VIEW_ORDER_BY_CODE)
   @ApiOperation({ summary: 'Get order by code' })
   @ApiParam({ name: 'code', description: 'Order code', example: 'ORD12345' })
   @ApiResponse({
@@ -201,6 +211,7 @@ export class OrderController {
     type: OrderResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Order not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Permission denied' })
   async findByCode(
     @Param('code') code: string,
   ): Promise<ApiResponseDto<OrderResponseDto>> {
@@ -213,6 +224,7 @@ export class OrderController {
   }
 
   @Get('shop/:shopId')
+  @RequirePermission(PermissionEnum.CAN_VIEW_SHOP_ORDERS)
   @ApiOperation({ summary: 'Get orders by shop ID (paginated)' })
   @ApiParam({ name: 'shopId', description: 'Shop ID', example: '56' })
   @ApiQuery({
@@ -232,6 +244,7 @@ export class OrderController {
     description: 'Orders found for the shop',
     type: PaginatedResponseDto<OrderResponseDto>,
   })
+  @ApiResponse({ status: 403, description: 'Forbidden - Permission denied' })
   async findByShopId(
     @Param('shopId') shopId: string,
     @Query('page') page: number = 1,
@@ -246,6 +259,7 @@ export class OrderController {
   }
 
   @Get('shipper/:shipperId')
+  @RequirePermission(PermissionEnum.CAN_VIEW_SHIPPER_ASSIGNED_ORDERS)
   @ApiOperation({ summary: 'Get orders assigned to a shipper (paginated)' })
   @ApiParam({
     name: 'shipperId',
@@ -270,6 +284,7 @@ export class OrderController {
     description: 'Paginated orders for shipper',
     type: [OrderResponseDto],
   })
+  @ApiResponse({ status: 403, description: 'Forbidden - Permission denied' })
   async findByShipperId(
     @Param('shipperId') shipperId: string,
     @Query() query: ShipperOrderQueryDto,
@@ -291,6 +306,7 @@ export class OrderController {
   }
 
   @Get('status/order/:orderStatus')
+  @RequirePermission(PermissionEnum.CAN_VIEW_ORDERS_BY_STATUS)
   @ApiOperation({ summary: 'Get orders by order status' })
   @ApiParam({
     name: 'orderStatus',
@@ -303,6 +319,7 @@ export class OrderController {
     description: 'Orders found with the specified order status',
     type: [OrderResponseDto],
   })
+  @ApiResponse({ status: 403, description: 'Forbidden - Permission denied' })
   async findByOrderStatus(
     @Param('orderStatus') orderStatus: string,
   ): Promise<ApiResponseDto<OrderResponseDto[]>> {
@@ -317,6 +334,7 @@ export class OrderController {
   }
 
   @Get('status/shipping/:shippingStatus')
+  @RequirePermission(PermissionEnum.CAN_VIEW_ORDERS_BY_SHIPPING_STATUS)
   @ApiOperation({ summary: 'Get orders by shipping status' })
   @ApiParam({
     name: 'shippingStatus',
@@ -335,6 +353,7 @@ export class OrderController {
     description: 'Orders found with the specified shipping status',
     type: [OrderResponseDto],
   })
+  @ApiResponse({ status: 403, description: 'Forbidden - Permission denied' })
   async findByShippingStatus(
     @Param('shippingStatus') shippingStatus: string,
   ): Promise<ApiResponseDto<OrderResponseDto[]>> {
@@ -349,6 +368,7 @@ export class OrderController {
   }
 
   @Get(':id')
+  @RequirePermission(PermissionEnum.CAN_VIEW_ORDER_DETAILS)
   @ApiOperation({ summary: 'Get order by ID' })
   @ApiParam({ name: 'id', description: 'Order ID', type: 'number' })
   @ApiResponse({
@@ -357,6 +377,7 @@ export class OrderController {
     type: OrderResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Order not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Permission denied' })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<ApiResponseDto<OrderResponseDto>> {
@@ -369,6 +390,7 @@ export class OrderController {
   }
 
   @Patch(':id')
+  @RequirePermission(PermissionEnum.CAN_UPDATE_ORDER)
   @ApiOperation({ summary: 'Update an order' })
   @ApiParam({ name: 'id', description: 'Order ID', type: 'number' })
   @ApiBody({ type: UpdateOrderDto })
@@ -379,6 +401,7 @@ export class OrderController {
   })
   @ApiResponse({ status: 404, description: 'Order not found' })
   @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Permission denied' })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateOrderDto: UpdateOrderDto,
@@ -392,6 +415,7 @@ export class OrderController {
   }
 
   @Delete(':id')
+  @RequirePermission(PermissionEnum.CAN_SOFT_DELETE_ORDER)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Soft delete an order' })
   @ApiParam({ name: 'id', description: 'Order ID', type: 'number' })
@@ -400,11 +424,13 @@ export class OrderController {
     description: 'Order deleted successfully',
   })
   @ApiResponse({ status: 404, description: 'Order not found' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Permission denied' })
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.orderService.remove(id);
   }
 
   @Post('transition-order')
+  @RequirePermission(PermissionEnum.CAN_TRANSITION_ORDER)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
@@ -416,6 +442,7 @@ export class OrderController {
     description: 'Order transitioned successfully',
     type: OrderResponseDto,
   })
+  @ApiResponse({ status: 403, description: 'Forbidden - Permission denied' })
   async transitionOrder(
     @Body() transitionOrderDto: TransitionOrderDto,
   ): Promise<ApiResponseDto<OrderResponseDto>> {
@@ -428,6 +455,7 @@ export class OrderController {
   }
 
   @Post('order-post-office')
+  @RequirePermission(PermissionEnum.CAN_CREATE_ORDER_POST_OFFICE_ASSOCIATION)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create order-post-office association' })
   @ApiBody({ type: OrderPostOfficeDto })
@@ -436,6 +464,7 @@ export class OrderController {
     description: 'Order-PostOffice association created successfully',
     type: OrderResponseDto,
   })
+  @ApiResponse({ status: 403, description: 'Forbidden - Permission denied' })
   async createOrderPostOffice(
     @Body() orderPostOfficeDto: OrderPostOfficeDto,
   ): Promise<ApiResponseDto<OrderResponseDto>> {
@@ -449,6 +478,7 @@ export class OrderController {
   }
 
   @Get('post-office/:postOfficeId')
+  @RequirePermission(PermissionEnum.CAN_VIEW_ORDERS_BY_POST_OFFICE)
   @ApiOperation({
     summary:
       'Get orders by post office ID with optional status filter and pagination',
@@ -476,6 +506,7 @@ export class OrderController {
     required: false,
     type: 'number',
   })
+  @ApiResponse({ status: 403, description: 'Forbidden - Permission denied' })
   async findByPostOffice(
     @Param('postOfficeId', ParseIntPipe) postOfficeId: number,
     @Query('status') status?: PostOfficeOrderStatus,

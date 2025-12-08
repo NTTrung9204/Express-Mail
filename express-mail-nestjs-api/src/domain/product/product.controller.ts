@@ -10,6 +10,7 @@ import {
   HttpStatus,
   HttpCode,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,6 +19,7 @@ import {
   ApiParam,
   ApiBody,
   ApiQuery,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { ProductService } from './product.service';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
@@ -25,13 +27,20 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductResponseDto } from './dto/product-response.dto';
 import { ApiResponseDto } from 'src/common/dto/api-response.dto';
+import { PermissionGuard } from 'src/common/guards/permission.guard';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { PermissionEnum } from 'src/common/enums/permission.enum';
+import { RequirePermission } from 'src/common/decorators/require-permission.decorator';
 
+@UseGuards(JwtAuthGuard, PermissionGuard)
+@ApiBearerAuth('JWT-auth')
 @ApiTags('Products')
 @Controller('products')
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
   @Post()
+  @RequirePermission(PermissionEnum.CAN_CREATE_ORDER)
   @ApiOperation({ summary: 'Create a new product' })
   @ApiBody({ type: CreateProductDto })
   @ApiResponse({
@@ -54,6 +63,7 @@ export class ProductController {
   }
 
   @Get()
+  @RequirePermission(PermissionEnum.CAN_VIEW_ALL_ORDERS)
   @ApiOperation({ summary: 'Get all products (paginated)' })
   @ApiQuery({ name: 'page', required: false, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, description: 'Items per page' })
@@ -74,6 +84,7 @@ export class ProductController {
   }
 
   @Get(':id')
+  @RequirePermission(PermissionEnum.CAN_VIEW_ORDER_DETAILS)
   @ApiOperation({ summary: 'Get a product by ID' })
   @ApiParam({ name: 'id', description: 'Product ID', type: 'number' })
   @ApiResponse({
@@ -94,6 +105,7 @@ export class ProductController {
   }
 
   @Get('order/:orderId')
+  @RequirePermission(PermissionEnum.CAN_VIEW_ORDER_DETAILS)
   @ApiOperation({ summary: 'Get products by order ID' })
   @ApiParam({ name: 'orderId', description: 'Order ID', type: 'number' })
   @ApiResponse({
@@ -113,6 +125,7 @@ export class ProductController {
   }
 
   @Patch(':id')
+  @RequirePermission(PermissionEnum.CAN_UPDATE_ORDER)
   @ApiOperation({ summary: 'Update a product' })
   @ApiParam({ name: 'id', description: 'Product ID', type: 'number' })
   @ApiBody({ type: UpdateProductDto })
@@ -137,6 +150,7 @@ export class ProductController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @RequirePermission(PermissionEnum.CAN_SOFT_DELETE_ORDER)
   @ApiOperation({ summary: 'Soft delete a product' })
   @ApiParam({ name: 'id', description: 'Product ID', type: 'number' })
   @ApiResponse({

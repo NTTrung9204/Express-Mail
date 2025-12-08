@@ -9,6 +9,7 @@ import { dataSourceOptions } from './config/database.config';
 import { PlanModule } from './domain/plan/plan.module';
 import { CommonModule } from './common/module/common.module';
 import { FileModule } from './domain/file/file.module';
+import { WebhookModule } from './domain/webhook/webhook.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { FileModule } from './domain/file/file.module';
     PlanModule,
     CommonModule,
     FileModule,
+    WebhookModule,
   ],
   controllers: [AppController],
   providers: [AppService],

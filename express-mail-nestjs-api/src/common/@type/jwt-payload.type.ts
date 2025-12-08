@@ -5,9 +5,12 @@ export interface JwtPayload {
   userId: number;
   shopId?: number;
   postOfficeId?: string;
-  permissions: PermissionEnum[];
-  expireAt: Date;
-  code: string;
+  permissions?: string;
+  role?: string;
+  expireAt?: Date;
+  code?: string;
+  decodedPermissions?: PermissionEnum[];
+  iat?: number;
 }
 
 export interface AuthJwtRequest extends Request {
