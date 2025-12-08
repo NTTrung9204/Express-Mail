@@ -73,3 +73,17 @@ class DeletePostOfficeUserPermission(permissions.BasePermission):
 
         user = request.user
         return user.has_perm("post_offices.delete_user")
+
+
+class ViewPostOfficeUserPermission(permissions.BasePermission):
+    """
+    Permission class to check if a user has permission to view post office user.
+    """
+
+    def has_permission(self, request, view):
+        """
+        Check if user has permission to view post office user.
+        """
+
+        user = request.user
+        return user.has_perm("post_offices.view_user")
