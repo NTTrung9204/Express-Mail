@@ -4,12 +4,13 @@ import {
   LocalShipping,
   Add,
 } from "@mui/icons-material";
-import ConfirmModal from "../components/shippers/ConfirmModal";
+import { Switch } from "@mui/material";
 import DeliveryScheduleModal from "../components/shippers/DeliveryScheduleModal";
 import Pagination from "../components/common/Pagination";
 
 import { fetchUserPostOfficeId } from '../api/profileAPI';
 import { getShippersByPostOfficeId, createShipper } from '../api/shipperAPI';
+import { togglePostOfficeUserStatus } from '../api/postOfficeUserAPI';
 import authAPI from "../api/authAPI";
 import plansAPI from "../api/plansAPI";
 import { toast } from "react-toastify";
@@ -22,8 +23,6 @@ const Shippers = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalContent, setModalContent] = useState({ type: "", name: "" });
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
   const [selectedShipper, setSelectedShipper] = useState(null);
   const [postOfficeId, setPostOfficeId] = useState(null);
@@ -31,6 +30,7 @@ const Shippers = () => {
   const [scheduleData, setScheduleData] = useState(null);
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [togglingShipper, setTogglingShipper] = useState(null);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -105,25 +105,6 @@ const Shippers = () => {
     }
   }, [page, pageSize, postOfficeId, loadShippers]);
 
-  const isShipperActive = (shipper) => true; 
-
-  const getStatusDisplay = (shipper) => {
-    return isShipperActive(shipper) ? "Hoạt động" : "Vô hiệu";
-  };
-
-  const openModal = (type, name) => {
-    setModalContent({ type, name });
-    setModalOpen(true);
-  };
-
-  const closeModal = () => setModalOpen(false);
-
-  const handleConfirm = () => {
-    console.log(`Đã xác nhận vô hiệu hóa: ${modalContent.name}`);
-    setModalOpen(false);
-    if (postOfficeId) loadShippers(postOfficeId, page, pageSize);
-  };
-
   const fetchScheduleData = useCallback(async (shipperId, mode = '', startDate = '', endDate = '') => {
     if (!shipperId) return;
 
@@ -152,12 +133,35 @@ const Shippers = () => {
     setScheduleData(null);
   };
 
-  const renderModalMessage = () => {
-    switch (modalContent.type) {
-      case "disable":
-        return `Bạn có chắc muốn vô hiệu hóa tài khoản của ${modalContent.name}?`;
-      default:
-        return "";
+  const handleToggleShipperStatus = async (shipper) => {
+    if (!postOfficeId || !shipper?.id) return;
+
+    setTogglingShipper(shipper.id);
+    try {
+      const result = await togglePostOfficeUserStatus(
+        postOfficeId,
+        shipper.id,
+        !shipper.isActive
+      );
+
+      if (result.success) {
+        // Cập nhật state local
+        setShippers((prev) =>
+          prev.map((s) =>
+            s.id === shipper.id ? { ...s, isActive: !s.isActive } : s
+          )
+        );
+        toast.success(
+          `Tài khoản shipper đã ${!shipper.isActive ? "kích hoạt" : "vô hiệu hóa"} thành công!`
+        );
+      } else {
+        toast.error(result.message || "Không thể thay đổi trạng thái tài khoản");
+      }
+    } catch (error) {
+      console.error("Lỗi khi thay đổi trạng thái:", error);
+      toast.error("Đã xảy ra lỗi khi thay đổi trạng thái tài khoản");
+    } finally {
+      setTogglingShipper(null);
     }
   };
 
@@ -342,7 +346,7 @@ const Shippers = () => {
     setIsSubmitting(true);
     
     try {
-      const { confirmPassword, ...dataToSend } = formData; 
+      const { ...dataToSend } = formData; 
       
       await createShipper(postOfficeId, dataToSend);
       toast.success("Tạo tài khoản shipper thành công!");
@@ -438,15 +442,14 @@ const Shippers = () => {
                     <th className="py-2 px-4 w-[20%] text-center">Email</th>
                     <th className="py-2 px-4 w-[12%] text-center">Số điện thoại</th>
                     <th className="py-2 px-4 w-[15%] text-center">Biển số xe</th>
-                    <th className="py-2 px-4 w-[10%] text-center">Trạng thái</th>
-                    <th className="py-2 px-4 w-[28%] text-center">Hành động</th>
+                    <th className="py-2 px-4 w-[18%] text-center">Trạng thái</th>
+                    <th className="py-2 px-4 w-[20%] text-center">Hành động</th>
                   </tr>
                 </thead>
                 <tbody>
                   {shippers.length > 0 ? (
                     shippers.map((shipper) => {
                       const fullName = `${shipper.firstName} ${shipper.lastName}`;
-                      const isActive = isShipperActive(shipper);
 
                       return (
                         <tr
@@ -458,36 +461,32 @@ const Shippers = () => {
                           <td className="px-4 text-center">{shipper.profile?.phoneNumber || 'N/A'}</td>
                           <td className="px-4 text-center">{shipper.profile?.licensePlateNumber || 'N/A'}</td>
                           <td className="px-4 text-center">
-                            <span
-                              className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                isActive
-                                  ? "bg-orange-500 text-white"
-                                  : "bg-orange-100 text-orange-500"
-                              }`}
-                            >
-                              {getStatusDisplay(shipper)}
-                            </span>
-                          </td>
-                          <td className="px-4 text-right">
-                            <div className="flex gap-2 justify-end">
-                              <button
-                                onClick={() => openScheduleModal(shipper)}
-                                className="flex items-center gap-1 px-3 py-1 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs cursor-pointer transition-all"
-                              >
-                                <LocalShipping fontSize="small" /> Xem lịch trình
-                              </button>
-                              <button
-                                onClick={() => openModal("disable", fullName)}
-                                className={`flex items-center gap-1 px-3 py-1 rounded-md text-white text-xs transition-all ${
-                                  isActive
-                                    ? "bg-red-500 hover:bg-red-600 cursor-pointer"
-                                    : "bg-gray-400 cursor-not-allowed"
+                            <div className="flex items-center justify-center gap-2">
+                               <Switch
+                                checked={shipper.isActive}
+                                onChange={() => handleToggleShipperStatus(shipper)}
+                                disabled={togglingShipper === shipper.id}
+                                color="success"
+                                size="small"
+                              />
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  shipper.isActive
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-red-100 text-red-700"
                                 }`}
-                                disabled={!isActive}
                               >
-                                <PersonOff fontSize="small" /> Vô hiệu hóa
-                              </button>
+                                {shipper.isActive ? "Hoạt động" : "Vô hiệu"}
+                              </span>
                             </div>
+                          </td>
+                          <td className="px-4 text-center">
+                            <button
+                              onClick={() => openScheduleModal(shipper)}
+                              className="flex items-center gap-1 px-3 py-1 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs cursor-pointer transition-all"
+                            >
+                              <LocalShipping fontSize="small" /> Xem lịch trình
+                            </button>
                           </td>
                         </tr>
                       );
@@ -796,14 +795,6 @@ const Shippers = () => {
           </div>
         </form>
       </div>
-
-      <ConfirmModal
-        open={modalOpen}
-        title="Xác nhận hành động"
-        message={renderModalMessage()}
-        onCancel={closeModal}
-        onConfirm={handleConfirm}
-      />
 
       <DeliveryScheduleModal
         open={scheduleModalOpen}

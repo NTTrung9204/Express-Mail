@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import UserModal from "../components/users/UserModal";
 import ConfirmDeleteModal from "../components/users/ConfirmDeleteModal";
-import { Add, Edit, Delete, Visibility, Search } from "@mui/icons-material";
+import { Add, Edit, Delete, Visibility, Search} from "@mui/icons-material";
+import { IconButton, Switch, CircularProgress } from "@mui/material";
 import { getPageNumbers } from "../utils/pagination";
 import { roleOptions, useUserStore } from "../store/userStore";
+import { toast } from "react-toastify";
 
 const Users = () => {
   const {
@@ -15,8 +17,6 @@ const Users = () => {
     open,
     mode,
     selected,
-    openRoleModal,
-    selectedUser,
     openDeleteModal,
     userToDelete,
 
@@ -24,17 +24,19 @@ const Users = () => {
     setPage,
     setOpen,
     setOpenDeleteModal,
-    setOpenRoleModal,
     handleOpen,
     handleSave,
-    handleConfirmRole,
     handleDelete,
     confirmDelete,
+    search,
+    setSearch,
+
+    setUsers,
+    handleToggleStatus,
   } = useUserStore();
 
   const [searchInput, setSearchInput] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const { search, setSearch } = useUserStore(); 
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -78,6 +80,25 @@ const Users = () => {
     };
     loadInitialData();
   }, [page]);
+
+  const handleStatusToggle = async (userId, currentStatus, event) => {
+    const newStatus = event.target.checked;
+
+    setUsers((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, isActive: newStatus } : u))
+    );
+
+    const result = await handleToggleStatus(userId, newStatus);
+
+    if (result.success) {
+      toast.success(newStatus ? "Đã kích hoạt tài khoản!" : "Đã vô hiệu hóa tài khoản!");
+    } else {
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, isActive: !newStatus } : u))
+      );
+      alert(result.message || "Không thể thay đổi trạng thái tài khoản");
+    }
+  };
 
   return (
     <div className="p-6 space-y-6 bg-orange-50 min-h-screen">
@@ -125,13 +146,16 @@ const Users = () => {
                   <th className="pl-6 pr-3 py-3 font-semibold w-[15%] text-center rounded-tl-lg">
                     Tên đăng nhập
                   </th>
-                  <th className="px-3 py-3 font-semibold w-[35%] text-center">
+                  <th className="px-3 py-3 font-semibold w-[30%] text-center">
                     Email
                   </th>
-                  <th className="px-3 py-3 font-semibold w-[35%] text-center">
+                  <th className="px-3 py-3 font-semibold w-[20%] text-center">
                     Vai trò
                   </th>
-                  <th className="pl-3 pr-6 py-3 font-semibold w-[15%] text-center rounded-tr-lg">
+                  <th className="px-3 py-3 font-semibold w-[15%] text-center">
+                    Trạng thái
+                  </th>
+                  <th className="pl-3 pr-6 py-3 font-semibold w-[20%] text-center rounded-tr-lg">
                     Hành động
                   </th>
                 </tr>
@@ -140,7 +164,7 @@ const Users = () => {
               <tbody>
                 {errorMessage ? (
                   <tr>
-                    <td colSpan="4" className="text-center text-red-600 font-medium p-6">
+                    <td colSpan="5" className="text-center text-red-600 font-medium p-6">
                       {errorMessage}
                     </td>
                   </tr>
@@ -155,6 +179,21 @@ const Users = () => {
                       <td className="px-3 py-3 text-orange-700 font-medium">
                         {getRoleLabel(user.role)}
                       </td>
+
+                      <td className="px-3 py-3">
+                        <div className="flex items-center justify-center gap-2">
+                          <Switch
+                            checked={user.isActive || false}
+                            onChange={(e) => handleStatusToggle(user.id, user.isActive, e)}
+                            color="success"
+                            size="small"
+                          />
+                          <span className={`text-sm font-medium ${user.isActive ? "text-green-600" : "text-red-600"}`}>
+                            {user.isActive ? "Hoạt động" : "Bị khóa"}
+                          </span>
+                        </div>
+                      </td>
+
                       <td className="pl-3 pr-6 py-3 space-x-2">
                         <button
                           onClick={() => handleOpen("view", user)}
@@ -182,7 +221,7 @@ const Users = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="4" className="text-center text-gray-500 p-4">
+                    <td colSpan="5" className="text-center text-gray-500 p-4">
                       {search
                         ? `Không tìm thấy người dùng với từ khóa "${search}"`
                         : "Không có người dùng nào"}
@@ -195,7 +234,7 @@ const Users = () => {
         )}
       </div>
 
-       {totalPages > 1 && !errorMessage && (
+      {totalPages > 1 && !errorMessage && (
         <div className="flex justify-center items-center gap-2 p-4">
           <button
             onClick={() => setPage((p) => Math.max(p - 1, 1))}
@@ -253,14 +292,6 @@ const Users = () => {
         user={selected}
         onSave={handleSave}
       />
-
-      {openRoleModal && selectedUser && (
-        <RoleModal
-          role={selectedUser.newRole}
-          onConfirm={handleConfirmRole}
-          onClose={() => setOpenRoleModal(false)}
-        />
-      )}
 
       <ConfirmDeleteModal
         open={openDeleteModal}

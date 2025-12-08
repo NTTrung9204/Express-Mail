@@ -150,6 +150,21 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
     }
   };
 
+  const handleToggleStatus = async (userId, newStatus) => {
+    try {
+      const result = await userService.toggleUserStatus(userId, newStatus);
+      if (result.success) {
+        setUsers(prev => prev.map(u => 
+          u.id === userId ? { ...u, isActive: newStatus } : u
+        ));
+      }
+      return result;
+    } catch (error) {
+      console.error("Lỗi khi thay đổi trạng thái:", error);
+      return { success: false, message: "Không thể thay đổi trạng thái" };
+    }
+};
+
   const handleDelete = (user) => {
     setUserToDelete(user);
     setOpenDeleteModal(true);
@@ -208,5 +223,7 @@ export const useUserStore = (initialPage = 1, pageSize = 10) => {
     handleDelete,
     confirmDelete,
     fetchUsers,
+    setUsers,
+    handleToggleStatus
   };
 };

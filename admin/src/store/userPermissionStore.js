@@ -183,7 +183,7 @@ export const usePermissionStore = () => {
       payload.address = user.address || "";
       payload.phoneNumber = user.phoneNumber || "";
       payload.latitude = user.latitude ?? null;
-      payload.longitude = user.longtitude ?? null;
+      payload.longitude = user.longitude ?? null;
     }
 
     if (effectiveRole === "shipper") {

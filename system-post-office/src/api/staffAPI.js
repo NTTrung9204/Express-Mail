@@ -14,7 +14,7 @@ export const getStaffsByPostOfficeId = async (
 
   try {
     const response = await djangoAPI.get(
-      `/api/v1/post-offices/${postOfficeId}/post-office-staffs`,
+      `/api/v1/post-offices/${postOfficeId}/staffs`,
       { params }
     );
     return response.data;
@@ -43,7 +43,7 @@ export const createStaff = async (postOfficeId, staffData) => {
     };
 
     const response = await djangoAPI.post(
-      `/api/v1/post-offices/${postOfficeId}/add-staff`,
+      `/api/v1/post-offices/${postOfficeId}/staffs`,
       payload
     );
     return response.data;
