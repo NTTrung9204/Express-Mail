@@ -14,16 +14,13 @@ from apps.post_offices.permissions import (
     AddStaffToPostOfficePermission,
     EditPostOfficeUserPermission,
     DeletePostOfficeUserPermission,
+    ViewPostOfficeUserPermission,
 )
 from apps.post_offices.serializers import (
     PostOfficeSerializer,
     ShipperInPostOfficeSerializer,
     StaffInPostOfficeSerializer,
     ChangePostOfficeUserStatusRequestSerializer,
-)
-from apps.users.permissions import (
-    ViewShipperProfilePermission,
-    ViewPostOfficeStaffProfilePermission,
 )
 from apps.users.models import User
 from apps.users.serializers import (
@@ -148,8 +145,10 @@ class PostOfficeShipperViewSet(BaseAPIViewSet):
         """
 
         action_permissions = {
-            "list": [ViewShipperProfilePermission],
+            "list": [ViewPostOfficeUserPermission],
             "create": [AddShipperToPostOfficePermission],
+            "retrieve": [ViewPostOfficeUserPermission],
+            "partial_update": [EditPostOfficeUserPermission],
         }
         perms = action_permissions.get(self.action, [])
         return [p() for p in perms]
@@ -199,7 +198,7 @@ class PostOfficeShipperViewSet(BaseAPIViewSet):
         request=ShipperInPostOfficeSerializer,
         responses=ShipperInPostOfficeSerializer,
     )
-    def update(self, request, post_office_pk=None, pk=None):
+    def partial_update(self, request, post_office_pk=None, pk=None):
         """
         Update shipper of a post office
         """
@@ -212,21 +211,26 @@ class PostOfficeShipperViewSet(BaseAPIViewSet):
                 "profile": shipper.shipper_profile,
             },
             data=request.data,
+            partial=True,
         )
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
 
-        user_validated_data = validated_data["user"]
-        profile_validated_data = validated_data["profile"]
+        user_validated_data = validated_data.get("user", None)
+        profile_validated_data = validated_data.get("profile", None)
 
-        user = UserService.update(shipper, user_validated_data)
-        profile = ProfileService.update_shipper_profile(
-            shipper.shipper_profile, profile_validated_data
-        )
+        if user_validated_data:
+            UserService.update(shipper, user_validated_data)
+        if profile_validated_data:
+            ProfileService.update_shipper_profile(
+                shipper.shipper_profile, profile_validated_data
+            )
+
+        shipper.refresh_from_db()
 
         return self.response_ok(
             ShipperInPostOfficeSerializer(
-                instance={"user": user, "profile": profile}
+                instance={"user": shipper, "profile": shipper.shipper_profile}
             ).data
         )
 
@@ -291,8 +295,10 @@ class PostOfficeStaffViewSet(BaseAPIViewSet):
         """
 
         action_permissions = {
-            "list": [ViewPostOfficeStaffProfilePermission],
+            "list": [ViewPostOfficeUserPermission],
             "create": [AddStaffToPostOfficePermission],
+            "retrieve": [ViewPostOfficeUserPermission],
+            "partial_update": [EditPostOfficeUserPermission],
         }
         perms = action_permissions.get(self.action, [])
         return [p() for p in perms]
@@ -346,7 +352,7 @@ class PostOfficeStaffViewSet(BaseAPIViewSet):
         request=StaffInPostOfficeSerializer,
         responses=StaffInPostOfficeSerializer,
     )
-    def update(self, request, post_office_pk=None, pk=None):
+    def partial_update(self, request, post_office_pk=None, pk=None):
         """
         Update staff of a post office.
         """
@@ -359,21 +365,26 @@ class PostOfficeStaffViewSet(BaseAPIViewSet):
                 "profile": staff.post_office_staff_profile,
             },
             data=request.data,
+            partial=True,
         )
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
 
-        user_validated_data = validated_data["user"]
-        profile_validated_data = validated_data["profile"]
+        user_validated_data = validated_data.get("user", None)
+        profile_validated_data = validated_data.get("profile", None)
 
-        user = UserService.update(staff, user_validated_data)
-        profile = ProfileService.update_post_office_staff_profile(
-            staff.post_office_staff_profile, profile_validated_data
-        )
+        if user_validated_data:
+            UserService.update(staff, user_validated_data)
+        if profile_validated_data:
+            ProfileService.update_post_office_staff_profile(
+                staff.post_office_staff_profile, profile_validated_data
+            )
+
+        staff.refresh_from_db()
 
         return self.response_ok(
             StaffInPostOfficeSerializer(
-                instance={"user": user, "profile": profile}
+                instance={"user": staff, "profile": staff.post_office_staff_profile}
             ).data
         )
 
