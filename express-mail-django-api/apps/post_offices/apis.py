@@ -28,6 +28,7 @@ from apps.users.serializers import (
     UserPostOfficeStaffProfileSerializer,
 )
 from services.groups.group_services import GroupService
+from services.permissions.permission_services import PermissionService
 from services.post_offices.post_office_services import PostOfficeService
 from services.profiles.profile_services import ProfileService
 from services.users.user_services import UserService
@@ -107,7 +108,7 @@ class PostOfficeShipperViewSet(BaseAPIViewSet):
     ViewSet to manage Shippers under a Post Office.
     """
 
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by("id")
 
     def get_post_office(self):
         """
@@ -181,6 +182,7 @@ class PostOfficeShipperViewSet(BaseAPIViewSet):
         validated_data = serializer.validated_data
 
         user_data = validated_data["user"]
+        exclude_permissions = validated_data["exclude_permissions"]
         profile_data = validated_data["profile"]
 
         user = UserService.create(user_data)
@@ -188,6 +190,7 @@ class PostOfficeShipperViewSet(BaseAPIViewSet):
         shipper_profile = ProfileService.create_shipper_profile(profile_data)
 
         user.groups.add(GroupService.get_group_by_name(Groups.SHIPPER.value))
+        PermissionService.update_exclude_permissions(user, exclude_permissions)
 
         response_data = ShipperInPostOfficeSerializer(
             {"user": user, "profile": shipper_profile}
@@ -217,6 +220,7 @@ class PostOfficeShipperViewSet(BaseAPIViewSet):
         validated_data = serializer.validated_data
 
         user_validated_data = validated_data.get("user", None)
+        exclude_permissions = validated_data.pop("exclude_permissions", None)
         profile_validated_data = validated_data.get("profile", None)
 
         if user_validated_data:
@@ -225,6 +229,8 @@ class PostOfficeShipperViewSet(BaseAPIViewSet):
             ProfileService.update_shipper_profile(
                 shipper.shipper_profile, profile_validated_data
             )
+        if exclude_permissions:
+            PermissionService.update_exclude_permissions(shipper, exclude_permissions)
 
         shipper.refresh_from_db()
 
@@ -257,7 +263,7 @@ class PostOfficeStaffViewSet(BaseAPIViewSet):
     ViewSet to manage Staffs under a Post Office.
     """
 
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by("id")
 
     def get_post_office(self):
         """
@@ -333,6 +339,7 @@ class PostOfficeStaffViewSet(BaseAPIViewSet):
         validated_data = serializer.validated_data
 
         user_data = validated_data["user"]
+        exclude_permissions = validated_data["exclude_permissions"]
         profile_data = validated_data["profile"]
 
         user = UserService.create(user_data)
@@ -343,6 +350,7 @@ class PostOfficeStaffViewSet(BaseAPIViewSet):
         staff_profile = ProfileService.create_post_office_staff_profile(profile_data)
 
         user.groups.add(GroupService.get_group_by_name(Groups.POST_OFFICE_STAFF.value))
+        PermissionService.update_exclude_permissions(user, exclude_permissions)
 
         return self.response_created(
             StaffInPostOfficeSerializer({"user": user, "profile": staff_profile}).data
@@ -371,6 +379,7 @@ class PostOfficeStaffViewSet(BaseAPIViewSet):
         validated_data = serializer.validated_data
 
         user_validated_data = validated_data.get("user", None)
+        exclude_permissions = validated_data.get("exclude_permissions", None)
         profile_validated_data = validated_data.get("profile", None)
 
         if user_validated_data:
@@ -379,6 +388,8 @@ class PostOfficeStaffViewSet(BaseAPIViewSet):
             ProfileService.update_post_office_staff_profile(
                 staff.post_office_staff_profile, profile_validated_data
             )
+        if exclude_permissions:
+            PermissionService.update_exclude_permissions(staff, exclude_permissions)
 
         staff.refresh_from_db()
 

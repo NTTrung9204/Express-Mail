@@ -104,6 +104,7 @@ GROUP_PERMISSIONS_MAP = {
         "shipping.change_shippingrate_status",
     ],
     Groups.POST_OFFICE_MANAGER.value: [
+        "auth.view_group",
         "routing.call_vrp",
         "users.view_shipperprofile",
         "users.view_postofficestaffprofile",
