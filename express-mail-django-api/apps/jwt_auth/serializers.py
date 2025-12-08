@@ -58,7 +58,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token["role"] = user.role
         permissions = user.get_all_permissions()
         token["permissions"] = (
-            PermissionService.encrypt_permissions(permissions) if permissions else ""
+            PermissionService.gzip_permissions(permissions) if permissions else ""
         )
         if user.role == Roles.SHOP.value:
             token["post_office_id"] = (
