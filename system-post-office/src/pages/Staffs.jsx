@@ -1,18 +1,17 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
-import { PersonOff, Add, Security } from "@mui/icons-material";
-import ConfirmModal from "../components/staffs/ConfirmModal";
+import { Add, Security } from "@mui/icons-material";
+import { Switch } from "@mui/material";
 import Pagination from "../components/common/Pagination";
 import PermissionModal from "../components/staffs/PermissionModal";
 import { getStaffsByPostOfficeId, createStaff } from "../api/staffAPI";
 import { fetchUserPostOfficeId } from '../api/profileAPI';
+import { togglePostOfficeUserStatus } from '../api/postOfficeUserAPI';
 import authAPI from "../api/authAPI";
 
 const Staffs = () => {
-  const [showModal, setShowModal] = useState(false);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
-  const [modalContent, setModalContent] = useState({ title: "", message: "" });
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -30,6 +29,7 @@ const Staffs = () => {
   const [limit, setLimit] = useState(20);
   const [total, setTotal] = useState(0);
   const [postOfficeId, setPostOfficeId] = useState(null);
+  const [togglingStaff, setTogglingStaff] = useState(null);
 
   const fetchStaffs = useCallback(async (id, currentPage = page, currentLimit = limit) => {
     if (!id) return;
@@ -87,19 +87,35 @@ const Staffs = () => {
     }
   }, [page, limit, postOfficeId, fetchStaffs]);
 
-  const handleDisable = (staff) => {
-    setModalContent({
-      title: "Xác nhận vô hiệu hóa",
-      message: `Bạn có chắc chắn muốn vô hiệu hóa tài khoản của ${staff.firstName} ${staff.lastName} không?`,
-    });
-    setSelectedStaff(staff);
-    setShowModal(true);
-  };
+  const handleToggleStaffStatus = async (staff) => {
+    if (!postOfficeId || !staff?.id) return;
 
-  const confirmAction = () => {
-    setShowModal(false);
-    toast.success("Tài khoản đã được vô hiệu hóa!");
-    if (postOfficeId) fetchStaffs(postOfficeId, page, limit);
+    setTogglingStaff(staff.id);
+    try {
+      const result = await togglePostOfficeUserStatus(
+        postOfficeId,
+        staff.id,
+        !staff.isActive
+      );
+
+      if (result.success) {
+        setStaffs((prev) =>
+          prev.map((s) =>
+            s.id === staff.id ? { ...s, isActive: !s.isActive } : s
+          )
+        );
+        toast.success(
+          `Tài khoản đã ${!staff.isActive ? "kích hoạt" : "vô hiệu hóa"} thành công!`
+        );
+      } else {
+        toast.error(result.message || "Không thể thay đổi trạng thái tài khoản");
+      }
+    } catch (error) {
+      console.error("Lỗi khi thay đổi trạng thái:", error);
+      toast.error("Đã xảy ra lỗi khi thay đổi trạng thái tài khoản");
+    } finally {
+      setTogglingStaff(null);
+    }
   };
 
   const handleOpenPermission = (staff) => {
@@ -107,7 +123,6 @@ const Staffs = () => {
     setShowPermissionModal(true);
   };
 
-  // Validators
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -172,14 +187,12 @@ const Staffs = () => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
     
-    // Validate realtime
     const error = validateField(name, value);
     setFormErrors(prev => ({
       ...prev,
       [name]: error
     }));
 
-    // Revalidate confirmPassword if password changes
     if (name === "password" && formData.confirmPassword) {
       const confirmError = formData.confirmPassword !== value 
         ? "Mật khẩu xác nhận không khớp" 
@@ -219,7 +232,6 @@ const Staffs = () => {
       await createStaff(postOfficeId, formData);
       toast.success("Tạo tài khoản nhân viên thành công!");
       
-      // Reset form
       setFormData({
         username: "",
         password: "",
@@ -230,17 +242,14 @@ const Staffs = () => {
       });
       setFormErrors({});
       
-      // Refresh staff list
       fetchStaffs(postOfficeId, page, limit);
     } catch (error) {
       console.error("Error creating staff:", error);
       
-      // Handle API error response
       if (error.response?.data?.errors) {
         const apiErrors = error.response.data.errors;
         const newErrors = {};
         
-        // Parse user errors
         if (apiErrors.user) {
           if (apiErrors.user.username) {
             newErrors.username = apiErrors.user.username[0];
@@ -303,6 +312,7 @@ const Staffs = () => {
                     <th className="py-2 px-2">Tên</th>
                     <th className="py-2 px-2">Username</th>
                     <th className="py-2 px-2">Email</th>
+                    <th className="py-2 px-2">Trạng thái</th>
                     <th className="py-2 px-2">Hành động</th>
                   </tr>
                 </thead>
@@ -324,19 +334,33 @@ const Staffs = () => {
                         </td>
                         <td className="px-2 text-center">{staff.username}</td>
                         <td className="px-2 text-center">{staff.email}</td>
-                        <td className="px-2">
+                        <td className="px-2 text-center">
                           <div className="flex items-center justify-center gap-2">
+                            <Switch
+                                checked={staff.isActive}
+                                onChange={() => handleToggleStaffStatus(staff)}
+                                disabled={togglingStaff === staff.id}
+                                color="success"
+                                size="small"
+                              />
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                staff.isActive
+                                  ? "bg-green-100 text-green-700"
+                                  : "bg-red-100 text-red-700"
+                              }`}
+                            >
+                              {staff.isActive ? "Hoạt động" : "Vô hiệu"}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-2">
+                          <div className="flex items-center justify-center gap-3">
                             <button
                               onClick={() => handleOpenPermission(staff)}
                               className="flex items-center gap-1 px-3 py-1 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs transition cursor-pointer"
                             >
                               <Security fontSize="small" /> Phân quyền
-                            </button>
-                            <button
-                              onClick={() => handleDisable(staff)}
-                              className="flex items-center gap-1 px-3 py-1 rounded-md bg-red-500 hover:bg-red-600 text-white text-xs transition cursor-pointer"
-                            >
-                              <PersonOff fontSize="small" /> Vô hiệu hóa
                             </button>
                           </div>
                         </td>
@@ -510,14 +534,6 @@ const Staffs = () => {
           </div>
         </form>
       </div>
-
-      <ConfirmModal
-        isOpen={showModal}
-        title={modalContent.title}
-        message={modalContent.message}
-        onConfirm={confirmAction}
-        onCancel={() => setShowModal(false)}
-      />
 
       <PermissionModal
         isOpen={showPermissionModal}

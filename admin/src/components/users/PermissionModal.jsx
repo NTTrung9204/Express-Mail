@@ -1,20 +1,20 @@
-import React, { useEffect, useState } from "react";
-import { Checkbox, MenuItem, Select, FormControl, InputLabel } from "@mui/material";
+import React, { useEffect, useState, useMemo, useRef } from "react";
+import {
+  Checkbox,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+} from "@mui/material";
 import { LockOutlined } from "@mui/icons-material";
 import { toast } from "react-toastify";
 import { usePermissionStore } from "../../store/userPermissionStore";
 import VietmapPicker from "../common/VietmapPicker";
 
-import permissionData from "../../data/permissions.json";
-
-const permissionViMap = permissionData.reduce((acc, perm) => {
-  if (!acc[perm.contentTypeId]) acc[perm.contentTypeId] = {};
-  acc[perm.contentTypeId][perm.id] = perm.name_vi;
-  return acc;
-}, {});
+import permissionTranslations from "../../data/permissions.json";
 
 const contentTypeNames = {
-  1: "Admin",
+  1: "Quản trị viên (Admin)",
   2: "Trưởng bưu cục",
   3: "Nhân viên bưu cục",
   4: "Cửa hàng",
@@ -40,17 +40,20 @@ const groupToRoleMap = {
 export default function PermissionModal({
   open,
   onClose,
-  excludePermissions,
+  excludePermissions = [],
   setExcludePermissions,
-  isView,
+  isView = false,
   user,
   onRoleChange,
 }) {
-  const [isPermissionsLoading, setIsPermissionsLoading] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [selectedPostOffice, setSelectedPostOffice] = useState(user?.postOffice || "");
   const [userProfile, setUserProfile] = useState({});
   const [errors, setErrors] = useState({});
+  const [isPermissionsLoading, setIsPermissionsLoading] = useState(false);
+  const [isRoleProhibited, setIsRoleProhibited] = useState(false); 
+  
+  const mapPickerRef = useRef(null);
 
   const {
     groups,
@@ -61,11 +64,21 @@ export default function PermissionModal({
     fetchPostOffices,
     fetchUserProfile,
     updateUserPermissions,
-    loading,
+    loading: storeLoading,
   } = usePermissionStore();
 
-  const isSaving = loading;
+  const isSaving = storeLoading;
   const currentRole = selectedGroup ? groupToRoleMap[selectedGroup] : null;
+
+  const nameToVietnamese = useMemo(() => {
+    const map = {};
+    permissionTranslations.forEach((item) => {
+      if (item.name) {
+        map[item.name] = item.name_vi || item.name;
+      }
+    });
+    return map;
+  }, []);
 
   const hasPermission = (permId) => !excludePermissions.includes(permId);
 
@@ -78,78 +91,129 @@ export default function PermissionModal({
     }
   };
 
-  const handleSelectAll = (permissions) => {
-    const allSelected = permissions.every((p) => hasPermission(p.id));
-    let newExclude;
+  const handleSelectAll = () => {
+    if (!selectedGroup) return;
+    const perms = groupPermissions[selectedGroup] || [];
+    const allSelected = perms.every((p) => hasPermission(p.id));
+
     if (allSelected) {
-      newExclude = [...new Set([...excludePermissions, ...permissions.map((p) => p.id)])];
+      setExcludePermissions([
+        ...new Set([...excludePermissions, ...perms.map((p) => p.id)]),
+      ]);
     } else {
-      const groupPermIds = new Set(permissions.map((p) => p.id));
-      newExclude = excludePermissions.filter((id) => !groupPermIds.has(id));
+      setExcludePermissions(
+        excludePermissions.filter((id) => !perms.some((p) => p.id === id))
+      );
     }
-    setExcludePermissions(newExclude);
   };
 
   const validateFields = () => {
-    const currentRole = groupToRoleMap[selectedGroup];
     const newErrors = {};
-
     if (!selectedGroup) newErrors.role = "Vui lòng chọn vai trò.";
+    
+    if (currentRole === "shipper") {
+        newErrors.prohibited = "Chỉ Chủ kho mới có quyền chỉnh sửa người dùng Shipper.";
+    }
 
-    if (["post_office_manager", "post_office_staff", "shipper"].includes(currentRole) && !selectedPostOffice) {
+    if (
+      ["post_office_manager", "post_office_staff", "shipper"].includes(currentRole) &&
+      !selectedPostOffice
+    ) {
       newErrors.postOffice = "Vui lòng chọn bưu cục.";
     }
 
     if (currentRole === "shop") {
       if (!userProfile.address?.trim()) newErrors.address = "Vui lòng nhập địa chỉ.";
       if (!userProfile.phoneNumber?.trim()) newErrors.phoneNumber = "Vui lòng nhập số điện thoại.";
-      else if (!/^0\d{8,10}$/.test(userProfile.phoneNumber)) {
-        newErrors.phoneNumber = "Số điện thoại không hợp lệ (9-11 số).";
-      }
-      if (!userProfile.latitude) newErrors.latitude = "Vui lòng chọn vĩ độ.";
-      if (!userProfile.longtitude) newErrors.longtitude = "Vui lòng chọn kinh độ.";
+      else if (!/^0\d{8,10}$/.test(userProfile.phoneNumber))
+        newErrors.phoneNumber = "Số điện thoại không hợp lệ.";
+      if (userProfile.latitude === null || userProfile.latitude === undefined || userProfile.latitude === "") 
+        newErrors.latitude = "Vui lòng chọn vị trí trên bản đồ.";
+      if (userProfile.longitude === null || userProfile.longitude === undefined || userProfile.longitude === "") 
+        newErrors.longitude = "Vui lòng chọn vị trí trên bản đồ.";
     }
 
     setErrors(newErrors);
+    setIsRoleProhibited(!!newErrors.prohibited); 
+
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSavePermissions = async () => {
+  const handleSave = async () => {
     if (isView || isSaving || !user?.id || !selectedGroup) return;
-
     if (!validateFields()) {
       toast.error("Vui lòng kiểm tra lại thông tin!");
       return;
     }
+    
+    if (isRoleProhibited) {
+        toast.error("Bạn không có quyền lưu thay đổi cho vai trò này.");
+        return;
+    }
 
     try {
+      const sanitizedProfile = {
+        ...userProfile,
+        longitude: userProfile.longitude !== "" && userProfile.longitude !== null ? String(userProfile.longitude) : null,
+        latitude: userProfile.latitude !== "" && userProfile.latitude !== null ? String(userProfile.latitude) : null,
+      };
+
       const updatedUser = {
         ...user,
         postOffice: selectedPostOffice,
-        ...userProfile,
+        ...sanitizedProfile,
       };
       await updateUserPermissions(updatedUser, excludePermissions, selectedGroup);
       toast.success("Cập nhật quyền thành công!");
-
-      if (typeof onRoleChange === "function") {
-        onRoleChange(groupToRoleMap[selectedGroup]);
-      }
+      onRoleChange?.(groupToRoleMap[selectedGroup]);
       onClose();
     } catch (err) {
       toast.error("Lỗi lưu quyền: " + (err.message || "Không xác định"));
     }
   };
+  
+  const getSafeCoordinate = (coord) => {
+    if (coord !== null && coord !== undefined && coord !== "") {
+        const parsed = parseFloat(coord);
+        return isNaN(parsed) ? "" : parsed;
+    }
+    return "";
+  };
+
+  const loadProfileAndSetState = async (u) => {
+    const profile = await fetchUserProfile(u.id);
+    
+    if (u.role === "shop") {
+        const lat = getSafeCoordinate(profile.latitude);
+        const lng = getSafeCoordinate(profile.longitude);
+
+        setUserProfile({
+            address: profile.address || "",
+            phoneNumber: profile.phoneNumber || "",
+            latitude: lat,
+            longitude: lng,
+        });
+
+        if (mapPickerRef.current && lat !== "" && lng !== "") {
+            mapPickerRef.current.flyTo([lng, lat]);
+        }
+    } else {
+        setUserProfile({});
+        setSelectedPostOffice(profile.postOffice || "");
+    }
+
+    return profile;
+  }
 
   const loadGroupPermissions = async (gId) => {
-    if (!groupPermissions[gId]) {
-      setIsPermissionsLoading(true);
-      try {
-        await fetchGroupPermissions(gId);
-      } catch (err) {
-        toast.error("Không thể tải quyền: " + err.message);
-      } finally {
-        setIsPermissionsLoading(false);
-      }
+    if (groupPermissions[gId]) return;
+    setIsPermissionsLoading(true);
+    try {
+      await fetchGroupPermissions(gId);
+    } catch (err) {
+      toast.error("Không thể tải quyền: " + err.message);
+    } finally {
+      setIsPermissionsLoading(false);
     }
   };
 
@@ -167,37 +231,29 @@ export default function PermissionModal({
 
     const init = async () => {
       setErrors({});
+      setIsRoleProhibited(user?.role === "shipper");
+
       if (!groups.length) await fetchGroups();
 
-      let currentRole = null;
       if (user?.role) {
         const gId = roleToGroupMap[user.role];
-        setSelectedGroup(gId);
-        await loadGroupPermissions(gId);
-        currentRole = user.role;
-      }
-
-      if (["post_office_manager", "post_office_staff", "shipper", "shop"].includes(currentRole)) {
-        const profile = await fetchUserProfile(user.id);
-        if (profile?.postOffice) setSelectedPostOffice(profile.postOffice);
-
-        if (currentRole === "shop") {
-          setUserProfile({
-            address: profile.address || "",
-            phoneNumber: profile.phoneNumber || "",
-            latitude: profile.latitude ?? "",
-            longtitude: profile.longtitude ?? ""
-          });
+        if (gId) {
+          setSelectedGroup(gId);
+          await loadGroupPermissions(gId);
         }
       }
 
-      if (["post_office_manager", "post_office_staff", "shipper"].includes(currentRole)) {
+      if (["post_office_manager", "post_office_staff", "shipper", "shop"].includes(user?.role)) {
+        await loadProfileAndSetState(user);
+      }
+
+      if (["post_office_manager", "post_office_staff", "shipper"].includes(user?.role)) {
         await loadPostOfficesIfNeeded();
       }
     };
 
     init();
-  }, [open, user?.role]);
+  }, [open, user]);
 
   const handleRoleChange = async (e) => {
     const gId = e.target.value;
@@ -205,209 +261,230 @@ export default function PermissionModal({
 
     setSelectedGroup(gId);
     setErrors({});
+    
+    setIsRoleProhibited(newRole === "shipper");
+
     await loadGroupPermissions(gId);
 
     if (["post_office_manager", "post_office_staff", "shipper"].includes(newRole)) {
       await loadPostOfficesIfNeeded();
       const profile = await fetchUserProfile(user.id);
-      if (profile?.postOffice) setSelectedPostOffice(profile.postOffice);
+      setSelectedPostOffice(profile.postOffice || "");
+      setUserProfile({});
     }
 
     if (newRole === "shop") {
-      const profile = await fetchUserProfile(user.id);
-      setUserProfile({
-        address: profile.address || "",
-        phoneNumber: profile.phoneNumber || "",
-        latitude: profile.latitude ?? "",
-        longtitude: profile.longtitude ?? ""
-      });
+      await loadProfileAndSetState({ id: user.id, role: newRole });
+      setSelectedPostOffice("");
     } else {
       setUserProfile({});
+      setSelectedPostOffice("");
     }
   };
 
   if (!open) return null;
 
   const permissions = selectedGroup ? groupPermissions[selectedGroup] || [] : [];
+  const allSelected = permissions.length > 0 && permissions.every((p) => hasPermission(p.id));
+
+  const isSaveDisabled = isSaving || !selectedGroup || isRoleProhibited;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white w-full max-w-3xl max-h-[85vh] overflow-y-auto shadow-2xl rounded-xl" onClick={(e) => e.stopPropagation()}>
-        <div className="sticky top-0 bg-white z-10 border-b p-6 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-orange-600 flex items-center gap-2">
-            <LockOutlined className="text-orange-500" />
-            Hồ sơ người dùng {isView ? "(Xem)" : ""}
+      <div
+        className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white p-6">
+          <h2 className="flex items-center gap-3 text-2xl font-bold text-orange-600">
+            <LockOutlined className="text-3xl" />
+            Quản lý quyền người dùng {isView ? "(Chỉ xem)" : ""}
           </h2>
-          <button onClick={onClose} className="text-3xl leading-none hover:text-orange-600" disabled={isPermissionsLoading || isSaving}>
+          <button onClick={onClose} className="text-4xl leading-none hover:text-red-500">
             ×
           </button>
         </div>
 
-        <div className="p-6 space-y-6 mb-4">
-          <div className="space-y-4">
-            {isView && !user?.role ? (
-              <div className="w-full p-2 bg-gray-100 text-gray-500 rounded-md text-center">
-                Chưa có vai trò
+        <div className="flex flex-col gap-5 mt-3 p-6">
+          <FormControl fullWidth error={!!errors.role}>
+            <InputLabel>Chọn vai trò</InputLabel>
+            <Select
+              value={selectedGroup || ""}
+              label="Chọn vai trò"
+              onChange={handleRoleChange}
+              disabled={isView || isSaving}
+            >
+              <MenuItem value="">Chọn vai trò</MenuItem>
+              {Object.entries(contentTypeNames).map(([id, name]) => (
+                <MenuItem key={id} value={Number(id)}>{name}</MenuItem>
+              ))}
+            </Select>
+            {errors.role && <p className="mt-1 text-sm text-red-500">{errors.role}</p>}
+          </FormControl>
+          
+          {isRoleProhibited && (
+              <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+                  <p className="font-semibold">
+                      Quyền chỉnh sửa bị hạn chế:
+                  </p>
+                  <p className='mt-1'>
+                      Chỉ Trưởng bưu cục mới có quyền chỉnh sửa thông tin/phân quyền cho người dùng Shipper.
+                  </p>
               </div>
-            ) : (
-              <FormControl fullWidth sx={{ mb: 2 }} error={!!errors.role}>
-                <InputLabel id="role-select-label">Chọn vai trò</InputLabel>
-                <Select
-                  labelId="role-select-label"
-                  value={selectedGroup || ""}
-                  label="Chọn vai trò"
-                  onChange={handleRoleChange}
-                  disabled={isView || isSaving}
-                >
-                  <MenuItem value="">Chọn vai trò</MenuItem>
-                  {Object.entries(contentTypeNames).map(([id, name]) => (
-                    <MenuItem key={id} value={Number(id)}>{name}</MenuItem>
-                  ))}
-                </Select>
-                {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
-              </FormControl>
-            )}
+          )}
 
-            {selectedGroup && ["post_office_manager", "post_office_staff", "shipper"].includes(currentRole) && (
-              <div>
-                <FormControl fullWidth error={!!errors.postOffice}>
-                  <InputLabel id="postoffice-select-label">Chọn bưu cục</InputLabel>
-                  <Select
-                    labelId="postoffice-select-label"
-                    value={selectedPostOffice}
-                    onChange={(e) => setSelectedPostOffice(e.target.value)}
+          {selectedGroup && ["post_office_manager", "post_office_staff", "shipper"].includes(currentRole) && (
+            <FormControl fullWidth error={!!errors.postOffice}>
+              <InputLabel>Chọn bưu cục</InputLabel>
+              <Select
+                value={selectedPostOffice}
+                label="Chọn bưu cục"
+                onChange={(e) => setSelectedPostOffice(e.target.value)}
+                disabled={isView}
+              >
+                <MenuItem value="">Chọn bưu cục</MenuItem>
+                {postOffices.map((po) => (
+                  <MenuItem key={po.id} value={po.id}>{po.name}</MenuItem>
+                ))}
+              </Select>
+              {errors.postOffice && <p className="mt-1 text-sm text-red-500">{errors.postOffice}</p>}
+            </FormControl>
+          )}
+
+          {currentRole === "shop" && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Địa chỉ"
+                    className={`w-full rounded-md border p-3 text-sm focus:ring-2 focus:ring-orange-300 ${
+                      errors.address ? "border-red-500" : "border-gray-300"
+                    }`}
+                    value={userProfile.address || ""}
+                    onChange={(e) => setUserProfile(p => ({ ...p, address: e.target.value }))}
                     disabled={isView}
-                  >
-                    <MenuItem value="">Chọn bưu cục</MenuItem>
-                    {postOffices.map((po) => (
-                      <MenuItem key={po.id} value={po.id}>{po.name}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                {errors.postOffice && <p className="text-red-500 text-sm mt-1">{errors.postOffice}</p>}
-              </div>
-            )}
-
-            {currentRole === "shop" && (
-              <>
-                <div className="grid grid-cols-2 gap-4 mt-4">
-                  <div>
-                    <input
-                      type="text"
-                      className={`border rounded-md p-2 text-sm w-full outline-none focus:ring-2 focus:ring-orange-300 ${errors.address ? "border-red-500" : "border-gray-300"}`}
-                      placeholder="Địa chỉ"
-                      value={userProfile.address || ""}
-                      onChange={(e) => setUserProfile(prev => ({ ...prev, address: e.target.value }))}
-                      disabled={isView}
-                    />
-                    {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
-                  </div>
-                  <div>
-                    <input
-                      type="text"
-                      className={`border rounded-md p-2 text-sm w-full outline-none focus:ring-2 focus:ring-orange-300 ${errors.phoneNumber ? "border-red-500" : "border-gray-300"}`}
-                      placeholder="Số điện thoại"
-                      value={userProfile.phoneNumber || ""}
-                      onChange={(e) => setUserProfile(prev => ({ ...prev, phoneNumber: e.target.value }))}
-                      disabled={isView}
-                    />
-                    {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>}
-                  </div>
+                  />
+                  {errors.address && <p className="mt-1 text-sm text-red-500">{errors.address}</p>}
                 </div>
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Số điện thoại"
+                    className={`w-full rounded-md border p-3 text-sm focus:ring-2 focus:ring-orange-300 ${
+                      errors.phoneNumber ? "border-red-500" : "border-gray-300"
+                    }`}
+                    value={userProfile.phoneNumber || ""}
+                    onChange={(e) => setUserProfile(p => ({ ...p, phoneNumber: e.target.value }))}
+                    disabled={isView}
+                  />
+                  {errors.phoneNumber && <p className="mt-1 text-sm text-red-500">{errors.phoneNumber}</p>}
+                </div>
+              </div>
 
-                {!isView && (
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Chọn vị trí trên bản đồ
-                    </label>
-                    <VietmapPicker
-                      latitude={userProfile.latitude}
-                      longitude={userProfile.longtitude}
-                      address={userProfile.address}
-                      onChange={({ latitude, longitude, address }) => {
-                        setUserProfile(prev => ({
-                          ...prev,
-                          latitude,
-                          longtitude: longitude,
-                          address: address || prev.address,
-                        }));
-                      }}
-                      disabled={isView}
-                      hideSearch = {false}
-                    />
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+              {!isView && (
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                    Chọn vị trí trên bản đồ
+                  </label>
+                  <VietmapPicker
+                    ref={mapPickerRef} 
+                    latitude={userProfile.latitude}
+                    longitude={userProfile.longitude}
+                    address={userProfile.address}
+                    onChange={({ latitude, longitude, address }) => {
+                      setUserProfile(p => ({
+                        ...p,
+                        latitude: parseFloat(latitude), 
+                        longitude: parseFloat(longitude), 
+                        address: address || p.address,
+                      }));
+                    }}
+                    disabled={isView}
+                  />
+                  {(errors.latitude || errors.longitude) && 
+                    <p className="mt-1 text-sm text-red-500">
+                        {errors.latitude || errors.longitude}
+                    </p>
+                  }
+                </div>
+              )}
+            </div>
+          )}
 
           {selectedGroup && (
-            <>
+            <div className="pt-8">
+              <h3 className="mb-6 text-lg font-semibold text-gray-800">
+                Quyền hạn – {contentTypeNames[selectedGroup]}
+              </h3>
+
               {isPermissionsLoading ? (
-                <div className="text-center text-orange-500">
-                  Đang tải quyền...
-                </div>
+                <p className="py-8 text-center text-orange-500">Đang tải quyền...</p>
               ) : permissions.length === 0 ? (
-                <div className="text-center text-gray-500 italic">
-                  Không có quyền nào.
-                </div>
+                <p className="py-8 text-center italic text-gray-500">Không có quyền nào.</p>
               ) : (
                 <>
-                  <div className="flex items-center gap-2 mb-4">
+                  <div className="mb-6 flex items-center gap-3">
                     <Checkbox
                       color="warning"
-                      checked={permissions.every((p) => hasPermission(p.id))}
-                      onChange={() => handleSelectAll(permissions)}
+                      checked={allSelected}
+                      indeterminate={!allSelected && permissions.some(p => hasPermission(p.id))}
+                      onChange={handleSelectAll}
                       disabled={isView}
                     />
-                    <span className="font-medium">Chọn tất cả</span>
+                    <span className="font-medium text-gray-700">Chọn / Bỏ chọn tất cả</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-y-2">
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {permissions.map((perm) => {
-                      const viName = permissionViMap[selectedGroup]?.[perm.id];
+                      const displayName = nameToVietnamese[perm.name] || perm.name;
+
                       return (
                         <label
                           key={perm.id}
-                          className={`flex items-center gap-2 select-none rounded-md px-2 py-1 ${!isView ? "cursor-pointer hover:bg-gray-50" : "opacity-70"}`}
+                          className={`flex items-center gap-4 rounded-lg border-2 p-4 transition-all ${
+                            hasPermission(perm.id)
+                              ? "border-orange-200 bg-orange-50"
+                              : "border-gray-200 bg-gray-50 opacity-70"
+                          } ${!isView ? "cursor-pointer hover:border-orange-400" : ""}`}
                         >
                           <Checkbox
                             color="warning"
-                            disabled={isView}
                             checked={hasPermission(perm.id)}
                             onChange={() => handleTogglePermission(perm.id)}
+                            disabled={isView}
                           />
-                          {viName || perm.name}
+                          <span className="text-sm font-medium text-gray-800">{displayName}</span>
                         </label>
                       );
                     })}
                   </div>
                 </>
               )}
-            </>
+            </div>
           )}
         </div>
 
-        <div className="flex justify-end p-6 border-t bg-white sticky bottom-0 gap-3">
+        <div className="sticky bottom-0 flex justify-end gap-4 border-t bg-white p-6">
           <button
             onClick={onClose}
-            className="px-5 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 cursor-pointer"
+            className="rounded-lg bg-gray-200 px-6 py-3 hover:bg-gray-300"
             disabled={isSaving}
           >
             Đóng
           </button>
+
           {!isView && (
             <button
-              onClick={handleSavePermissions}
-              className={`px-5 py-2 rounded-lg text-white ${
-                currentRole === "shipper"
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : (isSaving || isPermissionsLoading || !selectedGroup)
-                  ? "bg-orange-300 cursor-not-allowed"
-                  : "bg-orange-500 hover:bg-orange-600 cursor-pointer"
+              onClick={handleSave}
+              disabled={isSaveDisabled} 
+              className={`rounded-lg px-8 py-3 font-medium text-white ${
+                isSaveDisabled
+                  ? "cursor-not-allowed bg-gray-400"
+                  : "bg-orange-500 hover:bg-orange-600"
               }`}
-              disabled={isSaving || isPermissionsLoading || !selectedGroup || currentRole === "shipper"}
             >
-              {isSaving ? "Đang lưu..." : "Lưu Thay Đổi"}
+              {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
             </button>
           )}
         </div>

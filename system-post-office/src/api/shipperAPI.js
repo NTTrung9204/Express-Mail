@@ -59,7 +59,7 @@ export const createShipper = async (postOfficeId, shipperData) => {
     }
 
     const response = await djangoAPI.post(
-      `/api/v1/post-offices/${postOfficeId}/add-shipper`,
+      `/api/v1/post-offices/${postOfficeId}/shippers`,
       formData,
       {
         headers: {

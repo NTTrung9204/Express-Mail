@@ -47,6 +47,23 @@ export const userService = {
     return response.data;
   },
 
+  toggleUserStatus: async (id, isActive) => {
+    try {
+      const response = await baseAPI.put(`/users/${id}/status`, { isActive });
+      return {
+        success: true,
+        data: response.data,
+        message: isActive ? 'Kích hoạt tài khoản thành công!' : 'Vô hiệu hóa tài khoản thành công!',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Không thể thay đổi trạng thái tài khoản',
+        errors: error.response?.data?.errors || {},
+      };
+    }
+  },
+
   deleteUser: async (id) => {
     await baseAPI.delete(`/users/${id}`);
   },
