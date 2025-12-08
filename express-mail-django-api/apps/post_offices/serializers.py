@@ -1,9 +1,11 @@
 from rest_framework import serializers
 
+from apps.permissions.constants import Groups
 from apps.post_offices.models import PostOffice
 from apps.users.models import ShipperProfile, PostOfficeStaffProfile
 from apps.users.serializers import UserRegisterSerializer
 from apps.users.models import User
+from services.groups.group_services import GroupService
 
 
 class PostOfficeSerializer(serializers.ModelSerializer):
@@ -71,6 +73,20 @@ class ShipperInPostOfficeSerializer(serializers.Serializer):
 
     user = UserRegisterSerializer()
     profile = PostOfficeShipperProfileSerializer()
+    exclude_permissions = serializers.PrimaryKeyRelatedField(
+        queryset=GroupService.get_permissions_of_group(Groups.SHIPPER.value),
+        many=True,
+        write_only=True,
+    )
+
+    exclude_permissions_response = serializers.SerializerMethodField()
+
+    def get_exclude_permissions_response(self, obj):
+        """
+        Method return exclude permission of user in serializer.
+        """
+
+        return list(obj["user"].exclude_permissions.values_list("id", flat=True))
 
     def get_fields(self):
         """
@@ -93,6 +109,19 @@ class StaffInPostOfficeSerializer(serializers.Serializer):
 
     user = UserRegisterSerializer()
     profile = StaffInProfileSerializer()
+    exclude_permissions = serializers.PrimaryKeyRelatedField(
+        queryset=GroupService.get_permissions_of_group(Groups.POST_OFFICE_STAFF.value),
+        many=True,
+        write_only=True,
+    )
+    exclude_permissions_response = serializers.SerializerMethodField()
+
+    def get_exclude_permissions_response(self, obj):
+        """
+        Method return exclude permission of user in serializer.
+        """
+
+        return list(obj["user"].exclude_permissions.values_list("id", flat=True))
 
     def get_fields(self):
         """

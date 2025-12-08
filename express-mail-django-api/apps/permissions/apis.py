@@ -1,4 +1,5 @@
 from django.contrib.auth.models import Permission, Group
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.decorators import action
@@ -32,6 +33,8 @@ class GroupViewSet(ReadOnlyModelViewSet):
     serializer_class = GroupSerializer
     permission_classes = [FullDjangoModelPermissions]
     pagination_class = None
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["name"]
 
     @action(detail=True, methods=["get"], url_path="permissions")
     def permissions(self, request, pk=None):
