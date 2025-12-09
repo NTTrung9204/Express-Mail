@@ -149,7 +149,7 @@ class PostOfficeShipperViewSet(BaseAPIViewSet):
             "list": [ViewPostOfficeUserPermission],
             "create": [AddShipperToPostOfficePermission],
             "retrieve": [ViewPostOfficeUserPermission],
-            "partial_update": [EditPostOfficeUserPermission],
+            "update": [EditPostOfficeUserPermission],
         }
         perms = action_permissions.get(self.action, [])
         return [p() for p in perms]
@@ -201,7 +201,7 @@ class PostOfficeShipperViewSet(BaseAPIViewSet):
         request=ShipperInPostOfficeSerializer,
         responses=ShipperInPostOfficeSerializer,
     )
-    def partial_update(self, request, post_office_pk=None, pk=None):
+    def update(self, request, post_office_pk=None, pk=None):
         """
         Update shipper of a post office
         """
@@ -214,23 +214,19 @@ class PostOfficeShipperViewSet(BaseAPIViewSet):
                 "profile": shipper.shipper_profile,
             },
             data=request.data,
-            partial=True,
         )
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
 
-        user_validated_data = validated_data.get("user", None)
-        exclude_permissions = validated_data.pop("exclude_permissions", None)
-        profile_validated_data = validated_data.get("profile", None)
+        user_validated_data = validated_data["user"]
+        exclude_permissions = validated_data["exclude_permissions"]
+        profile_validated_data = validated_data["profile"]
 
-        if user_validated_data:
-            UserService.update(shipper, user_validated_data)
-        if profile_validated_data:
-            ProfileService.update_shipper_profile(
-                shipper.shipper_profile, profile_validated_data
-            )
-        if exclude_permissions:
-            PermissionService.update_exclude_permissions(shipper, exclude_permissions)
+        UserService.update(shipper, user_validated_data)
+        ProfileService.update_shipper_profile(
+            shipper.shipper_profile, profile_validated_data
+        )
+        PermissionService.update_exclude_permissions(shipper, exclude_permissions)
 
         shipper.refresh_from_db()
 
@@ -304,7 +300,7 @@ class PostOfficeStaffViewSet(BaseAPIViewSet):
             "list": [ViewPostOfficeUserPermission],
             "create": [AddStaffToPostOfficePermission],
             "retrieve": [ViewPostOfficeUserPermission],
-            "partial_update": [EditPostOfficeUserPermission],
+            "update": [EditPostOfficeUserPermission],
         }
         perms = action_permissions.get(self.action, [])
         return [p() for p in perms]
@@ -360,7 +356,7 @@ class PostOfficeStaffViewSet(BaseAPIViewSet):
         request=StaffInPostOfficeSerializer,
         responses=StaffInPostOfficeSerializer,
     )
-    def partial_update(self, request, post_office_pk=None, pk=None):
+    def update(self, request, post_office_pk=None, pk=None):
         """
         Update staff of a post office.
         """
@@ -373,23 +369,19 @@ class PostOfficeStaffViewSet(BaseAPIViewSet):
                 "profile": staff.post_office_staff_profile,
             },
             data=request.data,
-            partial=True,
         )
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
 
-        user_validated_data = validated_data.get("user", None)
-        exclude_permissions = validated_data.get("exclude_permissions", None)
-        profile_validated_data = validated_data.get("profile", None)
+        user_validated_data = validated_data["user"]
+        exclude_permissions = validated_data["exclude_permissions"]
+        profile_validated_data = validated_data["profile"]
 
-        if user_validated_data:
-            UserService.update(staff, user_validated_data)
-        if profile_validated_data:
-            ProfileService.update_post_office_staff_profile(
-                staff.post_office_staff_profile, profile_validated_data
-            )
-        if exclude_permissions:
-            PermissionService.update_exclude_permissions(staff, exclude_permissions)
+        UserService.update(staff, user_validated_data)
+        ProfileService.update_post_office_staff_profile(
+            staff.post_office_staff_profile, profile_validated_data
+        )
+        PermissionService.update_exclude_permissions(staff, exclude_permissions)
 
         staff.refresh_from_db()
 

@@ -1,6 +1,10 @@
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from datetime import datetime, timezone as dt_timezone
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
 
 from apps.jwt_auth.models import AccessTokenWhiteList
 
@@ -41,3 +45,22 @@ class JWTAuthService:
 
         access_tk_wl = AccessTokenWhiteList.objects.get(token=access_token_str)
         access_tk_wl.delete()
+
+    @staticmethod
+    def delete_all_access_token(user):
+        """
+        Delete all access token of a user.
+        """
+
+        tokens = AccessTokenWhiteList.objects.filter(user=user)
+        tokens.delete()
+
+    @staticmethod
+    def black_list_all_refresh_token(user):
+        """
+        Black list all refresh token of a user.
+        """
+
+        tokens = OutstandingToken.objects.filter(user=user)
+        black_list_tokens = [BlacklistedToken(token=token) for token in tokens]
+        BlacklistedToken.objects.bulk_create(black_list_tokens, ignore_conflicts=True)
