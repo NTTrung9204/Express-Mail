@@ -77,7 +77,6 @@ class ShipperInPostOfficeSerializer(serializers.Serializer):
         queryset=GroupService.get_permissions_of_group(Groups.SHIPPER.value),
         many=True,
         write_only=True,
-        default=[],
     )
 
     exclude_permissions_response = serializers.SerializerMethodField()
