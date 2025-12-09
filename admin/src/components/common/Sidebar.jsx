@@ -30,17 +30,6 @@ const Sidebar = ({ setTitle }) => {
         <h1 className="text-xl font-bold mb-4 text-center">Admin</h1>
         <hr className="border-t border-orange-400 mb-6" />
         <nav className="flex flex-col gap-2">
-          <NavLink
-            to="home"
-            end
-            className={({ isActive }) =>
-              `${linkStyle} ${isActive ? activeStyle : ""}`
-            }
-            onClick={() => setTitle && setTitle("Dashboard")}
-          >
-            <DashboardIcon className="w-5 h-5 mr-3" />
-            Trang chủ
-          </NavLink>
 
           <NavLink
             to="users"

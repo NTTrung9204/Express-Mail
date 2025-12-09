@@ -75,4 +75,74 @@ export const createShipper = async (postOfficeId, shipperData) => {
   }
 };
 
+export const updateShipper = async (postOfficeId, userId, shipperData) => {
+  if (!postOfficeId || !userId) {
+    console.error("Post Office ID and User ID are required.");
+    return null;
+  }
+
+  try {
+    const formData = new FormData();
+
+    if (shipperData.username !== undefined) {
+      formData.append('user.username', shipperData.username);
+    }
+    
+    if (shipperData.password) {
+      formData.append('user.password', shipperData.password);
+    }
+
+    if (shipperData.email !== undefined) {
+      formData.append('user.email', shipperData.email);
+    }
+    if (shipperData.firstName !== undefined) {
+      formData.append('user.firstName', shipperData.firstName);
+    }
+    if (shipperData.lastName !== undefined) {
+      formData.append('user.lastName', shipperData.lastName);
+    }
+
+    if (shipperData.phoneNumber !== undefined) {
+      formData.append('profile.phoneNumber', shipperData.phoneNumber);
+    }
+    if (shipperData.address !== undefined) {
+      formData.append('profile.address', shipperData.address);
+    }
+    if (shipperData.motorModel !== undefined) {
+      formData.append('profile.motorModel', shipperData.motorModel);
+    }
+    if (shipperData.licensePlateNumber !== undefined) {
+      formData.append('profile.licensePlateNumber', shipperData.licensePlateNumber);
+    }
+    if (shipperData.cardId !== undefined) {
+      formData.append('profile.cardId', shipperData.cardId);
+    }
+    
+    if (shipperData.avatar) {
+      formData.append('profile.avatar', shipperData.avatar);
+    }
+
+    if (shipperData.excludePermissions && Array.isArray(shipperData.excludePermissions)) {
+      shipperData.excludePermissions.forEach(permissionId => {
+        formData.append('excludePermissions', permissionId);
+      });
+    }
+
+    const response = await djangoAPI.patch(
+      `/api/v1/post-offices/${postOfficeId}/shippers/${userId}`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating shipper ${userId} for post office ${postOfficeId}:`, error);
+    throw error; 
+  }
+};
+
 export default getShippersByPostOfficeId;
