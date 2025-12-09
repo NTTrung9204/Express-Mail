@@ -353,8 +353,9 @@ class UserShipperProfileSerializer(serializers.ModelSerializer):
             "email",
             "profile",
             "is_active",
+            "exclude_permissions",
         ]
-        read_only_fields = ["id", "is_active"]
+        read_only_fields = ["id", "is_active", "exclude_permissions"]
 
 
 class UserPostOfficeStaffProfileSerializer(serializers.ModelSerializer):
@@ -376,8 +377,9 @@ class UserPostOfficeStaffProfileSerializer(serializers.ModelSerializer):
             "email",
             "profile",
             "is_active",
+            "exclude_permissions",
         ]
-        read_only_fields = ["id", "is_active"]
+        read_only_fields = ["id", "is_active", "exclude_permissions"]
 
 
 class ChangeUserStatusRequestSerializer(serializers.Serializer):
