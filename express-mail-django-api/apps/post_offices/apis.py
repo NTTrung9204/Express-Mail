@@ -108,7 +108,7 @@ class PostOfficeShipperViewSet(BaseAPIViewSet):
     ViewSet to manage Shippers under a Post Office.
     """
 
-    queryset = User.objects.all().order_by("id")
+    queryset = User.objects.all().prefetch_related("exclude_permissions").order_by("id")
 
     def get_post_office(self):
         """
@@ -263,7 +263,7 @@ class PostOfficeStaffViewSet(BaseAPIViewSet):
     ViewSet to manage Staffs under a Post Office.
     """
 
-    queryset = User.objects.all().order_by("id")
+    queryset = User.objects.all().prefetch_related("exclude_permissions").order_by("id")
 
     def get_post_office(self):
         """
