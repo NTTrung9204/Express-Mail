@@ -1,17 +1,16 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "react-toastify";
-import { Add, Security } from "@mui/icons-material";
+import { Add } from "@mui/icons-material";
+import EditIcon from "@mui/icons-material/Edit";
 import { Switch } from "@mui/material";
 import Pagination from "../components/common/Pagination";
-import PermissionModal from "../components/staffs/PermissionModal";
+import EditStaffModal from "../components/staffs/EditStaffModal";
 import { getStaffsByPostOfficeId, createStaff } from "../api/staffAPI";
 import { fetchUserPostOfficeId } from '../api/profileAPI';
 import { togglePostOfficeUserStatus } from '../api/postOfficeUserAPI';
 import authAPI from "../api/authAPI";
 
 const Staffs = () => {
-  const [showPermissionModal, setShowPermissionModal] = useState(false);
-  const [selectedStaff, setSelectedStaff] = useState(null);
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -30,6 +29,10 @@ const Staffs = () => {
   const [total, setTotal] = useState(0);
   const [postOfficeId, setPostOfficeId] = useState(null);
   const [togglingStaff, setTogglingStaff] = useState(null);
+
+  // State cho Edit Modal
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingStaff, setEditingStaff] = useState(null);
 
   const fetchStaffs = useCallback(async (id, currentPage = page, currentLimit = limit) => {
     if (!id) return;
@@ -118,9 +121,18 @@ const Staffs = () => {
     }
   };
 
-  const handleOpenPermission = (staff) => {
-    setSelectedStaff(staff);
-    setShowPermissionModal(true);
+  const openEditModal = (staff) => {
+    setEditingStaff(staff);
+    setEditModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setEditModalOpen(false);
+    setEditingStaff(null);
+  };
+
+  const handleStaffUpdated = () => {
+    fetchStaffs(postOfficeId, page, limit);
   };
 
   const validateEmail = (email) => {
@@ -319,7 +331,7 @@ const Staffs = () => {
                 <tbody>
                   {staffs.length === 0 ? (
                     <tr>
-                      <td colSpan="4" className="text-center py-8 text-gray-500">
+                      <td colSpan="5" className="text-center py-8 text-gray-500">
                         Không có nhân viên nào
                       </td>
                     </tr>
@@ -357,10 +369,10 @@ const Staffs = () => {
                         <td className="px-2">
                           <div className="flex items-center justify-center gap-3">
                             <button
-                              onClick={() => handleOpenPermission(staff)}
-                              className="flex items-center gap-1 px-3 py-1 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs transition cursor-pointer"
+                              onClick={() => openEditModal(staff)}
+                              className="flex items-center gap-1 px-3 py-1 rounded-md bg-blue-500 hover:bg-blue-600 text-white text-xs transition cursor-pointer"
                             >
-                              <Security fontSize="small" /> Phân quyền
+                              <EditIcon fontSize="small" /> Sửa
                             </button>
                           </div>
                         </td>
@@ -535,14 +547,12 @@ const Staffs = () => {
         </form>
       </div>
 
-      <PermissionModal
-        isOpen={showPermissionModal}
-        staff={selectedStaff}
-        onClose={() => setShowPermissionModal(false)}
-        onSave={(permissions) => {
-          toast.success("Cập nhật quyền thành công!");
-          setShowPermissionModal(false);
-        }}
+      <EditStaffModal
+        open={editModalOpen}
+        onClose={closeEditModal}
+        staff={editingStaff}
+        postOfficeId={postOfficeId}
+        onUpdated={handleStaffUpdated}
       />
     </div>
   );

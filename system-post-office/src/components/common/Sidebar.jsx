@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Dashboard, LocalShipping, Inventory2, People, RouteOutlined } from "@mui/icons-material";
+import { LocalShipping, Inventory2, People, RouteOutlined } from "@mui/icons-material";
 import LogoutIcon from '@mui/icons-material/Logout';
 import { toast } from "react-toastify";
 import authAPI from "../../api/authAPI";
@@ -32,18 +32,6 @@ const Sidebar = () => {
       <hr className="border-t border-orange-400 mb-6" />
 
       <ul className="space-y-3 font-semibold">
-        <li>
-          <NavLink
-            to="/post-office/home"
-            end
-            className={({ isActive }) =>
-              `${linkClasses} ${isActive ? activeClasses : ""}`
-            }
-          >
-            <Dashboard className="mr-3 text-base" /> Trang chủ
-          </NavLink>
-        </li>
-
         <li>
           <NavLink
             to="/post-office/shippers"

@@ -3,7 +3,6 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { ToastContainer} from 'react-toastify';
 import MainLayout from "./pages/MainLayout";
 import LoginPage from "./pages/LoginPage";
-import Dashboard from "./pages/Dashboard";
 import Shippers from "./pages/Shippers"; 
 import Orders from "./pages/orders/Orders";
 import ReceivedOrders from "./pages/orders/ReceivedOrders";
@@ -25,7 +24,7 @@ export default function App() {
       <ToastContainer/>
       <Routes>
         {/* If authenticated, redirect root to home */}
-        <Route path="/" element={<Navigate to={isAuthenticated ? "/post-office/home" : "/post-office/login"} replace />} />
+        <Route path="/" element={<Navigate to={isAuthenticated ? "/post-office/shippers" : "/post-office/login"} replace />} />
 
         {/* Protected routes - only accessible if logged in */}
         <Route 
@@ -36,7 +35,6 @@ export default function App() {
             </ProtectedRoute>
           }
         >
-          <Route path="home" element={<Dashboard />} />
           <Route path="shippers" element={<Shippers />} />
 
           <Route path="orders" element={<Orders />}>

@@ -48,9 +48,9 @@ const LoginPage = () => {
       toast.success("Đăng nhập thành công");
 
       if (user.role === "superadmin" || user.role === "admin") {
-        navigate("/home");
+        navigate("/users");
       } else if (user.role === "post_office_manager" || user.role === "post_office_staff") {
-        window.location.href = `${API_URL}/post-office/home`;
+        window.location.href = `${API_URL}/post-office/shippers`;
       } else if (user.role === "shop") {
         window.location.href = `${API_URL}/shop/orders/pending`;
       }

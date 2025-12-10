@@ -4,6 +4,10 @@ import {
   LocalShipping,
   Add,
 } from "@mui/icons-material";
+import { Avatar } from "@mui/material";
+import { CameraAlt } from "@mui/icons-material";
+import EditShipperModal from "../components/shippers/EditShipperModal";
+import EditIcon from "@mui/icons-material/Edit";
 import { Switch } from "@mui/material";
 import DeliveryScheduleModal from "../components/shippers/DeliveryScheduleModal";
 import Pagination from "../components/common/Pagination";
@@ -31,6 +35,8 @@ const Shippers = () => {
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [togglingShipper, setTogglingShipper] = useState(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingShipper, setEditingShipper] = useState(null);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -131,6 +137,20 @@ const Shippers = () => {
     setScheduleModalOpen(false);
     setSelectedShipper(null);
     setScheduleData(null);
+  };
+
+  const openEditModal = (shipper) => {
+    setEditingShipper(shipper);
+    setEditModalOpen(true);
+  };
+
+  const closeEditModal = () => {
+    setEditModalOpen(false);
+    setEditingShipper(null);
+  };
+
+  const handleShipperUpdated = () => {
+    loadShippers(postOfficeId, page, pageSize);
   };
 
   const handleToggleShipperStatus = async (shipper) => {
@@ -481,12 +501,21 @@ const Shippers = () => {
                             </div>
                           </td>
                           <td className="px-4 text-center">
-                            <button
-                              onClick={() => openScheduleModal(shipper)}
-                              className="flex items-center gap-1 px-3 py-1 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs cursor-pointer transition-all"
-                            >
-                              <LocalShipping fontSize="small" /> Xem lịch trình
-                            </button>
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => openScheduleModal(shipper)}
+                                className="flex items-center gap-1 px-3 py-1 rounded-md bg-orange-500 hover:bg-orange-600 text-white text-xs transition-all cursor-pointer"
+                              >
+                                <LocalShipping fontSize="small" /> Lịch trình
+                              </button>
+
+                              <button
+                                onClick={() => openEditModal(shipper)}
+                                className="flex items-center gap-1 px-3 py-1 rounded-md bg-blue-500 hover:bg-blue-600 text-white text-xs transition-all cursor-pointer"
+                              >
+                                <EditIcon fontSize="small" /> Sửa
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -515,227 +544,29 @@ const Shippers = () => {
         )}
       </div>
 
-      <div className="bg-white shadow-md rounded-xl p-5 border border-orange-100">
-        <h2 className="text-lg font-semibold text-[#4b1d09] mb-4">
+      <div className="bg-white shadow-md rounded-xl p-6 border border-orange-100">
+        <h2 className="text-lg font-semibold text-[#4b1d09] mb-6">
           Tạo tài khoản Shipper
         </h2>
 
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm mb-1 font-medium">Username <span className="text-red-500">*</span></label>
-              <input
-                name="username"
-                type="text"
-                placeholder="Nhập username"
-                value={formData.username}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                  formErrors.username 
-                    ? 'border-red-500 focus:ring-red-400' 
-                    : 'border-orange-200 focus:ring-orange-400'
-                }`}
-              />
-              {formErrors.username && (
-                <p className="text-xs text-red-500 mt-1">{formErrors.username}</p>
-              )}
-            </div>
+          <div className="flex flex-col md:flex-row gap-8">
+            <div className="flex flex-col items-center md:w-64">
+              <div className="relative group">
+                <Avatar
+                  src={avatarPreview || ""}
+                  alt="Avatar"
+                  sx={{ width: 160, height: 160 }}
+                  className="border-4 border-orange-200 shadow-lg"
+                >
+                  {!avatarPreview && <CameraAlt sx={{ fontSize: 60 }} />}
+                </Avatar>
 
-            <div>
-              <label className="block text-sm mb-1 font-medium">Mật khẩu <span className="text-red-500">*</span></label>
-              <input
-                name="password"
-                type="password"
-                placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
-                value={formData.password}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                  formErrors.password 
-                    ? 'border-red-500 focus:ring-red-400' 
-                    : 'border-orange-200 focus:ring-orange-400'
-                }`}
-              />
-              {formErrors.password && (
-                <p className="text-xs text-red-500 mt-1">{formErrors.password}</p>
-              )}
-            </div>
-
-            <div className="col-span-2 md:col-span-1"> 
-              <label className="block text-sm mb-1 font-medium">Xác nhận Mật khẩu <span className="text-red-500">*</span></label>
-              <input
-                name="confirmPassword"
-                type="password"
-                placeholder="Xác nhận lại mật khẩu"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                  formErrors.confirmPassword
-                    ? 'border-red-500 focus:ring-red-400' 
-                    : 'border-orange-200 focus:ring-orange-400'
-                }`}
-              />
-              {formErrors.confirmPassword && (
-                <p className="text-xs text-red-500 mt-1">{formErrors.confirmPassword}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm mb-1 font-medium">Họ <span className="text-red-500">*</span></label>
-              <input
-                name="firstName"
-                type="text"
-                placeholder="Nhập họ"
-                value={formData.firstName}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                  formErrors.firstName 
-                    ? 'border-red-500 focus:ring-red-400' 
-                    : 'border-orange-200 focus:ring-orange-400'
-                }`}
-              />
-              {formErrors.firstName && (
-                <p className="text-xs text-red-500 mt-1">{formErrors.firstName}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm mb-1 font-medium">Tên <span className="text-red-500">*</span></label>
-              <input
-                name="lastName"
-                type="text"
-                placeholder="Nhập tên"
-                value={formData.lastName}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                  formErrors.lastName 
-                    ? 'border-red-500 focus:ring-red-400' 
-                    : 'border-orange-200 focus:ring-orange-400'
-                }`}
-              />
-              {formErrors.lastName && (
-                <p className="text-xs text-red-500 mt-1">{formErrors.lastName}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm mb-1 font-medium">Email <span className="text-red-500">*</span></label>
-              <input
-                name="email"
-                type="email"
-                placeholder="Nhập email"
-                value={formData.email}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                  formErrors.email 
-                    ? 'border-red-500 focus:ring-red-400' 
-                    : 'border-orange-200 focus:ring-orange-400'
-                }`}
-              />
-              {formErrors.email && (
-                <p className="text-xs text-red-500 mt-1">{formErrors.email}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm mb-1 font-medium">Số điện thoại <span className="text-red-500">*</span></label>
-              <input
-                name="phoneNumber"
-                type="text"
-                placeholder="Nhập số điện thoại (10-11 số)"
-                value={formData.phoneNumber}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                  formErrors.phoneNumber 
-                    ? 'border-red-500 focus:ring-red-400' 
-                    : 'border-orange-200 focus:ring-orange-400'
-                }`}
-              />
-              {formErrors.phoneNumber && (
-                <p className="text-xs text-red-500 mt-1">{formErrors.phoneNumber}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm mb-1 font-medium">Địa chỉ <span className="text-red-500">*</span></label>
-              <input
-                name="address"
-                type="text"
-                placeholder="Nhập địa chỉ"
-                value={formData.address}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                  formErrors.address 
-                    ? 'border-red-500 focus:ring-red-400' 
-                    : 'border-orange-200 focus:ring-orange-400'
-                }`}
-              />
-              {formErrors.address && (
-                <p className="text-xs text-red-500 mt-1">{formErrors.address}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm mb-1 font-medium">Loại xe <span className="text-red-500">*</span></label>
-              <input
-                name="motorModel"
-                type="text"
-                placeholder="Nhập loại xe (VD: Honda Wave)"
-                value={formData.motorModel}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                  formErrors.motorModel 
-                    ? 'border-red-500 focus:ring-red-400' 
-                    : 'border-orange-200 focus:ring-orange-400'
-                }`}
-              />
-              {formErrors.motorModel && (
-                <p className="text-xs text-red-500 mt-1">{formErrors.motorModel}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm mb-1 font-medium">Biển số xe <span className="text-red-500">*</span></label>
-              <input
-                name="licensePlateNumber"
-                type="text"
-                placeholder="Nhập biển số xe (VD: 30A-12345)"
-                value={formData.licensePlateNumber}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                  formErrors.licensePlateNumber 
-                    ? 'border-red-500 focus:ring-red-400' 
-                    : 'border-orange-200 focus:ring-orange-400'
-                }`}
-              />
-              {formErrors.licensePlateNumber && (
-                <p className="text-xs text-red-500 mt-1">{formErrors.licensePlateNumber}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm mb-1 font-medium">CCCD <span className="text-red-500">*</span></label>
-              <input
-                name="cardId"
-                type="text"
-                placeholder="Nhập số CCCD (9-12 số)"
-                value={formData.cardId}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                  formErrors.cardId 
-                    ? 'border-red-500 focus:ring-red-400' 
-                    : 'border-orange-200 focus:ring-orange-400'
-                }`}
-              />
-              {formErrors.cardId && (
-                <p className="text-xs text-red-500 mt-1">{formErrors.cardId}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm mb-1 font-medium">Ảnh đại diện</label>
-              
-              {!avatarPreview ? (
-                <div className="relative">
+                <label
+                  htmlFor="avatar-input"
+                  className="absolute bottom-2 right-2 bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-full cursor-pointer shadow-lg transition-all"
+                >
+                  <CameraAlt />
                   <input
                     id="avatar-input"
                     type="file"
@@ -743,58 +574,296 @@ const Shippers = () => {
                     onChange={handleFileChange}
                     className="hidden"
                   />
-                  <label
-                    htmlFor="avatar-input"
-                    className="flex items-center justify-center w-full h-[180px] border-2 border-dashed border-orange-200 rounded-lg px-3 text-sm cursor-pointer hover:border-orange-400 transition-colors bg-orange-50/30"
-                  >
-                    <div className="text-center">
-                      <Add className="mx-auto text-orange-500 mb-2" fontSize="large" />
-                      <p className="text-[#7a4a32] font-medium">Nhấn để chọn ảnh</p>
-                      <p className="text-xs text-gray-500 mt-1">PNG, JPG (tối đa 5MB)</p>
-                    </div>
-                  </label>
-                </div>
-              ) : (
-                <div className="relative">
-                  <div className="border-2 border-orange-200 rounded-lg overflow-hidden bg-gray-50 h-[180px] flex items-center justify-center">
-                    <img
-                      src={avatarPreview}
-                      alt="Avatar preview"
-                      className="max-w-full max-h-full object-contain"
-                    />
-                  </div>
+                </label>
+
+                {avatarPreview && (
                   <button
                     type="button"
                     onClick={removeAvatar}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 transition-colors shadow-md"
-                    title="Xóa ảnh"
+                    className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-lg transition-all"
                   >
                     <PersonOff fontSize="small" />
                   </button>
-                  <p className="text-xs text-[#7a4a32] mt-2 truncate">
-                    {formData.avatar?.name}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
+                )}
+              </div>
 
-          <div className="flex justify-end mt-5">
-            <button
-              type="submit"
-              disabled={!isFormValid() || isSubmitting || Object.keys(formErrors).length > 0} 
-              className={`flex items-center gap-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                (isFormValid() && Object.keys(formErrors).length === 0) && !isSubmitting 
-                  ? "bg-orange-500 hover:bg-orange-600 text-white cursor-pointer"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-            >
-              <Add fontSize="small" /> 
-              {isSubmitting ? "Đang tạo..." : "Tạo tài khoản"}
-            </button>
+              <p className="mt-4 text-sm text-gray-600 text-center">
+                Nhấn vào biểu tượng máy ảnh để thêm ảnh
+                <br />
+                (Tối đa 5MB, PNG/JPG)
+              </p>
+            </div>
+
+            {/* Form Fields - Bên phải */}
+            <div className="flex-1">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Username <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    name="username"
+                    type="text"
+                    placeholder="Nhập username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2 border ${
+                      formErrors.username 
+                        ? 'border-red-500' 
+                        : 'border-gray-300'
+                    } rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-500 outline-none transition`}
+                  />
+                  {formErrors.username && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.username}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Mật khẩu <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    name="password"
+                    type="password"
+                    placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2 border ${
+                      formErrors.password 
+                        ? 'border-red-500' 
+                        : 'border-gray-300'
+                    } rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-500 outline-none transition`}
+                  />
+                  {formErrors.password && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.password}</p>
+                  )}
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Xác nhận Mật khẩu <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    name="confirmPassword"
+                    type="password"
+                    placeholder="Xác nhận lại mật khẩu"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2 border ${
+                      formErrors.confirmPassword
+                        ? 'border-red-500' 
+                        : 'border-gray-300'
+                    } rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-500 outline-none transition`}
+                  />
+                  {formErrors.confirmPassword && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.confirmPassword}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Họ <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    name="firstName"
+                    type="text"
+                    placeholder="Nhập họ"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2 border ${
+                      formErrors.firstName 
+                        ? 'border-red-500' 
+                        : 'border-gray-300'
+                    } rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-500 outline-none transition`}
+                  />
+                  {formErrors.firstName && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.firstName}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tên <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    name="lastName"
+                    type="text"
+                    placeholder="Nhập tên"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2 border ${
+                      formErrors.lastName 
+                        ? 'border-red-500' 
+                        : 'border-gray-300'
+                    } rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-500 outline-none transition`}
+                  />
+                  {formErrors.lastName && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.lastName}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    name="email"
+                    type="email"
+                    placeholder="Nhập email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2 border ${
+                      formErrors.email 
+                        ? 'border-red-500' 
+                        : 'border-gray-300'
+                    } rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-500 outline-none transition`}
+                  />
+                  {formErrors.email && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Số điện thoại (10-11 số) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    name="phoneNumber"
+                    type="text"
+                    placeholder="Nhập số điện thoại"
+                    value={formData.phoneNumber}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2 border ${
+                      formErrors.phoneNumber 
+                        ? 'border-red-500' 
+                        : 'border-gray-300'
+                    } rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-500 outline-none transition`}
+                  />
+                  {formErrors.phoneNumber && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.phoneNumber}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Địa chỉ <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    name="address"
+                    type="text"
+                    placeholder="Nhập địa chỉ"
+                    value={formData.address}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2 border ${
+                      formErrors.address 
+                        ? 'border-red-500' 
+                        : 'border-gray-300'
+                    } rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-500 outline-none transition`}
+                  />
+                  {formErrors.address && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.address}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Loại xe <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    name="motorModel"
+                    type="text"
+                    placeholder="Nhập loại xe (VD: Honda Wave)"
+                    value={formData.motorModel}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2 border ${
+                      formErrors.motorModel 
+                        ? 'border-red-500' 
+                        : 'border-gray-300'
+                    } rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-500 outline-none transition`}
+                  />
+                  {formErrors.motorModel && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.motorModel}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Biển số xe <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    name="licensePlateNumber"
+                    type="text"
+                    placeholder="VD: 59H1-12345"
+                    value={formData.licensePlateNumber}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2 border ${
+                      formErrors.licensePlateNumber 
+                        ? 'border-red-500' 
+                        : 'border-gray-300'
+                    } rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-500 outline-none transition uppercase`}
+                  />
+                  {formErrors.licensePlateNumber && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.licensePlateNumber}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    CCCD (9-12 số) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    name="cardId"
+                    type="text"
+                    placeholder="Nhập số CCCD"
+                    value={formData.cardId}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2 border ${
+                      formErrors.cardId 
+                        ? 'border-red-500' 
+                        : 'border-gray-300'
+                    } rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-500 outline-none transition`}
+                  />
+                  {formErrors.cardId && (
+                    <p className="text-red-500 text-xs mt-1">{formErrors.cardId}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-4 mt-8">
+                <button
+                  type="button"
+                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-all font-medium"
+                  onClick={() => {
+                    // Reset form if needed
+                  }}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={!isFormValid() || isSubmitting || Object.keys(formErrors).length > 0}
+                  className={`flex items-center gap-2 px-6 py-2 rounded-lg font-medium transition-all ${
+                    (isFormValid() && Object.keys(formErrors).length === 0) && !isSubmitting 
+                      ? "bg-orange-500 hover:bg-orange-600 text-white cursor-pointer"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  }`}
+                >
+                  <Add fontSize="small" /> 
+                  {isSubmitting ? "Đang tạo..." : "Tạo tài khoản"}
+                </button>
+              </div>
+            </div>
           </div>
         </form>
       </div>
+
+      <EditShipperModal
+        open={editModalOpen}
+        onClose={closeEditModal}
+        shipper={editingShipper}
+        postOfficeId={postOfficeId}
+        onUpdated={handleShipperUpdated}
+      />
 
       <DeliveryScheduleModal
         open={scheduleModalOpen}
