@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PlanController } from './plan.controller';
 import { PlanService } from './plan.service';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtService } from '@nestjs/jwt';
+import { PermissionService } from 'src/common/services/permission.service';
+import { WebhookService } from 'src/common/services/webhook.service';
 
 describe('PlanController', () => {
   let controller: PlanController;
@@ -21,6 +25,27 @@ describe('PlanController', () => {
           provide: PlanService,
           useValue: mockPlanService,
         },
+        {
+          provide: JwtService,
+          useValue: {
+            sign: jest.fn(),
+            verify: jest.fn(),
+            verifyAsync: jest.fn(),
+          },
+        },
+        {
+          provide: PermissionService,
+          useValue: {
+            checkPermission: jest.fn().mockResolvedValue(true),
+          },
+        },
+        {
+          provide: WebhookService,
+          useValue: {
+            sendWebhook: jest.fn(),
+          },
+        },
+        JwtAuthGuard,
       ],
     }).compile();
 

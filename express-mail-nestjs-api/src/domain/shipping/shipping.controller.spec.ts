@@ -5,6 +5,8 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Shipping } from './entities/shipping.entity';
 import { ShippingService } from './shipping.service';
 import { JwtService } from '@nestjs/jwt';
+import { PermissionService } from 'src/common/services/permission.service';
+import { WebhookService } from 'src/common/services/webhook.service';
 
 describe('ShippingController', () => {
   let controller: ShippingController;
@@ -13,6 +15,7 @@ describe('ShippingController', () => {
     const mockJwtService = {
       sign: jest.fn(),
       verify: jest.fn(),
+      verifyAsync: jest.fn(),
     };
     const mockShippingService = {
       findAll: jest.fn(),
@@ -32,6 +35,18 @@ describe('ShippingController', () => {
         {
           provide: JwtService,
           useValue: mockJwtService,
+        },
+        {
+          provide: PermissionService,
+          useValue: {
+            checkPermission: jest.fn().mockResolvedValue(true),
+          },
+        },
+        {
+          provide: WebhookService,
+          useValue: {
+            sendWebhook: jest.fn(),
+          },
         },
         JwtAuthGuard,
         {

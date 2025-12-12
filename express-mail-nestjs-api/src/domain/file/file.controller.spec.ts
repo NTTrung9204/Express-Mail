@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FileController } from './file.controller';
 import { FileService } from './file.service';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { JwtService } from '@nestjs/jwt';
+import { PermissionService } from 'src/common/services/permission.service';
+import { WebhookService } from 'src/common/services/webhook.service';
 
 describe('FileController', () => {
   let controller: FileController;
@@ -15,6 +19,27 @@ describe('FileController', () => {
             getFile: jest.fn(),
           },
         },
+        {
+          provide: JwtService,
+          useValue: {
+            sign: jest.fn(),
+            verify: jest.fn(),
+            verifyAsync: jest.fn(),
+          },
+        },
+        {
+          provide: PermissionService,
+          useValue: {
+            checkPermission: jest.fn().mockResolvedValue(true),
+          },
+        },
+        {
+          provide: WebhookService,
+          useValue: {
+            sendWebhook: jest.fn(),
+          },
+        },
+        JwtAuthGuard,
       ],
     }).compile();
 
