@@ -361,6 +361,10 @@ const CreateOrderPage = () => {
       toast.error("Vui lòng nhập số điện thoại người nhận");
       return;
     }
+    if (!orderData.receiver_name) {
+      toast.error("Vui lòng nhập tên người nhận");
+      return;
+    }
     if (!orderData.receiver_province_city || !orderData.receiver_district || !orderData.receiver_ward_commune) {
       toast.error("Vui lòng chọn đầy đủ địa chỉ");
       return;

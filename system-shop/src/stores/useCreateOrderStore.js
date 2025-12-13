@@ -8,6 +8,7 @@ export const useOrderCreationStore = () => {
   const [provinces, setProvinces] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
+  
 
   const [loadingProvinces, setLoadingProvinces] = useState(false);
   const [loadingDistricts, setLoadingDistricts] = useState(false);
@@ -95,6 +96,7 @@ export const useOrderCreationStore = () => {
       const apiPayload = {
         ...orderDataFromComponent,
 
+        receiver_name: orderDataFromComponent.receiver_name,
         receiver_province_city: provinceName,
         receiver_district: districtName,
         receiver_ward_commune: wardName,
