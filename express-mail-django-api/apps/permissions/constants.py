@@ -108,6 +108,7 @@ GROUP_PERMISSIONS_MAP = {
         "routing.call_vrp",
         "users.view_shipperprofile",
         "users.view_postofficestaffprofile",
+        "post_offices.view_postoffice",
         "post_offices.add_shipper",
         "post_offices.add_staff",
         "post_offices.edit_user",
