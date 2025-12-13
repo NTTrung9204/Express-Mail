@@ -6,12 +6,12 @@ export class WebhookService {
   constructor(private readonly redisService: RedisService) {}
 
   validatePermissionChangeDto(userId: number, timestamp: number): void {
-    if (!userId || typeof userId !== 'number') {
-      throw new BadRequestException('userId must be a valid number');
+    if (!userId || userId <= 0) {
+      throw new BadRequestException('userId must be a positive number');
     }
 
-    if (!timestamp || typeof timestamp !== 'number') {
-      throw new BadRequestException('timestamp must be a valid number');
+    if (!timestamp || timestamp <= 0) {
+      throw new BadRequestException('timestamp must be a positive number');
     }
   }
 
