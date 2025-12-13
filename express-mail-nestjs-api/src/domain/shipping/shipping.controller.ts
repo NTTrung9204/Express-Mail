@@ -24,6 +24,9 @@ import {
 } from '@nestjs/swagger';
 import { ApiResponseDto } from 'src/common/dto/api-response.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { RoleGuard } from 'src/common/guards/role.guard';
+import { RequireRole } from 'src/common/decorators/require-role.decorator';
+import { RoleEnum } from 'src/common/enums/role.enum';
 import { ShippingService } from './shipping.service';
 import {
   AssignShipperDto,
@@ -40,13 +43,19 @@ import { AuthJwtRequest } from 'src/common/@type/jwt-payload.type';
 
 @ApiTags('Shipping')
 @Controller('shipping')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RoleGuard)
 @ApiBearerAuth('JWT-auth')
 @ApiBearerAuth()
 export class ShippingController {
   constructor(private readonly shippingService: ShippingService) {}
 
   @Post()
+  @RequireRole(
+    RoleEnum.ADMIN,
+    RoleEnum.SUPER_ADMIN,
+    RoleEnum.POST_OFFICE_STAFF,
+    RoleEnum.POST_OFFICE_MANAGER,
+  )
   @ApiOperation({ summary: 'Create shipping' })
   @ApiBody({ type: CreateShippingDto })
   @ApiResponse({
@@ -54,6 +63,7 @@ export class ShippingController {
     description: 'Created',
     type: ShippingResponseDto,
   })
+  @ApiResponse({ status: 403, description: 'Forbidden - Role not allowed' })
   async create(
     @Body() dto: CreateShippingDto,
   ): Promise<ApiResponseDto<ShippingResponseDto>> {
@@ -68,10 +78,18 @@ export class ShippingController {
   }
 
   @Get()
+  @RequireRole(
+    RoleEnum.ADMIN,
+    RoleEnum.SUPER_ADMIN,
+    RoleEnum.POST_OFFICE_STAFF,
+    RoleEnum.POST_OFFICE_MANAGER,
+    RoleEnum.SHIPPER,
+  )
   @ApiOperation({ summary: 'List shipping (paginated)' })
   @ApiQuery({ name: 'page', required: false, description: 'Page number' })
   @ApiQuery({ name: 'limit', required: false, description: 'Items per page' })
   @ApiResponse({ status: 200, type: [ShippingResponseDto] })
+  @ApiResponse({ status: 403, description: 'Forbidden - Role not allowed' })
   async findAll(
     @Query() pagination: PaginationDto,
   ): Promise<ApiResponseDto<PaginatedResponseDto<Shipping>>> {
@@ -80,9 +98,17 @@ export class ShippingController {
   }
 
   @Get(':id')
+  @RequireRole(
+    RoleEnum.ADMIN,
+    RoleEnum.SUPER_ADMIN,
+    RoleEnum.POST_OFFICE_STAFF,
+    RoleEnum.POST_OFFICE_MANAGER,
+    RoleEnum.SHIPPER,
+  )
   @ApiOperation({ summary: 'Get shipping by id' })
   @ApiParam({ name: 'id', type: 'number' })
   @ApiResponse({ status: 200, type: ShippingResponseDto })
+  @ApiResponse({ status: 403, description: 'Forbidden - Role not allowed' })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<ApiResponseDto<ShippingResponseDto>> {
@@ -91,8 +117,10 @@ export class ShippingController {
   }
 
   @Get('shipper/:shipperId')
+  @RequireRole(RoleEnum.SHIPPER, RoleEnum.ADMIN, RoleEnum.SUPER_ADMIN)
   @ApiOperation({ summary: 'Get orders by shipper ID with filters' })
   @ApiResponse({ status: 200, type: PaginatedResponseDto })
+  @ApiResponse({ status: 403, description: 'Forbidden - Role not allowed' })
   async getShipperOrders(
     @Query() query: GetShipperOrdersDto,
     @Req() req: AuthJwtRequest,
@@ -109,10 +137,17 @@ export class ShippingController {
   }
 
   @Patch(':id')
+  @RequireRole(
+    RoleEnum.ADMIN,
+    RoleEnum.SUPER_ADMIN,
+    RoleEnum.POST_OFFICE_STAFF,
+    RoleEnum.POST_OFFICE_MANAGER,
+  )
   @ApiOperation({ summary: 'Update shipping' })
   @ApiParam({ name: 'id', type: 'number' })
   @ApiBody({ type: UpdateShippingDto })
   @ApiResponse({ status: 200, type: ShippingResponseDto })
+  @ApiResponse({ status: 403, description: 'Forbidden - Role not allowed' })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateShippingDto,
@@ -122,10 +157,17 @@ export class ShippingController {
   }
 
   @Patch(':id/assign')
+  @RequireRole(
+    RoleEnum.ADMIN,
+    RoleEnum.SUPER_ADMIN,
+    RoleEnum.POST_OFFICE_STAFF,
+    RoleEnum.POST_OFFICE_MANAGER,
+  )
   @ApiOperation({ summary: 'Assign shipper to shipping' })
   @ApiParam({ name: 'id', type: 'number' })
   @ApiBody({ type: AssignShipperDto })
   @ApiResponse({ status: 200, type: ShippingResponseDto })
+  @ApiResponse({ status: 403, description: 'Forbidden - Role not allowed' })
   async assignShipper(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: AssignShipperDto,
@@ -135,10 +177,18 @@ export class ShippingController {
   }
 
   @Patch(':id/status')
+  @RequireRole(
+    RoleEnum.ADMIN,
+    RoleEnum.SUPER_ADMIN,
+    RoleEnum.POST_OFFICE_STAFF,
+    RoleEnum.POST_OFFICE_MANAGER,
+    RoleEnum.SHIPPER,
+  )
   @ApiOperation({ summary: 'Update shipping status' })
   @ApiParam({ name: 'id', type: 'number' })
   @ApiBody({ type: UpdateShippingStatusDto })
   @ApiResponse({ status: 200, type: ShippingResponseDto })
+  @ApiResponse({ status: 403, description: 'Forbidden - Role not allowed' })
   async updateStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateShippingStatusDto,
@@ -148,10 +198,16 @@ export class ShippingController {
   }
 
   @Delete(':id')
+  @RequireRole(
+    RoleEnum.ADMIN,
+    RoleEnum.SUPER_ADMIN,
+    RoleEnum.POST_OFFICE_MANAGER,
+  )
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Soft delete shipping' })
   @ApiParam({ name: 'id', type: 'number' })
   @ApiResponse({ status: 204, description: 'Deleted' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Role not allowed' })
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.shippingService.remove(id);
   }

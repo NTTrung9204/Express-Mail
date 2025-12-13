@@ -2,12 +2,19 @@ import { Controller, Get, Param, Res } from '@nestjs/common';
 import { ApiTags, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { Response } from 'express';
 import { FileService } from './file.service';
+import { PermissionGuard } from 'src/common/guards/permission.guard';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { UseGuards } from '@nestjs/common';
+import { PermissionEnum } from 'src/common/enums/permission.enum';
+import { RequirePermission } from 'src/common/decorators/require-permission.decorator';
 
 @ApiTags('File')
 @Controller('uploads')
+@UseGuards(JwtAuthGuard, PermissionGuard)
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 
+  @RequirePermission(PermissionEnum.CAN_CREATE_ORDER)
   @Get(':filename')
   @ApiParam({
     name: 'filename',

@@ -14,7 +14,6 @@ export class FileService {
   );
 
   getFile(filename: string): { path: string; mimetype: string } {
-    // Validate filename to prevent directory traversal
     if (
       filename.includes('..') ||
       filename.includes('/') ||
@@ -26,12 +25,10 @@ export class FileService {
     const filePath = path.join(this.uploadDir, filename);
     console.log('Resolved file path:', filePath);
 
-    // Check if file exists
     if (!fs.existsSync(filePath)) {
       throw new NotFoundException(`File ${filename} not found`);
     }
 
-    // Get mimetype from extension
     const ext = path.extname(filename).toLowerCase();
     const mimetypeMap: Record<string, string> = {
       '.jpg': 'image/jpeg',
