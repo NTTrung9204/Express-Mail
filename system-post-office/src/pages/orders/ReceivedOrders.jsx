@@ -255,7 +255,7 @@ const ReceivedOrders = () => {
                     <th className="p-3 border-b border-orange-200">COD</th>
                     <th className="p-3 border-b border-orange-200">Phí vận chuyển</th>
                     {tab === "transfer" && (
-                      <th className="p-3 border-b border-orange-200">Cách tiếp theo</th>
+                      <th className="p-3 border-b border-orange-200">Bưu cục tiếp theo</th>
                     )}
                     <th className="p-3 border-b border-orange-200 text-center">
                       Hành động
@@ -293,7 +293,7 @@ const ReceivedOrders = () => {
                             PO #{order.nearestPostOfficeId}
                           </span>
                           <div className="text-gray-500 mt-1">
-                            {order.nearestPostOfficeDistance?.toFixed(2)} km
+                            {order.distanceToReceiver?.toFixed(2)} km
                           </div>
                         </td>
                       )}

@@ -822,7 +822,10 @@ export class OrderService {
         nearestPostOfficeId: number;
       }
     >();
-    if (status === PostOfficeOrderStatus.IN_WAREHOUSE) {
+    if (
+      status === PostOfficeOrderStatus.IN_WAREHOUSE ||
+      status === PostOfficeOrderStatus.CLASSIFIED
+    ) {
       for (const order of enrichedOrders) {
         const readinessInfo = await this.checkIsReadyForDelivery(
           order,
