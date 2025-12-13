@@ -80,6 +80,7 @@ jobs:
           DJANGO_USERNAME: ${{ secrets.DJANGO_USERNAME }}
           DJANGO_PASSWORD: ${{ secrets.DJANGO_PASSWORD }}
           REDIS_PORT: ${{ secrets.REDIS_PORT }}
+          WEBHOOK_SECRET_KEY: ${{ secrets.WEBHOOK_SECRET_KEY }}
         run: |
           IMAGE_TAG=latest
           COMPOSE_PROJECT_NAME=nestjs-dev
