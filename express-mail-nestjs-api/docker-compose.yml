@@ -49,6 +49,7 @@ services:
       DJANGO_BACKEND_URL: ${DJANGO_BACKEND_URL}
       DJANGO_USERNAME: ${DJANGO_USERNAME}
       DJANGO_PASSWORD: ${DJANGO_PASSWORD}
+      WEBHOOK_SECRET_KEY: ${WEBHOOK_SECRET_KEY}
     volumes:
       - uploads_data:/app/uploads
     depends_on:
