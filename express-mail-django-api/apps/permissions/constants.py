@@ -163,6 +163,7 @@ GROUP_PERMISSIONS_MAP = {
         "order_external_app.can_view_order_details",
         "order_external_app.can_update_order",
         "order_external_app.can_soft_delete_order",
+        "order_external_app.can_view_shop_orders",
     ],
     Groups.SHIPPER.value: [
         "order_external_app.can_view_pickup_orders",
