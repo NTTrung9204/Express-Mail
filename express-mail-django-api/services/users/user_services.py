@@ -1,6 +1,9 @@
 from django.contrib.auth.hashers import make_password
 
 from apps.users.models import User
+from django.conf import settings
+import requests
+import time
 
 
 class UserService:
@@ -105,3 +108,26 @@ class UserService:
 
         user.is_active = is_active
         user.save()
+
+    @staticmethod
+    def revoke_nestjs_user_token(user):
+        """
+        Tell NestJS server to blacklist all user token created in the past.
+        """
+
+        body = {"userId": user.id, "timestamp": int(time.time())}
+
+        headers = {
+            "X-API-KEY": settings.NESTJS_API_KEY,
+            "Content-Type": "application/json",
+        }
+
+        response = requests.post(
+            settings.REVOKE_USER_TOKEN_URL,
+            json=body,
+            headers=headers,
+        )
+
+        response.raise_for_status()
+
+        return response.json()
