@@ -1,14 +1,27 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { RedisService } from './redis.service';
 
 @Injectable()
 export class WebhookService {
   constructor(private readonly redisService: RedisService) {}
+
+  validatePermissionChangeDto(userId: number, timestamp: number): void {
+    if (!userId || typeof userId !== 'number') {
+      throw new BadRequestException('userId must be a valid number');
+    }
+
+    if (!timestamp || typeof timestamp !== 'number') {
+      throw new BadRequestException('timestamp must be a valid number');
+    }
+  }
+
   async addToPermissionBlacklist(
     userId: number,
     timestamp: number,
     ttl: number,
   ): Promise<void> {
+    this.validatePermissionChangeDto(userId, timestamp);
+
     const redisKey = this.getBlacklistKey(userId);
     await this.redisService.set(redisKey, timestamp.toString(), ttl);
   }
