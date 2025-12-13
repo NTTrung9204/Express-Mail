@@ -335,5 +335,6 @@ CACHES = {
     },
 }
 
-# Encrypt
-ENCRYPT_PASSWORD = os.getenv("ENCRYPT_PASSWORD")
+# NestJS Server
+NESTJS_API_KEY = os.getenv("NESTJS_API_KEY")
+REVOKE_USER_TOKEN_URL = os.getenv("REVOKE_USER_TOKEN_URL")
