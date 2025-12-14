@@ -43,6 +43,7 @@ from shared.permissions import (
     IsUserAuthenticated,
 )
 from utils.generators import Generator
+from apps.users.tasks import send_reset_password_otp_task, send_init_password_email_task
 
 
 @extend_schema(tags=["Users"])
@@ -71,7 +72,14 @@ class UserViewSet(ModelViewSet, BaseAPIViewSet):
         Create a new User instance with hashed password.
         """
 
-        new_user = UserService.create(serializer.validated_data)
+        data = serializer.validated_data.copy()
+        password = Generator.generate_random_password()
+        data["password"] = password
+
+        new_user = UserService.create(data)
+
+        send_init_password_email_task(new_user.email, password)
+
         serializer.instance = new_user
 
     def perform_update(self, serializer):
@@ -258,7 +266,7 @@ class ResetPasswordViewSet(BaseAPIViewSet):
         if user:
             otp = Generator.generate_otp()
             PasswordResetOTPService.create_password_reset_otp(user, otp)
-            PasswordResetOTPService.send_reset_password_otp(user.email, otp)
+            send_reset_password_otp_task.delay.send_reset_password_otp(user.email, otp)
 
         return self.response_ok()
 

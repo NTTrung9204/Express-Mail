@@ -14,4 +14,4 @@ class UsersConfig(AppConfig):
         Import signal classes.
         """
 
-        from apps.users.signals import invalidate_jwt_on_permission_change  # noqa: F401
+        from apps.users import signals  # noqa: F401

@@ -318,13 +318,19 @@ MAP_API_VERSION = os.getenv("MAP_API_VERSION")
 MAP_API_TIMEOUT = 10
 
 # Redis
-REDIS_URL = os.getenv("REDIS_URL", "redis://redis:6379/1")
+REDIS_RATE_LIMIT_CACHE_URL = os.getenv(
+    "REDIS_RATE_LIMIT_CACHE_URL", "redis://redis:6379/1"
+)
+REDIS_CELERY_BROKER_URL = os.getenv("REDIS_CELERY_BROKER_URL", "redis://redis:6379/2")
+CELERY_RESULT_BACKEND_URL = os.getenv(
+    "CELERY_RESULT_BACKEND_URL", "redis://redis:6379/3"
+)
 
 # Caches
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": REDIS_URL,
+        "LOCATION": REDIS_RATE_LIMIT_CACHE_URL,
         "TIMEOUT": 300,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
@@ -338,3 +344,11 @@ CACHES = {
 # NestJS Server
 NESTJS_API_KEY = os.getenv("NESTJS_API_KEY")
 REVOKE_USER_TOKEN_URL = os.getenv("REVOKE_USER_TOKEN_URL")
+
+# Celery for background tasks
+CELERY_BROKER_URL = REDIS_CELERY_BROKER_URL
+CELERY_RESULT_BACKEND = CELERY_RESULT_BACKEND_URL
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "UTC"
