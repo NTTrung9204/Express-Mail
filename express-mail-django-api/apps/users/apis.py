@@ -24,6 +24,7 @@ from apps.users.serializers import (
     GetNameListResponseSerializer,
     ShopRegisterSerializer,
     ChangeUserStatusRequestSerializer,
+    ChangeUserPasswordRequestSerializer,
 )
 from apps.users.throttling import (
     OTPRequestThrottle,
@@ -36,7 +37,11 @@ from services.profiles.profile_services import ProfileService
 from services.users.password_reset_otp_services import PasswordResetOTPService
 from services.users.user_services import UserService
 from shared.apis import BaseAPIViewSet
-from shared.permissions import GenericMultiPermission, FullDjangoModelPermissions
+from shared.permissions import (
+    GenericMultiPermission,
+    FullDjangoModelPermissions,
+    IsUserAuthenticated,
+)
 from utils.generators import Generator
 
 
@@ -192,6 +197,31 @@ class UserViewSet(ModelViewSet, BaseAPIViewSet):
         is_active = validated_data["is_active"]
 
         UserService.change_status(user, is_active)
+
+        return self.response_ok()
+
+    @extend_schema(
+        request=ChangeUserPasswordRequestSerializer,
+        responses={status.HTTP_200_OK: OpenApiResponse()},
+    )
+    @action(
+        methods=["post"],
+        detail=False,
+        url_path="change-password",
+        permission_classes=[IsUserAuthenticated],
+    )
+    def change_password(self, request):
+        """
+        Change password for current user.
+        """
+
+        serializer = ChangeUserPasswordRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        password = serializer.validated_data["password"]
+        user = request.user
+
+        UserService.change_password(user, password)
 
         return self.response_ok()
 

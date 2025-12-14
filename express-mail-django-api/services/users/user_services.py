@@ -131,3 +131,12 @@ class UserService:
         response.raise_for_status()
 
         return response.json()
+
+    @staticmethod
+    def change_password(user, password):
+        """
+        Change user password.
+        """
+
+        user.set_password(password)
+        user.save()
