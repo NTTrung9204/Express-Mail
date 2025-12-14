@@ -60,3 +60,16 @@ class ExcludePermissionModelBackend(ModelBackend):
         }
 
         return all_perms - excluded_perms
+
+
+class IsUserAuthenticated(BasePermission):
+    """
+    Permission class that checks if user is authenticated.
+    """
+
+    def has_permission(self, request, view):
+        """
+        Check if user is authenticated.
+        """
+
+        return request.user.is_authenticated

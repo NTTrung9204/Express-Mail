@@ -388,3 +388,11 @@ class ChangeUserStatusRequestSerializer(serializers.Serializer):
     """
 
     is_active = serializers.BooleanField()
+
+
+class ChangeUserPasswordRequestSerializer(serializers.Serializer):
+    """
+    Serializer class for change user password request.
+    """
+
+    password = serializers.CharField(min_length=6)
