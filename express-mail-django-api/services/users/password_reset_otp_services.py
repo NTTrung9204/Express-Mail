@@ -1,10 +1,7 @@
-from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
 import hashlib
 
-from utils.send_mail import SendMail
-from django.template.loader import render_to_string
 
 from apps.users.models import PasswordResetOTP
 
@@ -15,27 +12,6 @@ class PasswordResetOTPService:
     """
     Service class for PasswordResetOTP model.
     """
-
-    @staticmethod
-    def send_reset_password_otp(email, otp):
-        """
-        Send reset password otp to user's email.
-        """
-
-        subject = f"{settings.APP_NAME}: Mã xác thực đặt lại mật khẩu"
-        html_message = render_to_string(
-            "emails/reset_password_otp.html",
-            {"otp": otp, "app_name": settings.APP_NAME},
-        )
-
-        try:
-            SendMail.send(
-                subject=subject,
-                html_message=html_message,
-                recipient_list=[email],
-            )
-        except Exception:
-            pass
 
     @staticmethod
     def create_password_reset_otp(user, otp):

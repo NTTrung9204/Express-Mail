@@ -34,6 +34,8 @@ from services.profiles.profile_services import ProfileService
 from services.users.user_services import UserService
 from shared.apis import BaseAPIViewSet
 from shared.permissions import FullDjangoModelPermissions
+from utils.generators import Generator
+from apps.users.tasks import send_init_password_email_task
 
 
 @extend_schema(tags=["PostOffices"])
@@ -182,6 +184,9 @@ class PostOfficeShipperViewSet(BaseAPIViewSet):
         validated_data = serializer.validated_data
 
         user_data = validated_data["user"]
+        password = Generator.generate_random_password()
+        user_data["password"] = password
+
         exclude_permissions = validated_data["exclude_permissions"]
         profile_data = validated_data["profile"]
 
@@ -191,6 +196,8 @@ class PostOfficeShipperViewSet(BaseAPIViewSet):
 
         user.groups.add(GroupService.get_group_by_name(Groups.SHIPPER.value))
         PermissionService.update_exclude_permissions(user, exclude_permissions)
+
+        send_init_password_email_task.delay(user.email, password)
 
         response_data = ShipperInPostOfficeSerializer(
             {"user": user, "profile": shipper_profile}
@@ -338,6 +345,9 @@ class PostOfficeStaffViewSet(BaseAPIViewSet):
         validated_data = serializer.validated_data
 
         user_data = validated_data["user"]
+        password = Generator.generate_random_password()
+        user_data["password"] = password
+
         exclude_permissions = validated_data["exclude_permissions"]
         profile_data = validated_data["profile"]
 
@@ -350,6 +360,8 @@ class PostOfficeStaffViewSet(BaseAPIViewSet):
 
         user.groups.add(GroupService.get_group_by_name(Groups.POST_OFFICE_STAFF.value))
         PermissionService.update_exclude_permissions(user, exclude_permissions)
+
+        send_init_password_email_task.delay(user.email, password)
 
         return self.response_created(
             StaffInPostOfficeSerializer({"user": user, "profile": staff_profile}).data

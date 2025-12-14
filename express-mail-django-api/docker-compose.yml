@@ -7,6 +7,8 @@ services:
     image: express-mail-api
     container_name: express_mail_api
     command: python manage.py runserver 0.0.0.0:8000
+    env_file:
+      - .env
     volumes:
       - .:/code
     ports:
@@ -29,13 +31,21 @@ services:
     volumes:
       - data_express_mail:/var/lib/postgresql/data
 
+  celery:
+    build: .
+    command: celery -A core worker --loglevel=info
+    volumes:
+      - .:/code
+    depends_on:
+      - redis
+
   redis:
     image: redis:7-alpine
     container_name: express_mail_redis
     restart: unless-stopped
     command: redis-server --appendonly yes --maxmemory 25mb --maxmemory-policy allkeys-lru
     ports:
-      - "6379:6379"
+      - "${MAPPING_REDIS_PORT}:6379"
     volumes:
       - redis_data:/data
 

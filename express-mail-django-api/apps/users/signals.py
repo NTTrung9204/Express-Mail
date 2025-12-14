@@ -6,7 +6,7 @@ from services.users.user_services import UserService
 
 
 @receiver(m2m_changed, sender=User.exclude_permissions.through)
-def invalidate_jwt_on_permission_change(sender, instance, action, **kwargs):
+def on_exclude_permissions_changed(sender, instance, action, **kwargs):
     """
     Invalid user JWT if exclude permission is changed.
     """

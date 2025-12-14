@@ -66,12 +66,16 @@ class StaffInProfileSerializer(serializers.ModelSerializer):
         fields = []
 
 
+class UserRegisterWithoutPasswordSerializer(UserRegisterSerializer):
+    password = serializers.CharField(write_only=True, required=False, min_length=6)
+
+
 class ShipperInPostOfficeSerializer(serializers.Serializer):
     """
     Serializer class for add shipper to post office.
     """
 
-    user = UserRegisterSerializer()
+    user = UserRegisterWithoutPasswordSerializer()
     profile = PostOfficeShipperProfileSerializer()
     exclude_permissions = serializers.PrimaryKeyRelatedField(
         queryset=GroupService.get_permissions_of_group(Groups.SHIPPER.value),
@@ -107,7 +111,7 @@ class StaffInPostOfficeSerializer(serializers.Serializer):
     Serializer class for add staff to post office.
     """
 
-    user = UserRegisterSerializer()
+    user = UserRegisterWithoutPasswordSerializer()
     profile = StaffInProfileSerializer()
     exclude_permissions = serializers.PrimaryKeyRelatedField(
         queryset=GroupService.get_permissions_of_group(Groups.POST_OFFICE_STAFF.value),
