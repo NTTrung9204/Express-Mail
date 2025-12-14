@@ -174,5 +174,6 @@ GROUP_PERMISSIONS_MAP = {
         "order_external_app.can_view_orders_by_status",
         "order_external_app.can_view_order_details",
         "order_external_app.can_update_order",
+        "plan_external_app.can_view_shipping_plan",
     ],
 }
