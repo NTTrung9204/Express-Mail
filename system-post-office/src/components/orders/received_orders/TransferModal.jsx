@@ -1,12 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Info, LocationOn } from '@mui/icons-material';
+import { Info, LocationOn, ExpandLess, ExpandMore } from '@mui/icons-material';
 import { nestJSAPI, djangoAPI } from '../../../api/axiosInstances';
 import { toast } from 'react-toastify';
 
-const TransferModal = ({ open, onClose, selectedOrders, currentPostOfficeId, onTransferComplete }) => {
+const TransferModal = ({ open, onClose, selectedOrders, onTransferComplete }) => {
   const [processing, setProcessing] = useState(false);
   const [postOffices, setPostOffices] = useState({});
   const [loading, setLoading] = useState(true);
+  const [expandedPostOffices, setExpandedPostOffices] = useState({});
+
+  const togglePostOfficeExpand = (poId) => {
+    setExpandedPostOffices(prev => ({
+      ...prev,
+      [poId]: !prev[poId]
+    }));
+  };
 
   useEffect(() => {
     if (open && selectedOrders.length > 0) {
@@ -134,51 +142,80 @@ const TransferModal = ({ open, onClose, selectedOrders, currentPostOfficeId, onT
               </p>
             </div>
 
-            <div className="space-y-3">
-              {selectedOrders.map((order) => {
-                const nextPO = postOffices[order.nearestPostOfficeId];
+            <div className="space-y-4">
+              {Object.entries(
+                selectedOrders.reduce((grouped, order) => {
+                  const poId = order.nearestPostOfficeId;
+                  if (!grouped[poId]) {
+                    grouped[poId] = [];
+                  }
+                  grouped[poId].push(order);
+                  return grouped;
+                }, {})
+              ).map(([poId, orders]) => {
+                const nextPO = postOffices[poId];
                 return (
                   <div
-                    key={order.id}
-                    className="border border-gray-200 rounded-lg p-3 bg-gray-50"
+                    key={poId}
+                    className="border border-gray-200 rounded-lg p-4 bg-gray-50"
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <p className="font-semibold text-gray-800">{order.code}</p>
-                        <p className="text-xs text-gray-500">{order.shopProfile?.username}</p>
-                      </div>
-                      <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded">
-                        {order.cod?.toLocaleString('vi-VN')} đ
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-sm">
-                      <LocationOn fontSize="small" className="text-red-500" />
-                      <span className="text-gray-600">
-                        Bưu cục hiện tại: <span className="font-medium">PO #{currentPostOfficeId}</span>
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 text-sm mt-2">
+                    <div
+                      onClick={() => togglePostOfficeExpand(poId)}
+                      className="flex items-center gap-2 mb-3 cursor-pointer hover:bg-gray-100 -mx-4 -mt-4 px-4 py-3 rounded-t-lg transition-colors"
+                    >
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          togglePostOfficeExpand(poId);
+                        }}
+                        className="flex-shrink-0 text-gray-600 hover:text-gray-800 transition-colors cursor-pointer"
+                      >
+                        {expandedPostOffices[poId] ? (
+                          <ExpandLess fontSize="small" />
+                        ) : (
+                          <ExpandMore fontSize="small" />
+                        )}
+                      </button>
                       <LocationOn fontSize="small" className="text-green-600" />
-                      <span className="text-gray-600">
-                        Bưu cục tiếp theo: 
+                      <div className="flex-1">
                         {nextPO ? (
                           <>
-                            <span className="font-medium"> {nextPO.name}</span>
-                            <span className="text-gray-500 text-xs ml-1">
-                              ({nextPO.address})
-                            </span>
+                            <p className="font-semibold text-gray-800">{nextPO.name}</p>
+                            <p className="text-xs text-gray-500">{nextPO.address}</p>
                           </>
                         ) : (
-                          <span className="font-medium"> PO #{order.nearestPostOfficeId}</span>
+                          <p className="font-semibold text-gray-800">PO #{poId}</p>
                         )}
+                      </div>
+                      <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded font-medium">
+                        {orders.length} đơn
                       </span>
                     </div>
 
-                    <div className="text-xs text-gray-500 mt-2">
-                      Khoảng cách: {order.nearestPostOfficeDistance?.toFixed(2)} km
-                    </div>
+                    {expandedPostOffices[poId] && (
+                      <div className="space-y-2 pl-4">
+                        {orders.map((order) => (
+                          <div
+                            key={order.id}
+                            className="bg-white border border-gray-200 rounded p-2 flex justify-between items-center"
+                          >
+                            <div>
+                              <p className="font-medium text-gray-800 text-sm">{order.code}</p>
+                              <p className="text-xs text-gray-500">{order.shopProfile?.username}</p>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-xs px-2 py-1 bg-orange-100 text-orange-700 rounded block mb-1">
+                                {order.cod?.toLocaleString('vi-VN')} đ
+                              </span>
+                              <p className="text-xs text-gray-500">
+                                {order.distanceToReceiver?.toFixed(2)} km
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })}
