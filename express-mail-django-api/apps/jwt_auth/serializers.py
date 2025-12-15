@@ -1,13 +1,16 @@
+from django.contrib.auth.models import update_last_login
 from rest_framework_simplejwt.serializers import (
     TokenBlacklistSerializer,
     TokenObtainPairSerializer,
 )
 from rest_framework import serializers
-from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.exceptions import TokenError, AuthenticationFailed
 from apps.jwt_auth.models import AccessTokenWhiteList
 from apps.permissions.constants import Roles
 from services.permissions.permission_services import PermissionService
+from services.users.user_services import UserService
 from shared.messages import ERROR_MESSAGES
+from rest_framework_simplejwt.settings import api_settings
 
 
 class LogoutSerializer(serializers.Serializer):
@@ -68,3 +71,45 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             )
 
         return token
+
+    def validate(self, attrs):
+        """
+        Authenticate user credentials and return JWT access/refresh tokens with custom claims.
+        """
+
+        authenticate_kwargs = {
+            self.username_field: attrs.get(self.username_field),
+            "password": attrs.get("password"),
+        }
+
+        request = self.context.get("request")
+        if request:
+            authenticate_kwargs["request"] = request
+
+        user = UserService.get_user_with_credentials(
+            attrs.get(self.username_field), attrs.get("password")
+        )
+
+        if user is None:
+            raise AuthenticationFailed(
+                ERROR_MESSAGES["common"]["invalid_basic_auth"],
+            )
+
+        if not user.is_active:
+            raise AuthenticationFailed(
+                ERROR_MESSAGES["common"]["account_disabled"],
+            )
+
+        self.user = user
+
+        refresh = self.get_token(self.user)
+
+        data = {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+        }
+
+        if api_settings.UPDATE_LAST_LOGIN:
+            update_last_login(None, self.user)
+
+        return data

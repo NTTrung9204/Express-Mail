@@ -19,9 +19,7 @@ EXCEPTION_MESSAGES = {
     InvalidToken: lambda exc, resp: {
         "message": ERROR_MESSAGES["common"]["invalid_token"]
     },
-    AuthenticationFailed: lambda exc, resp: {
-        "message": ERROR_MESSAGES["common"]["invalid_basic_auth"]
-    },
+    AuthenticationFailed: lambda exc, resp: {"message": exc.detail["detail"]},
     NotAuthenticated: lambda exc, resp: {
         "message": ERROR_MESSAGES["common"]["not_authenticated"]
     },
