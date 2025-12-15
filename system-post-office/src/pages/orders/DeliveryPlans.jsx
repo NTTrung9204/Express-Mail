@@ -5,6 +5,7 @@ import AssignShipperModal from "../../components/orders/delivery_plans/AssignShi
 import Pagination from "../../components/common/Pagination";
 import plansAPI from "../../api/plansAPI";
 import authAPI from "../../api/authAPI";
+import { fetchUserPostOfficeId } from "../../api/profileAPI";
 import { toast } from "react-toastify";
 
 const DeliveryPlans = () => {
@@ -19,13 +20,34 @@ const DeliveryPlans = () => {
   const [expandedPlans, setExpandedPlans] = useState(new Set());
   const [openAssignShipper, setOpenAssignShipper] = useState(false);
   const [selectedVehicleRouteForAssign, setSelectedVehicleRouteForAssign] = useState(null);
+  const [postOfficeId, setPostOfficeId] = useState(null);
 
-  // Get post office ID from user data
-  const user = authAPI.getUser();
-  const postOfficeId = user?.postOffice || 1;
+  // Get post office ID from user data via API
+  useEffect(() => {
+    const fetchPostOfficeId = async () => {
+      const user = authAPI.getUser();
+      const userId = user?.id;
+
+      if (!userId) {
+        toast.error("Không tìm thấy User ID. Vui lòng đăng nhập lại.");
+        return;
+      }
+
+      const id = await fetchUserPostOfficeId(userId);
+      if (id) {
+        setPostOfficeId(id);
+      } else {
+        toast.error("Không thể xác định ID Bưu cục của người dùng.");
+      }
+    };
+
+    fetchPostOfficeId();
+  }, []);
 
   // Fetch plans
   const fetchPlans = async () => {
+    if (!postOfficeId) return;
+
     setLoading(true);
     try {
       const response = await plansAPI.getRoutePlans(postOfficeId, mode, page, limit);
@@ -49,9 +71,11 @@ const DeliveryPlans = () => {
   }, [mode]);
 
   useEffect(() => {
-    fetchPlans();
+    if (postOfficeId) {
+      fetchPlans();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, limit, mode]);
+  }, [postOfficeId, page, limit, mode]);
 
   // Format time in seconds to HH:MM:SS
   const formatTime = (seconds) => {
