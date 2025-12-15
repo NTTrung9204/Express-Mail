@@ -12,7 +12,7 @@ import { VehicleRoute } from './entities/vehicle-route.entity';
 import { RouteStep, RouteStepType } from './entities/route-step.entity';
 import { Order } from '../order/entities/order.entity';
 import { DjangoService } from 'src/common/services/django.service';
-import { CalculateRouteDto } from './dto/calculate-route.dto';
+import { CalculateRouteDto, RouteMode } from './dto/calculate-route.dto';
 import { GetRoutePlansDto } from './dto/get-route-plans.dto';
 import { AssignVehicleRoutesDto } from './dto/assign-vehicle-routes.dto';
 import {
@@ -94,38 +94,73 @@ export class PlanService {
     }));
 
     // Build jobs array
-    const jobs = orders.map((order) => {
-      // Parse receiver_coordinate (format: "lat,lon" -> convert to [lon, lat])
-      const coords = order.receiver_coordinate
-        .split(',')
-        .map((coord) => coord.trim());
+    const jobs = await Promise.all(
+      orders.map(async (order) => {
+        let lat: string;
+        let lon: string;
 
-      if (coords.length !== 2) {
-        throw new BadRequestException(
-          `Invalid coordinate format for order ${order.id}: ${order.receiver_coordinate}. Expected format: "lat,lon"`,
-        );
-      }
+        // Get coordinates based on mode
+        if (dto.mode === RouteMode.PICKUP) {
+          // For pickup mode: get shop coordinates
+          if (!order.shopId) {
+            throw new BadRequestException(
+              `Order ${order.id} missing shopId for pickup mode`,
+            );
+          }
 
-      const [lat, lon] = coords;
-      const latNum = parseFloat(lat);
-      const lonNum = parseFloat(lon);
+          const shopProfile = await this.djangoService.fetchShopProfile(
+            order.shopId.toString(),
+          );
 
-      if (isNaN(latNum) || isNaN(lonNum)) {
-        throw new BadRequestException(
-          `Invalid coordinate values for order ${order.id}: ${order.receiver_coordinate}. Coordinates must be valid numbers`,
-        );
-      }
+          if (!shopProfile || !shopProfile.latitude || !shopProfile.longitude) {
+            throw new BadRequestException(
+              `Shop ${order.shopId} for order ${order.id} missing coordinates`,
+            );
+          }
 
-      // Calculate volume (cm3) and weight (g)
-      const volume = Math.round(order.length * order.width * order.height);
-      const weight = Math.round(order.weight * 1000); // Convert kg to g
+          lat = shopProfile.latitude.toString();
+          lon = shopProfile.longitude.toString();
+        } else {
+          // For delivery mode: get receiver coordinates
+          if (!order.receiver_coordinate) {
+            throw new BadRequestException(
+              `Order ${order.id} missing receiver_coordinate for delivery mode`,
+            );
+          }
 
-      return {
-        id: order.id,
-        location: [lon, lat] as [string, string],
-        amounts: [volume, weight] as [number, number],
-      };
-    });
+          const coords = order.receiver_coordinate
+            .split(',')
+            .map((coord) => coord.trim());
+
+          if (coords.length !== 2) {
+            throw new BadRequestException(
+              `Invalid coordinate format for order ${order.id}: ${order.receiver_coordinate}. Expected format: "lat,lon"`,
+            );
+          }
+
+          [lat, lon] = coords;
+        }
+
+        const latNum = parseFloat(lat);
+        const lonNum = parseFloat(lon);
+
+        if (isNaN(latNum) || isNaN(lonNum)) {
+          throw new BadRequestException(
+            `Invalid coordinate values for order ${order.id}: lat=${lat}, lon=${lon}. Coordinates must be valid numbers`,
+          );
+        }
+
+        // Calculate volume (cm3) and weight (g)
+        const volume = Math.round(order.length * order.width * order.height);
+        const weight = Math.round(order.weight * 1000); // Convert kg to g
+
+        return {
+          id: order.id,
+          location: [lon, lat] as [string, string],
+          amounts: [volume, weight] as [number, number],
+        };
+      }),
+    );
 
     // Call Django service
     const response = await this.djangoService.calculateVehicleRoutingProblem(
