@@ -140,3 +140,19 @@ class UserService:
 
         user.set_password(password)
         user.save()
+
+    @staticmethod
+    def get_user_with_credentials(username, password):
+        """
+        Get user by username and password.
+        """
+
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return None
+
+        if not user.check_password(password):
+            return None
+
+        return user

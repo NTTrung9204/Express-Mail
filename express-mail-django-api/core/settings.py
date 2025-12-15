@@ -237,7 +237,8 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=365),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=7),
+    "UPDATE_LAST_LOGIN": True,
 }
 
 # Spectacular swagger
