@@ -4,27 +4,27 @@ import shippersAPI from "../../../api/shippersAPI";
 import plansAPI from "../../../api/plansAPI";
 import { toast } from "react-toastify";
 
-const AssignShipperModal = ({ open, onClose, vehicleRouteId, onAssignSuccess }) => {
+const AssignShipperModal = ({ open, onClose, vehicleRouteId, postOfficeId, onAssignSuccess }) => {
   const [shippers, setShippers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedShipperId, setSelectedShipperId] = useState(null);
   const [assigning, setAssigning] = useState(false);
 
   useEffect(() => {
-    if (open) {
+    if (open && postOfficeId) {
       fetchShippers();
     }
-  }, [open]);
+  }, [open, postOfficeId]);
 
   const fetchShippers = async () => {
     setLoading(true);
     try {
-      const response = await shippersAPI.getShippers(1, 100);
+      const response = await shippersAPI.getShippers(postOfficeId, 1, 100);
       if (response.success) {
         setShippers(response.data);
         setSelectedShipperId(null);
       } else {
-        toast.error("Không thể lấy danh sách shipper");
+        toast.error(response.message || "Không thể lấy danh sách shipper");
       }
     } catch (error) {
       console.error("Error fetching shippers:", error);

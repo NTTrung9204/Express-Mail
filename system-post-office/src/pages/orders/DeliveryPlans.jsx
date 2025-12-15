@@ -273,6 +273,7 @@ const DeliveryPlans = () => {
         open={openAssignShipper}
         onClose={() => setOpenAssignShipper(false)}
         vehicleRouteId={selectedVehicleRouteForAssign}
+        postOfficeId={postOfficeId}
         onAssignSuccess={() => fetchPlans()}
       />
     </div>
