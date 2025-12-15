@@ -6,6 +6,7 @@ import Pagination from "../../components/common/Pagination";
 import { ordersAPI } from "../../api/ordersAPI";
 import { toast } from "react-toastify";
 import authAPI from "../../api/authAPI";
+import { fetchUserPostOfficeId } from "../../api/profileAPI";
 
 const FailedOrders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -17,13 +18,34 @@ const FailedOrders = () => {
   const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+  const [postOfficeId, setPostOfficeId] = useState(null);
 
-  // Get post office ID from user data
-  const user = authAPI.getUser();
-  const postOfficeId = user?.postOffice || 1;
+  // Get post office ID from user data via API
+  useEffect(() => {
+    const fetchPostOfficeId = async () => {
+      const user = authAPI.getUser();
+      const userId = user?.id;
+
+      if (!userId) {
+        toast.error("Không tìm thấy User ID. Vui lòng đăng nhập lại.");
+        return;
+      }
+
+      const id = await fetchUserPostOfficeId(userId);
+      if (id) {
+        setPostOfficeId(id);
+      } else {
+        toast.error("Không thể xác định ID Bưu cục của người dùng.");
+      }
+    };
+
+    fetchPostOfficeId();
+  }, []);
 
   // Fetch orders
   const fetchOrders = async () => {
+    if (!postOfficeId) return;
+
     setLoading(true);
     try {
       const response = await ordersAPI.getFailedOrders(postOfficeId, page, limit);
@@ -43,9 +65,11 @@ const FailedOrders = () => {
   };
 
   useEffect(() => {
-    fetchOrders();
+    if (postOfficeId) {
+      fetchOrders();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, limit]);
+  }, [postOfficeId, page, limit]);
 
   // Filter orders based on search term
   const filteredOrders = orders.filter((order) =>

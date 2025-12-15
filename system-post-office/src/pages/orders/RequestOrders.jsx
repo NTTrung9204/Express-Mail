@@ -9,6 +9,7 @@ import { ordersAPI } from "../../api/ordersAPI";
 import { nestJSAPI } from "../../api/axiosInstances";
 import { toast } from "react-toastify";
 import authAPI from "../../api/authAPI";
+import { fetchUserPostOfficeId } from "../../api/profileAPI";
 
 const RequestOrders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -23,13 +24,34 @@ const RequestOrders = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrderIds, setSelectedOrderIds] = useState(new Set());
   const [planCreating, setPlanCreating] = useState(false);
+  const [postOfficeId, setPostOfficeId] = useState(null);
 
-  // Get post office ID from user data
-  const user = authAPI.getUser();
-  const postOfficeId = user?.postOffice || 1;
+  // Get post office ID from user data via API
+  useEffect(() => {
+    const fetchPostOfficeId = async () => {
+      const user = authAPI.getUser();
+      const userId = user?.id;
+
+      if (!userId) {
+        toast.error("Không tìm thấy User ID. Vui lòng đăng nhập lại.");
+        return;
+      }
+
+      const id = await fetchUserPostOfficeId(userId);
+      if (id) {
+        setPostOfficeId(id);
+      } else {
+        toast.error("Không thể xác định ID Bưu cục của người dùng.");
+      }
+    };
+
+    fetchPostOfficeId();
+  }, []);
 
   // Fetch orders
   const fetchOrders = async () => {
+    if (!postOfficeId) return;
+
     setLoading(true);
     try {
       const response = await ordersAPI.getPickupOrders(postOfficeId, page, limit);
@@ -49,9 +71,11 @@ const RequestOrders = () => {
   };
 
   useEffect(() => {
-    fetchOrders();
+    if (postOfficeId) {
+      fetchOrders();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, limit]);
+  }, [postOfficeId, page, limit]);
 
   // Get status display
   const getStatusDisplay = (order) => {
