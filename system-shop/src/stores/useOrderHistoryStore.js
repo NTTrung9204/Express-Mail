@@ -91,8 +91,7 @@ export const useOrderHistoryStore = () => {
       orderPostOffices: o.orderPostOffices || [],
       shopProfile: o.shopProfile || null,
       raw: o
-    })); 
-;
+    }));
   };
 
   const getOrders = useCallback(async (page = 1, limit = 9, customFilters = {}) => {
@@ -136,6 +135,12 @@ export const useOrderHistoryStore = () => {
         response: err.response?.data,
         status: err.response?.status
       });
+      
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        setLoading(false);
+        throw err;
+      }
+      
       setError(err.response?.data?.message || err.message || "Lỗi kết nối server");
     } finally {
       setLoading(false);
@@ -160,7 +165,6 @@ export const useOrderHistoryStore = () => {
   }, [getOrders]);
 
   const goToPage = useCallback(async (page) => {
-    
     if (page < 1 || page > paginationRef.current.totalPages) {
       console.warn('Page out of range:', page);
       return;
@@ -172,7 +176,6 @@ export const useOrderHistoryStore = () => {
   const nextPage = useCallback(async () => {
     const currentPage = paginationRef.current.page;
     const totalPages = paginationRef.current.totalPages;
-    
     
     if (currentPage < totalPages) {
       await goToPage(currentPage + 1);

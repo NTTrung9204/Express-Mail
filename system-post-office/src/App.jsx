@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ToastContainer} from 'react-toastify';
 import MainLayout from "./pages/MainLayout";
@@ -15,18 +15,20 @@ import DeliveryPlans from "./pages/orders/DeliveryPlans";
 import Staffs from "./pages/Staffs";
 import { ProtectedRoute, PublicRoute } from "./components/ProtectedRoute";
 import authAPI from "./api/authAPI";
+import { setupAuthInterceptor } from "./interceptor/authInterceptor";
 
 export default function App() {
+   useEffect(() => {
+    setupAuthInterceptor();
+  }, []);
   const isAuthenticated = authAPI.isAuthenticated();
 
   return (
     <div>
       <ToastContainer/>
       <Routes>
-        {/* If authenticated, redirect root to home */}
         <Route path="/" element={<Navigate to={isAuthenticated ? "/post-office/shippers" : "/post-office/login"} replace />} />
 
-        {/* Protected routes - only accessible if logged in */}
         <Route 
           path="/post-office" 
           element={
@@ -49,7 +51,6 @@ export default function App() {
           <Route path="staffs" element={<Staffs />} />
         </Route>
 
-        {/* Order History - standalone route outside MainLayout */}
         <Route 
           path="/post-office/orders/history" 
           element={
@@ -59,7 +60,6 @@ export default function App() {
           } 
         />
 
-        {/* Public route - redirect to home if already logged in */}
         <Route 
           path="/post-office/login" 
           element={
@@ -69,7 +69,6 @@ export default function App() {
           } 
         />
 
-        {/* Catch all - redirect to appropriate page */}
         <Route path="*" element={<Navigate to={isAuthenticated ? "/post-office/home" : "/post-office/login"} replace />} />
       </Routes>
     </div>

@@ -4,7 +4,6 @@ import { fetchProvinces, fetchDistricts, fetchWards } from '../api/locationServi
 import { orderService } from '../api/orderService';
 
 export const useOrderCreationStore = () => {
-
   const [provinces, setProvinces] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [wards, setWards] = useState([]);
@@ -20,6 +19,11 @@ export const useOrderCreationStore = () => {
     fetchProvinces()
       .then(setProvinces)
       .catch(err => {
+        // FIXED: Throw 401/403 để interceptor xử lý
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          setLoadingProvinces(false);
+          throw err;
+        }
         console.error("Lỗi tải Tỉnh/Thành:", err);
         toast.error("Không thể tải danh sách Tỉnh/Thành.");
       })
@@ -38,6 +42,13 @@ export const useOrderCreationStore = () => {
       setDistricts(data);
       setWards([]);
     } catch (error) {
+      setLoadingDistricts(false);
+      
+      // FIXED: Throw 401/403 để interceptor xử lý
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        throw error;
+      }
+      
       console.error("Lỗi tải Quận/Huyện:", error);
       toast.error("Không thể tải danh sách Quận/Huyện.");
     } finally {
@@ -55,6 +66,13 @@ export const useOrderCreationStore = () => {
       const data = await fetchWards(districtCode);
       setWards(data);
     } catch (error) {
+      setLoadingWards(false);
+      
+      // FIXED: Throw 401/403 để interceptor xử lý
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        throw error;
+      }
+      
       console.error("Lỗi tải Phường/Xã:", error);
       toast.error("Không thể tải danh sách Phường/Xã.");
     } finally {
@@ -96,26 +114,26 @@ export const useOrderCreationStore = () => {
       const apiPayload = {
         ...orderDataFromComponent,
 
-        receiver_name: orderDataFromComponent.receiver_name,
         receiver_province_city: provinceName,
         receiver_district: districtName,
         receiver_ward_commune: wardName,
-
         length: parseFloat(orderDataFromComponent.length) || null,
         width: parseFloat(orderDataFromComponent.width) || null,
         height: parseFloat(orderDataFromComponent.height) || null,
         weight: parseFloat(orderDataFromComponent.weight) || 0,
         cod: parseFloat(orderDataFromComponent.cod) || 0,
-
         products: cleanedProducts, 
       };
 
       const newOrder = await orderService.createOrder(apiPayload);
-      
       return newOrder; 
       
     } catch (error) {
       console.error("Lỗi khi tạo đơn hàng:", error);
+      
+      // FIXED: LUÔN throw error để interceptor hoặc component xử lý
+      // Nếu là 401/403 -> interceptor sẽ logout
+      // Nếu là lỗi khác -> component sẽ hiển thị toast
       throw error; 
     } finally {
       setLoadingCreateOrder(false);
@@ -126,12 +144,10 @@ export const useOrderCreationStore = () => {
     provinces,
     districts,
     wards,
-
     loadingProvinces,
     loadingDistricts,
     loadingWards,
     loadingCreateOrder,
-
     fetchDistrictsAction,
     fetchWardsAction,
     createOrderAction,

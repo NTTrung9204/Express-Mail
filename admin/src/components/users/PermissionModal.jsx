@@ -10,6 +10,7 @@ import { LockOutlined } from "@mui/icons-material";
 import { toast } from "react-toastify";
 import { usePermissionStore } from "../../store/userPermissionStore";
 import VietmapPicker from "../common/VietmapPicker";
+import ProtectedComponent from "../common/ProtectedComponent";
 
 import permissionTranslations from "../../data/permissions.json";
 
@@ -306,6 +307,7 @@ export default function PermissionModal({
         </div>
 
         <div className="flex flex-col gap-5 mt-3 p-6">
+        <ProtectedComponent perm="auth.view_group">
           <FormControl fullWidth error={!!errors.role}>
             <InputLabel>Chọn vai trò</InputLabel>
             <Select
@@ -321,6 +323,7 @@ export default function PermissionModal({
             </Select>
             {errors.role && <p className="mt-1 text-sm text-red-500">{errors.role}</p>}
           </FormControl>
+        </ProtectedComponent>
           
           {isRoleProhibited && (
               <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700">

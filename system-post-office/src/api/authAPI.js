@@ -18,6 +18,7 @@ export const authAPI = {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
+      localStorage.removeItem('permissions');
     }
   },
 

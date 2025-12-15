@@ -356,6 +356,10 @@ const CreateOrderPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if(!orderData.receiver_name) {
+      toast.error("Vui lòng nhập tên người nhận");
+      return;
+    }
 
     if (!orderData.receiver_phone) {
       toast.error("Vui lòng nhập số điện thoại người nhận");

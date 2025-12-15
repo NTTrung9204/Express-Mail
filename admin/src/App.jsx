@@ -9,8 +9,15 @@ import ShippingRate from "./pages/ShippingRate";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ShopRegisterPage from "./pages/ShopRegisterPage";
 import ProtectedRoute from "./components/common/ProtectedRoute"; 
+import { useEffect } from "react";
+import { setupAuthInterceptor } from "./interceptor/authInterceptor";
 
 function App() {
+  
+  useEffect(() => {
+    setupAuthInterceptor();
+  }, []);
+
   return (
     <div>
       <ToastContainer />

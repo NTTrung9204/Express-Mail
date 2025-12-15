@@ -4,6 +4,7 @@
   { "name": "Can change post office", "name_vi": "Chỉnh sửa bưu cục" },
   { "name": "Can delete post office", "name_vi": "Xóa bưu cục" },
   { "name": "Can view post office", "name_vi": "Xem bưu cục" },
+  { "name": "Can view user of a post office", "name_vi": "Xem người dùng của bưu cục" },
   { "name": "Can add user", "name_vi": "Thêm người dùng" },
   { "name": "Can change user", "name_vi": "Chỉnh sửa người dùng" },
 

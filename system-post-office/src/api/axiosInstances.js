@@ -1,8 +1,6 @@
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
-/**
- * Axios instance for NestJS backend
- */
 export const nestJSAPI = axios.create({
   baseURL: import.meta.env.VITE_API_NESTJS_BASE_URL || 'http://localhost:3000',
   headers: {
@@ -10,9 +8,6 @@ export const nestJSAPI = axios.create({
   },
 });
 
-/**
- * Axios instance for Django backend
- */
 export const djangoAPI = axios.create({
   baseURL: import.meta.env.VITE_API_DJANGO_BASE_URL || 'http://localhost:8000',
   headers: {
@@ -20,9 +15,9 @@ export const djangoAPI = axios.create({
   },
 });
 
-/**
- * Request interceptor for NestJS - add access token to headers
- */
+let isLoggingOut = false;
+const API_URL = import.meta.env.VITE_API_URL;
+
 nestJSAPI.interceptors.request.use(
   (config) => {
     const accessToken = localStorage.getItem('accessToken');
@@ -36,9 +31,6 @@ nestJSAPI.interceptors.request.use(
   }
 );
 
-/**
- * Request interceptor for Django - add access token to headers
- */
 djangoAPI.interceptors.request.use(
   (config) => {
     const accessToken = localStorage.getItem('accessToken');
@@ -52,48 +44,72 @@ djangoAPI.interceptors.request.use(
   }
 );
 
-/**
- * Response interceptor for NestJS - handle token refresh on 401
- */
+const handleAuthError = async () => {
+  if (!isLoggingOut) {
+    isLoggingOut = true;
+    
+    toast.error('Quyền bị thay đổi. Vui lòng đăng nhập lại!', {
+      autoClose: 3000,
+      onClose: () => {
+        // Clear tokens
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        localStorage.removeItem('permissions');
+        
+        window.location.href = `${API_URL}/admin/login`;
+        isLoggingOut = false;
+      }
+    });
+  }
+};
+
 nestJSAPI.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // If error is 401 and we haven't already tried to refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      const errorMessage = error.response?.data?.message || 
+                         error.response?.data?.detail || 
+                         '';
+            if (
+        errorMessage.includes('Chưa xác thực') ||
+        errorMessage.includes('authentication') ||
+        errorMessage.includes('Unauthorized') ||
+        errorMessage.includes('Forbidden') ||
+        (error.response?.status === 401 && !originalRequest._retry)
+      ) {
+        if (!originalRequest._retry) {
+          originalRequest._retry = true;
 
-      try {
-        const refreshToken = localStorage.getItem('refreshToken');
+          try {
+            const refreshToken = localStorage.getItem('refreshToken');
 
-        if (!refreshToken) {
-          // No refresh token, redirect to login
-          window.location.href = '/post-office/login';
+            if (!refreshToken) {
+              await handleAuthError();
+              return Promise.reject(error);
+            }
+
+            const response = await axios.post(
+              `${import.meta.env.VITE_API_NESTJS_BASE_URL || 'http://localhost:3000'}/api/v1/auth/refresh`,
+              { refresh: refreshToken }
+            );
+
+            const { access } = response.data;
+
+            localStorage.setItem('accessToken', access);
+
+            originalRequest.headers.Authorization = `Bearer ${access}`;
+            return nestJSAPI(originalRequest);
+          } catch (refreshError) {
+            await handleAuthError();
+            return Promise.reject(refreshError);
+          }
+        } else {
+          await handleAuthError();
           return Promise.reject(error);
         }
-
-        // Call refresh endpoint (NestJS)
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_NESTJS_BASE_URL || 'http://localhost:3000'}/api/v1/auth/refresh`,
-          { refresh: refreshToken }
-        );
-
-        const { access } = response.data;
-
-        // Save new access token
-        localStorage.setItem('accessToken', access);
-
-        // Update authorization header and retry original request
-        originalRequest.headers.Authorization = `Bearer ${access}`;
-        return nestJSAPI(originalRequest);
-      } catch (refreshError) {
-        // Refresh failed, redirect to login
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
-        window.location.href = '/post-office/login';
-        return Promise.reject(refreshError);
       }
     }
 
@@ -101,48 +117,54 @@ nestJSAPI.interceptors.response.use(
   }
 );
 
-/**
- * Response interceptor for Django - handle token refresh on 401
- */
+
 djangoAPI.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // If error is 401 and we haven't already tried to refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      const errorMessage = error.response?.data?.message || 
+                         error.response?.data?.detail || 
+                         '';
+      
+      if (
+        errorMessage.includes('Chưa xác thực') ||
+        errorMessage.includes('authentication') ||
+        errorMessage.includes('Unauthorized') ||
+        errorMessage.includes('Forbidden') ||
+        (error.response?.status === 401 && !originalRequest._retry)
+      ) {
+        if (!originalRequest._retry) {
+          originalRequest._retry = true;
 
-      try {
-        const refreshToken = localStorage.getItem('refreshToken');
+          try {
+            const refreshToken = localStorage.getItem('refreshToken');
 
-        if (!refreshToken) {
-          // No refresh token, redirect to login
-          window.location.href = '/post-office/login';
+            if (!refreshToken) {
+              await handleAuthError();
+              return Promise.reject(error);
+            }
+
+            const response = await axios.post(
+              `${import.meta.env.VITE_API_DJANGO_BASE_URL || 'http://localhost:8000'}/api/v1/auth/refresh`,
+              { refresh: refreshToken }
+            );
+
+            const { access } = response.data;
+
+            localStorage.setItem('accessToken', access);
+
+            originalRequest.headers.Authorization = `Bearer ${access}`;
+            return djangoAPI(originalRequest);
+          } catch (refreshError) {
+            await handleAuthError();
+            return Promise.reject(refreshError);
+          }
+        } else {
+          await handleAuthError();
           return Promise.reject(error);
         }
-
-        // Call refresh endpoint (Django)
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_DJANGO_BASE_URL || 'http://localhost:8000'}/api/v1/auth/refresh`,
-          { refresh: refreshToken }
-        );
-
-        const { access } = response.data;
-
-        // Save new access token
-        localStorage.setItem('accessToken', access);
-
-        // Update authorization header and retry original request
-        originalRequest.headers.Authorization = `Bearer ${access}`;
-        return djangoAPI(originalRequest);
-      } catch (refreshError) {
-        // Refresh failed, redirect to login
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('user');
-        window.location.href = '/post-office/login';
-        return Promise.reject(refreshError);
       }
     }
 

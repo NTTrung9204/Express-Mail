@@ -4,6 +4,8 @@ import { useWarehouseStore } from "../store/warehouseStore";
 import { getPageNumbers } from "../utils/pagination";
 import WarehouseModal from "../components/warehouses/WarehouseModal";
 import ConfirmDeleteModal from "../components/warehouses/ConfirmDeleteModal";
+import ProtectedComponent from '../components/common/ProtectedComponent';
+
 
 export default function Warehouses() {
   const {
@@ -87,12 +89,14 @@ export default function Warehouses() {
             <Search fontSize="small" /> Tìm kiếm
           </button>
         </div>
-        <button
-          onClick={openAddWarehouse}
-          className="flex items-center gap-2 bg-orange-500 text-white px-5 py-2.5 rounded-lg hover:bg-orange-600 transition shadow-md font-medium cursor-pointer"
-        >
-          <Add fontSize="small" /> Thêm Kho Mới
-        </button>
+        <ProtectedComponent perm="post_offices.add_postoffice">
+          <button
+            onClick={openAddWarehouse}
+            className="flex items-center gap-2 bg-orange-500 text-white px-5 py-2.5 rounded-lg hover:bg-orange-600 transition shadow-md font-medium cursor-pointer"
+          >
+            <Add fontSize="small" /> Thêm Kho Mới
+          </button>
+        </ProtectedComponent>
       </div>
 
       <div className="bg-white rounded-xl shadow-lg border border-orange-100 overflow-hidden">
@@ -137,13 +141,16 @@ export default function Warehouses() {
                         >
                           <Visibility fontSize="small" />
                         </button>
+                      <ProtectedComponent perm="post_offices.change_postoffice">
                         <button
-                          onClick={() => openEditWarehouse(w)}
+                          onClick={() => openEditWarehouse(w)}  
                           className="text-green-600 hover:text-green-800 transition cursor-pointer"
                           title="Chỉnh sửa"
                         >
                           <Edit fontSize="small" />
                         </button>
+                      </ProtectedComponent>
+                      <ProtectedComponent perm="post_offices.delete_postoffice">
                         <button
                           onClick={() => handleDeleteWarehouse(w)}
                           className="text-red-600 hover:text-red-800 transition cursor-pointer"
@@ -151,6 +158,7 @@ export default function Warehouses() {
                         >
                           <Delete fontSize="small" />
                         </button>
+                      </ProtectedComponent>
                       </div>
                     </td>
                   </tr>

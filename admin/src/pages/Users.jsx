@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import UserModal from "../components/users/UserModal";
 import ConfirmDeleteModal from "../components/users/ConfirmDeleteModal";
+import ProtectedComponent from '../components/common/ProtectedComponent'
 import { Add, Edit, Delete, Visibility, Search} from "@mui/icons-material";
 import { IconButton, Switch, CircularProgress } from "@mui/material";
 import { getPageNumbers } from "../utils/pagination";
@@ -124,12 +125,14 @@ const Users = () => {
             <Search fontSize="small" /> Tìm kiếm
           </button>
         </div>
-        <button
-          onClick={() => handleOpen("add")}
-          className="flex items-center gap-1 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 cursor-pointer"
-        >
-          <Add fontSize="small" /> Thêm Người dùng
-        </button>
+        <ProtectedComponent perm="users.add_user">
+          <button
+            onClick={() => handleOpen("add")}
+            className="flex items-center gap-1 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 cursor-pointer"
+          >
+            <Add fontSize="small" /> Thêm Người dùng
+          </button>
+        </ProtectedComponent>
       </div>
 
       <div className="overflow-x-auto bg-white rounded-xl shadow-lg border border-orange-100">
@@ -195,27 +198,33 @@ const Users = () => {
                       </td>
 
                       <td className="pl-3 pr-6 py-3 space-x-2">
-                        <button
-                          onClick={() => handleOpen("view", user)}
-                          className="text-blue-500 hover:text-blue-600 hover:scale-110 transition-transform cursor-pointer"
-                          title="Xem"
-                        >
-                          <Visibility fontSize="small" />
-                        </button>
-                        <button
-                          onClick={() => handleOpen("edit", user)}
-                          className="text-green-500 hover:text-green-600 hover:scale-110 transition-transform cursor-pointer"
-                          title="Sửa"
-                        >
-                          <Edit fontSize="small" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(user)}
-                          className="text-red-500 hover:text-red-600 hover:scale-110 transition-transform cursor-pointer"
-                          title="Xóa"
-                        >
-                          <Delete fontSize="small" />
-                        </button>
+                        <ProtectedComponent perm="users.view_user">
+                          <button
+                            onClick={() => handleOpen("view", user)}
+                            className="text-blue-500 hover:text-blue-600 hover:scale-110 transition-transform cursor-pointer"
+                            title="Xem"
+                          >
+                            <Visibility fontSize="small" />
+                          </button>
+                        </ProtectedComponent>
+                        <ProtectedComponent perm="users.change_user">
+                          <button
+                            onClick={() => handleOpen("edit", user)}
+                            className="text-green-500 hover:text-green-600 hover:scale-110 transition-transform cursor-pointer"
+                            title="Sửa"
+                          >
+                            <Edit fontSize="small" />
+                          </button>
+                        </ProtectedComponent>
+                        <ProtectedComponent perm="users.delete_user">
+                          <button
+                            onClick={() => handleDelete(user)}
+                            className="text-red-500 hover:text-red-600 hover:scale-110 transition-transform cursor-pointer"
+                            title="Xóa"
+                          >
+                            <Delete fontSize="small" />
+                          </button>
+                        </ProtectedComponent>
                       </td>
                     </tr>
                   ))

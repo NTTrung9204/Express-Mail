@@ -5,6 +5,7 @@ import HistoryIcon from "@mui/icons-material/History";
 import LogoutIcon from "@mui/icons-material/Logout";
 import avatar from "../assets/avatar.jpg";
 import { authService } from "../api/authService";
+import ProtectedComponent from "../components/common/ProtectedComponent";
 
 const Sidebar = () => {
 
@@ -43,37 +44,41 @@ const Sidebar = () => {
 
       <nav className="flex-1 mt-6">
         <ul>
-          <li>
-            <NavLink
-              to="/orders/order-delivery"
-              className={`w-full flex items-center px-4 py-2 text-left transition font-medium cursor-pointer rounded-lg ${
-                isOrdersActive
-                  ? "bg-orange-100 text-orange-600"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <span className="mr-3 text-lg">
-                <Inventory2Icon />
-              </span>
-              Quản lý đơn hàng
-            </NavLink>
-          </li>
+          <ProtectedComponent perm="order_external_app.can_view_shop_orders">
+            <li>
+                <NavLink
+                  to="/orders/order-delivery"
+                  className={`w-full flex items-center px-4 py-2 text-left transition font-medium cursor-pointer rounded-lg ${
+                    isOrdersActive
+                      ? "bg-orange-100 text-orange-600"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  <span className="mr-3 text-lg">
+                    <Inventory2Icon />
+                  </span>
+                  Quản lý đơn hàng
+                </NavLink>
+            </li>
+          </ProtectedComponent>
 
-          <li className="mt-2">
-            <NavLink
-              to="/order-history"
-              className={`w-full flex items-center px-4 py-2 text-left transition font-medium cursor-pointer rounded-lg ${
-                isHistoryActive
-                  ? "bg-orange-100 text-orange-600"
-                  : "text-gray-700 hover:bg-gray-100"
-              }`}
-            >
-              <span className="mr-3 text-lg">
-                <HistoryIcon />
-              </span>
-              Lịch sử đơn hàng
-            </NavLink>
-          </li>
+          <ProtectedComponent perm="order_external_app.can_view_order_details">
+            <li className="mt-2">
+              <NavLink
+                to="/order-history"
+                className={`w-full flex items-center px-4 py-2 text-left transition font-medium cursor-pointer rounded-lg ${
+                  isHistoryActive
+                    ? "bg-orange-100 text-orange-600"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <span className="mr-3 text-lg">
+                  <HistoryIcon />
+                </span>
+                Lịch sử đơn hàng
+              </NavLink>
+            </li>
+          </ProtectedComponent>
 
           <li className="mt-2">
             <button

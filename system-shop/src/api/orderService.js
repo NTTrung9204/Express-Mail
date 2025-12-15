@@ -42,6 +42,7 @@ export const orderService = {
   createOrder: async (orderData) => {
     const formData = new FormData();
 
+    formData.append('receiver_name', orderData.receiver_name);
     formData.append('receiver_phone', orderData.receiver_phone);
     formData.append('receiver_province_city', orderData.receiver_province_city);
     formData.append('receiver_ward_commune', orderData.receiver_ward_commune);

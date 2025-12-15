@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PermissionModal from "./PermissionModal";
+import ProtectedComponent from "../common/ProtectedComponent";
 
 const ROLE_GROUP_MAP = {
   admin: 1, 
@@ -9,6 +10,29 @@ const ROLE_GROUP_MAP = {
   post_office_staff: 3, 
   shop: 4, 
   shipper: 5, 
+};
+
+const ROLE_PERMISSIONS = {
+  admin: {
+    view: "users.view_adminprofile",
+    change: "users.change_adminprofile"
+  },
+  post_office_manager: {
+    view: "users.view_postofficemanagerprofile",
+    change: "users.change_postofficemanagerprofile"
+  },
+  post_office_staff: {
+    view: "users.view_postofficestaffprofile",
+    change: "users.change_postofficestaffprofile"
+  },
+  shipper: {
+    view: "users.view_shipperprofile",
+    change: "users.change_shipperprofile"
+  },
+  shop: {
+    view: "users.view_shopprofile",
+    change: "users.change_shopprofile"
+  }
 };
 
 const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
@@ -124,6 +148,11 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
   };
 
   const userGroupId = ROLE_GROUP_MAP[currentRole] || 1;
+
+  const rolePermissions = ROLE_PERMISSIONS[currentRole];
+  const viewPermission = rolePermissions?.view;
+
+  const hasValidRole = currentRole && currentRole.trim() !== "";
 
   if (!open) return null;
 
@@ -291,18 +320,41 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
           )}
 
           {mode !== "add" && (
-            <div className="flex justify-start mt-6">
-              <button
-                onClick={() => setShowPermissionModal(true)}
-                className={`px-5 py-2 rounded-lg ${
-                  isView
-                    ? "bg-orange-100 text-orange-700 hover:bg-orange-200 cursor-pointer"
-                    : "bg-orange-500 text-white hover:bg-orange-600 cursor-pointer"
-                }`}
-              >
-                {isView ? "Xem hồ sơ" : "Chỉnh sửa hồ sơ"}
-              </button>
-            </div>
+            <>
+              {!isView && (
+                <div className="flex justify-start mt-6">
+                  <button
+                    onClick={() => setShowPermissionModal(true)}
+                    className="px-5 py-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 cursor-pointer"
+                  >
+                    {hasValidRole ? "Chỉnh sửa hồ sơ" : "Thêm hồ sơ"}
+                  </button>
+                </div>
+              )}
+
+              {isView && (
+                <>
+                  {hasValidRole && viewPermission ? (
+                    <ProtectedComponent perm={viewPermission}>
+                      <div className="flex justify-start mt-6">
+                        <button
+                          onClick={() => setShowPermissionModal(true)}
+                          className="px-5 py-2 rounded-lg bg-orange-100 text-orange-700 hover:bg-orange-200 cursor-pointer"
+                        >
+                          Xem hồ sơ
+                        </button>
+                      </div>
+                    </ProtectedComponent>
+                  ) : !hasValidRole ? (
+                    <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-yellow-800 text-sm">
+                        ⚠️ Người dùng này chưa được gán vai trò.
+                      </p>
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </>
           )}
 
           <div className="flex justify-end gap-4 mt-8">

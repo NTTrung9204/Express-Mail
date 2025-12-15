@@ -41,28 +41,29 @@ export const useOrderStore = () => {
   };
 
   const formatOrders = (data) => {
-      return data.map((o) => ({
-          id: o.id,
-          code: o.code || "-",
-          phone: o.receiver_phone || "-",
-          address: o.receiver_address || "-",
-          cod: o.cod ? `${o.cod.toLocaleString()} đ` : "0 đ",
-          weight: o.weight ? `${o.weight * 1000}` : "0",
-          payer: o.is_receiver_pay_shipping
-            ? "Bên nhận trả phí"
-            : "Bên gửi trả phí",
-          total: `${(
-            (o.cod || 0) +
-            (o.shipping_cost || 0) +
-            (o.shipping_cost_payper || 0)
-          ).toLocaleString()} đ`,
-          status: STATUS_MAP[o.shipping_status] || o.shipping_status || "Không rõ",
-          rawStatus: o.shipping_status,
-      }));
+    return data.map((o) => ({
+      id: o.id,
+      code: o.code || "-",
+      phone: o.receiver_phone || "-",
+      address: o.receiver_address || "-",
+      cod: o.cod ? `${o.cod.toLocaleString()} đ` : "0 đ",
+      weight: o.weight ? `${o.weight * 1000}` : "0",
+      payer: o.is_receiver_pay_shipping
+        ? "Bên nhận trả phí"
+        : "Bên gửi trả phí",
+      total: `${(
+        (o.cod || 0) +
+        (o.shipping_cost || 0) +
+        (o.shipping_cost_payper || 0)
+      ).toLocaleString()} đ`,
+      status: STATUS_MAP[o.shipping_status] || o.shipping_status || "Không rõ",
+      rawStatus: o.shipping_status,
+    }));
   };
 
   const getOrdersByShopId = useCallback(async (page = 1, limit = 9, customFilters = {}) => {
     if (!shopId) return;
+    
     try {
       setLoading(true);
       setError(null);
@@ -82,7 +83,6 @@ export const useOrderStore = () => {
         const meta = responseData.meta || {};
 
         const formatted = formatOrders(dataArray);
-
         setOrders(formatted);
         
         const newPagination = {
@@ -101,7 +101,15 @@ export const useOrderStore = () => {
       }
     } catch (err) {
       console.error('API Error:', err);
-      setError(err.response?.data?.message || err.message || "Lỗi kết nối server ");
+      
+      // FIXED: Throw 401/403 để interceptor xử lý logout
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        setLoading(false);
+        throw err;
+      }
+      
+      // Các lỗi khác (400, 404, 500) thì lưu vào state
+      setError(err.response?.data?.message || err.message || "Lỗi kết nối server");
       setOrders([]);
       setPagination(initialPagination);
     } finally {
@@ -121,7 +129,6 @@ export const useOrderStore = () => {
     
     await getOrdersByShopId(page, currentLimit, currentFilters);
   }, [getOrdersByShopId]);
-
 
   const applyFilters = useCallback(async (newFilters) => {
     const updatedFilters = { ...filtersRef.current, ...newFilters };
