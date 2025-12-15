@@ -19,6 +19,7 @@ export const authService = {
     } finally {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('user');
+      localStorage.removeItem('permissions');
     }
   },
 };

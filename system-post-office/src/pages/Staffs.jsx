@@ -9,6 +9,7 @@ import { getStaffsByPostOfficeId, createStaff } from "../api/staffAPI";
 import { fetchUserPostOfficeId } from '../api/profileAPI';
 import { togglePostOfficeUserStatus } from '../api/postOfficeUserAPI';
 import authAPI from "../api/authAPI";
+import ProtectedComponent from "../components/common/ProtectedComponent";
 
 const Staffs = () => {
   const [formData, setFormData] = useState({
@@ -366,16 +367,18 @@ const Staffs = () => {
                             </span>
                           </div>
                         </td>
-                        <td className="px-2">
-                          <div className="flex items-center justify-center gap-3">
-                            <button
-                              onClick={() => openEditModal(staff)}
-                              className="flex items-center gap-1 px-3 py-1 rounded-md bg-blue-500 hover:bg-blue-600 text-white text-xs transition cursor-pointer"
-                            >
-                              <EditIcon fontSize="small" /> Sửa
-                            </button>
-                          </div>
-                        </td>
+                        <ProtectedComponent perm="post_offices.edit_user">
+                          <td className="px-2">
+                            <div className="flex items-center justify-center gap-3">
+                              <button
+                                onClick={() => openEditModal(staff)}
+                                className="flex items-center gap-1 px-3 py-1 rounded-md bg-blue-500 hover:bg-blue-600 text-white text-xs transition cursor-pointer"
+                              >
+                                <EditIcon fontSize="small" /> Sửa
+                              </button>
+                            </div>
+                          </td>
+                        </ProtectedComponent>
                       </tr>
                     ))
                   )}
@@ -395,157 +398,158 @@ const Staffs = () => {
           </>
         )}
       </div>
+      <ProtectedComponent perm="post_offices.add_staff">
+        <div className="bg-white shadow-md rounded-xl p-5 border border-orange-100">
+          <h2 className="text-lg font-semibold text-[#4b1d09] mb-4">
+            Tạo tài khoản Nhân viên
+          </h2>
 
-      <div className="bg-white shadow-md rounded-xl p-5 border border-orange-100">
-        <h2 className="text-lg font-semibold text-[#4b1d09] mb-4">
-          Tạo tài khoản Nhân viên
-        </h2>
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm mb-1">
+                  Username <span className="text-red-500">*</span>
+                </label>
+                <input
+                  name="username"
+                  type="text"
+                  placeholder="Nhập username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                    formErrors.username
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-orange-200 focus:ring-orange-400"
+                  }`}
+                />
+                {formErrors.username && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.username}</p>
+                )}
+              </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm mb-1">
-                Username <span className="text-red-500">*</span>
-              </label>
-              <input
-                name="username"
-                type="text"
-                placeholder="Nhập username"
-                value={formData.username}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                  formErrors.username
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-orange-200 focus:ring-orange-400"
-                }`}
-              />
-              {formErrors.username && (
-                <p className="text-red-500 text-xs mt-1">{formErrors.username}</p>
-              )}
+              <div>
+                <label className="block text-sm mb-1">
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  name="email"
+                  type="email"
+                  placeholder="Nhập email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                    formErrors.email
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-orange-200 focus:ring-orange-400"
+                  }`}
+                />
+                {formErrors.email && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm mb-1">
+                  Họ <span className="text-red-500">*</span>
+                </label>
+                <input
+                  name="firstName"
+                  type="text"
+                  placeholder="Nhập họ"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                    formErrors.firstName
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-orange-200 focus:ring-orange-400"
+                  }`}
+                />
+                {formErrors.firstName && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.firstName}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm mb-1">
+                  Tên <span className="text-red-500">*</span>
+                </label>
+                <input
+                  name="lastName"
+                  type="text"
+                  placeholder="Nhập tên"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                    formErrors.lastName
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-orange-200 focus:ring-orange-400"
+                  }`}
+                />
+                {formErrors.lastName && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.lastName}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm mb-1">
+                  Mật khẩu <span className="text-red-500">*</span>
+                </label>
+                <input
+                  name="password"
+                  type="password"
+                  placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                    formErrors.password
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-orange-200 focus:ring-orange-400"
+                  }`}
+                />
+                {formErrors.password && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.password}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm mb-1">
+                  Xác nhận mật khẩu <span className="text-red-500">*</span>
+                </label>
+                <input
+                  name="confirmPassword"
+                  type="password"
+                  placeholder="Nhập lại mật khẩu"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                    formErrors.confirmPassword
+                      ? "border-red-500 focus:ring-red-500"
+                      : "border-orange-200 focus:ring-orange-400"
+                  }`}
+                />
+                {formErrors.confirmPassword && (
+                  <p className="text-red-500 text-xs mt-1">{formErrors.confirmPassword}</p>
+                )}
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm mb-1">
-                Email <span className="text-red-500">*</span>
-              </label>
-              <input
-                name="email"
-                type="email"
-                placeholder="Nhập email"
-                value={formData.email}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                  formErrors.email
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-orange-200 focus:ring-orange-400"
+            <div className="flex justify-end mt-5">
+              <button
+                type="submit"
+                disabled={!isFormValid() || isSubmitting}
+                className={`flex items-center gap-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  isFormValid() && !isSubmitting
+                    ? "bg-orange-500 hover:bg-orange-600 text-white cursor-pointer"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 }`}
-              />
-              {formErrors.email && (
-                <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>
-              )}
+              >
+                <Add fontSize="small" /> 
+                {isSubmitting ? "Đang tạo..." : "Tạo tài khoản"}
+              </button>
             </div>
-
-            <div>
-              <label className="block text-sm mb-1">
-                Họ <span className="text-red-500">*</span>
-              </label>
-              <input
-                name="firstName"
-                type="text"
-                placeholder="Nhập họ"
-                value={formData.firstName}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                  formErrors.firstName
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-orange-200 focus:ring-orange-400"
-                }`}
-              />
-              {formErrors.firstName && (
-                <p className="text-red-500 text-xs mt-1">{formErrors.firstName}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm mb-1">
-                Tên <span className="text-red-500">*</span>
-              </label>
-              <input
-                name="lastName"
-                type="text"
-                placeholder="Nhập tên"
-                value={formData.lastName}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                  formErrors.lastName
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-orange-200 focus:ring-orange-400"
-                }`}
-              />
-              {formErrors.lastName && (
-                <p className="text-red-500 text-xs mt-1">{formErrors.lastName}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm mb-1">
-                Mật khẩu <span className="text-red-500">*</span>
-              </label>
-              <input
-                name="password"
-                type="password"
-                placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
-                value={formData.password}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                  formErrors.password
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-orange-200 focus:ring-orange-400"
-                }`}
-              />
-              {formErrors.password && (
-                <p className="text-red-500 text-xs mt-1">{formErrors.password}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm mb-1">
-                Xác nhận mật khẩu <span className="text-red-500">*</span>
-              </label>
-              <input
-                name="confirmPassword"
-                type="password"
-                placeholder="Nhập lại mật khẩu"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                  formErrors.confirmPassword
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-orange-200 focus:ring-orange-400"
-                }`}
-              />
-              {formErrors.confirmPassword && (
-                <p className="text-red-500 text-xs mt-1">{formErrors.confirmPassword}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="flex justify-end mt-5">
-            <button
-              type="submit"
-              disabled={!isFormValid() || isSubmitting}
-              className={`flex items-center gap-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                isFormValid() && !isSubmitting
-                  ? "bg-orange-500 hover:bg-orange-600 text-white cursor-pointer"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
-              }`}
-            >
-              <Add fontSize="small" /> 
-              {isSubmitting ? "Đang tạo..." : "Tạo tài khoản"}
-            </button>
-          </div>
-        </form>
-      </div>
+          </form>
+        </div>
+      </ProtectedComponent>
 
       <EditStaffModal
         open={editModalOpen}

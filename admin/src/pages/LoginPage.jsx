@@ -56,7 +56,9 @@ const LoginPage = () => {
       }
     } catch (err) {
       console.error("Login failed:", err);
-      toast.error("Tên đăng nhập hoặc mật khẩu không chính xác");
+      if (err.response?.status === 401) {
+        toast.error("Thông tin đăng nhập không chính xác hoặc tài khoản đã bị khoá");
+      }
     } finally {
       setIsLoading(false);
     }

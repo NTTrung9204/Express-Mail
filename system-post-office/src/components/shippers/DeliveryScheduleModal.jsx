@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   Close,
-  DirectionsCar,
-  DirectionsBike,
-  DirectionsWalk,
-  LocalShipping,
   Place,
   ShoppingBag,
   Store,
@@ -14,13 +10,15 @@ import {
 } from "@mui/icons-material";
 
 const DeliveryScheduleModal = ({ open, shipper, onClose, routes, loading, fetchScheduleData }) => {
+  const baseURL = import.meta.env.VITE_NESTJS_API_URL;
+  
   const getTodayDate = () => {
     const today = new Date();
     return today.toISOString().split('T')[0];
   };
 
   const [filters, setFilters] = useState({
-    mode: "", 
+    mode: "pickup",
     startDate: getTodayDate(),
     endDate: getTodayDate(),
   });
@@ -28,7 +26,7 @@ const DeliveryScheduleModal = ({ open, shipper, onClose, routes, loading, fetchS
   useEffect(() => {
     if (open) {
       setFilters({
-        mode: "",
+        mode: "pickup",
         startDate: getTodayDate(),
         endDate: getTodayDate(),
       });
@@ -48,19 +46,6 @@ const DeliveryScheduleModal = ({ open, shipper, onClose, routes, loading, fetchS
 
   const handleFilterChange = (field, value) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const getModeIcon = (mode) => {
-    switch (mode?.toLowerCase()) {
-      case "car":
-        return <DirectionsCar fontSize="small" />;
-      case "bike":
-        return <DirectionsBike fontSize="small" />;
-      case "walk":
-        return <DirectionsWalk fontSize="small" />;
-      default:
-        return <LocalShipping fontSize="small" />;
-    }
   };
 
   const getStatusBadge = (status) => {
@@ -103,6 +88,7 @@ const DeliveryScheduleModal = ({ open, shipper, onClose, routes, loading, fetchS
   const normalizedRoutes = React.useMemo(() => {
     if (!routes) return [];
     if (Array.isArray(routes)) return routes;
+    if (routes.data && Array.isArray(routes.data)) return routes.data;
     if (routes.results && Array.isArray(routes.results)) return routes.results;
     if (typeof routes === 'object') return [routes];
     return [];
@@ -116,7 +102,7 @@ const DeliveryScheduleModal = ({ open, shipper, onClose, routes, loading, fetchS
       id="schedule-modal-overlay"
       className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
     >
-      <div className="bg-white rounded-xl w-[1000px] shadow-lg p-6 relative max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-xl w-[1100px] shadow-lg p-6 relative max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-600 hover:text-black cursor-pointer"
@@ -143,7 +129,6 @@ const DeliveryScheduleModal = ({ open, shipper, onClose, routes, loading, fetchS
                 onChange={(e) => handleFilterChange("mode", e.target.value)}
                 className="w-full border border-orange-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-orange-400"
               >
-                <option value="">Tất cả</option>
                 <option value="pickup">Lấy hàng</option>
                 <option value="delivery">Giao hàng</option>
               </select>
@@ -181,7 +166,7 @@ const DeliveryScheduleModal = ({ open, shipper, onClose, routes, loading, fetchS
 
         {!loading && normalizedRoutes.map((route, routeIndex) => (
           <div key={routeIndex} className="mb-6 border-b border-orange-200 pb-4">
-            <div className="grid grid-cols-4 gap-4 mb-4">
+            <div className="grid grid-cols-3 gap-4 mb-4">
               <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
                 <p className="text-xs text-gray-600 mb-1">Tổng khoảng cách</p>
                 <p className="text-lg font-bold text-orange-600">
@@ -192,13 +177,6 @@ const DeliveryScheduleModal = ({ open, shipper, onClose, routes, loading, fetchS
                 <p className="text-xs text-gray-600 mb-1">Thời gian dự kiến</p>
                 <p className="text-lg font-bold text-orange-600">
                   {formatTime(route.duration)}
-                </p>
-              </div>
-              <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
-                <p className="text-xs text-gray-600 mb-1">Phương tiện</p>
-                <p className="text-lg font-bold text-orange-600 flex items-center gap-1">
-                  {getModeIcon(route.mode)}
-                  {route.mode === "car" ? "Xe ô tô" : route.mode === "bike" ? "Xe máy" : route.mode === "walk" ? "Đi bộ" : "N/A"}
                 </p>
               </div>
               <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
@@ -219,14 +197,13 @@ const DeliveryScheduleModal = ({ open, shipper, onClose, routes, loading, fetchS
                 <table className="w-full text-sm">
                   <thead className="bg-orange-50 border-b border-orange-200">
                     <tr>
-                      <th className="text-left p-3">STT</th>
+                      <th className="text-left p-3 w-16">STT</th>
                       <th className="text-left p-3">Mã đơn</th>
                       <th className="text-left p-3">Người nhận</th>
                       <th className="text-left p-3">Địa chỉ</th>
-                      <th className="text-left p-3">Sản phẩm</th>
-                      <th className="text-left p-3">COD</th>
-                      <th className="text-left p-3">Phí ship</th>
-                      <th className="text-left p-3">Trạng thái</th>
+                      <th className="text-center p-3">COD</th>
+                      <th className="text-center p-3">Phí ship</th>
+                      <th className="text-center p-3 w-44">Trạng thái</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -261,16 +238,10 @@ const DeliveryScheduleModal = ({ open, shipper, onClose, routes, loading, fetchS
                                 </div>
                               </div>
                             </td>
-                            <td className="p-3">
-                              <div className="flex items-center gap-1 text-xs">
-                                <ShoppingBag fontSize="inherit" className="text-gray-500" />
-                                {order.products?.length || 0} sản phẩm
-                              </div>
-                            </td>
-                            <td className="p-3 font-semibold text-orange-600">
+                            <td className="p-3 text-center font-semibold text-orange-600">
                               {formatCurrency(order.cod)}
                             </td>
-                            <td className="p-3">
+                            <td className="p-3 text-center">
                               <div className="text-xs">
                                 <p className="font-medium">{formatCurrency(order.shipping_cost)}</p>
                                 <p className="text-gray-500">
@@ -278,173 +249,160 @@ const DeliveryScheduleModal = ({ open, shipper, onClose, routes, loading, fetchS
                                 </p>
                               </div>
                             </td>
-                            <td className="p-3">
-                              <div className="space-y-1">
-                                {getStatusBadge(order.shipping_status)}
-                              </div>
+                            <td className="p-3 w-44 text-center">
+                              {getStatusBadge(order.shipping_status)}
                             </td>
                           </tr>
                           <tr className={index % 2 === 0 ? "bg-gray-50" : "bg-orange-25"}>
-                            <td colSpan="8" className="p-0">
+                            <td colSpan="7" className="p-0">
                               <div className="p-4 border-t border-orange-100">
-                                <div className="grid grid-cols-2 gap-6">
-                                  <div className="space-y-3">
-                                    {order.shopProfile && (
-                                      <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                                        <h4 className="font-semibold text-xs text-gray-700 mb-2 flex items-center gap-1">
-                                          <Store fontSize="small" />
-                                          Thông tin Shop
-                                        </h4>
-                                        <div className="text-xs space-y-1">
-                                          <p>
-                                            <span className="text-gray-600">Tên:</span>{" "}
-                                            <span className="font-medium">
-                                              {order.shopProfile.firstName} {order.shopProfile.lastName}
-                                            </span>
-                                          </p>
-                                          <p className="flex items-center gap-1">
-                                            <Phone fontSize="inherit" className="text-gray-500" />
-                                            {order.shopProfile.phoneNumber}
-                                          </p>
-                                          {order.shopProfile.email && (
-                                            <p className="flex items-center gap-1">
-                                              <Email fontSize="inherit" className="text-gray-500" />
-                                              {order.shopProfile.email}
-                                            </p>
-                                          )}
-                                          <p className="flex items-start gap-1">
-                                            <Place fontSize="inherit" className="text-gray-500 mt-0.5" />
-                                            {order.shopProfile.address}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                      <h4 className="font-semibold text-xs text-gray-700 mb-2">
-                                        Thông tin kiện hàng
+                                <div className="space-y-4">
+                                  {order.products && order.products.length > 0 && (
+                                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                                      <h4 className="font-semibold text-sm text-gray-700 mb-3 flex items-center gap-2">
+                                        <ShoppingBag fontSize="small" />
+                                        Danh sách sản phẩm ({order.products.length})
                                       </h4>
-                                      <div className="grid grid-cols-2 gap-2 text-xs">
-                                        <div>
-                                          <span className="text-gray-600">Dài:</span>{" "}
-                                          <span className="font-medium">{order.length} cm</span>
-                                        </div>
-                                        <div>
-                                          <span className="text-gray-600">Rộng:</span>{" "}
-                                          <span className="font-medium">{order.width} cm</span>
-                                        </div>
-                                        <div>
-                                          <span className="text-gray-600">Cao:</span>{" "}
-                                          <span className="font-medium">{order.height} cm</span>
-                                        </div>
-                                        <div>
-                                          <span className="text-gray-600">Cân nặng:</span>{" "}
-                                          <span className="font-medium">{order.weight} kg</span>
-                                        </div>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {order.products.map((product) => {
+                                          const imgUrl = product.img_url && !product.img_url.startsWith('http') 
+                                            ? `${baseURL}${product.img_url}` 
+                                            : product.img_url;
+                                          
+                                          return (
+                                            <div
+                                              key={product.id}
+                                              className="bg-white p-3 rounded-lg shadow-sm flex gap-3 items-start"
+                                            >
+                                              {imgUrl && (
+                                                <img
+                                                  src={imgUrl}
+                                                  alt={product.name}
+                                                  className="w-16 h-16 object-cover rounded border border-gray-200"
+                                                  onError={(e) => {
+                                                    e.target.style.display = 'none';
+                                                  }}
+                                                />
+                                              )}
+                                              <div className="flex-1 text-xs">
+                                                <p className="font-semibold text-gray-800 mb-1">
+                                                  {product.name}
+                                                </p>
+                                                <div className="text-gray-600 space-y-0.5">
+                                                  <p>Số lượng: <span className="font-medium">{product.quantity}</span></p>
+                                                  <p>Cân nặng: <span className="font-medium">{product.weight} kg</span></p>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
                                       </div>
                                     </div>
-                                  </div>
+                                  )}
 
-                                  <div className="space-y-3">
-                                    {order.routeStep && (
-                                      <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                                        <h4 className="font-semibold text-xs text-gray-700 mb-2 flex items-center gap-1">
-                                          <Navigation fontSize="small" />
-                                          Thông tin tuyến đường
+                                  <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-3">
+                                      {order.shopProfile && (
+                                        <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                          <h4 className="font-semibold text-xs text-gray-700 mb-2 flex items-center gap-1">
+                                            <Store fontSize="small" />
+                                            Thông tin Shop
+                                          </h4>
+                                          <div className="text-xs space-y-1">
+                                            <p>
+                                              <span className="text-gray-600">Tên:</span>{" "}
+                                              <span className="font-medium">
+                                                {order.shopProfile.firstName} {order.shopProfile.lastName}
+                                              </span>
+                                            </p>
+                                            <p className="flex items-center gap-1">
+                                              <Phone fontSize="inherit" className="text-gray-500" />
+                                              {order.shopProfile.phoneNumber}
+                                            </p>
+                                            {order.shopProfile.email && (
+                                              <p className="flex items-center gap-1">
+                                                <Email fontSize="inherit" className="text-gray-500" />
+                                                {order.shopProfile.email}
+                                              </p>
+                                            )}
+                                            <p className="flex items-start gap-1">
+                                              <Place fontSize="inherit" className="text-gray-500 mt-0.5" />
+                                              {order.shopProfile.address}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      )}
+
+                                      <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                        <h4 className="font-semibold text-xs text-gray-700 mb-2">
+                                          Thông tin kiện hàng
                                         </h4>
                                         <div className="grid grid-cols-2 gap-2 text-xs">
                                           <div>
-                                            <span className="text-gray-600">Vị trí:</span>{" "}
-                                            <span className="font-medium">
-                                              {order.routeStep.lat?.toFixed(4)}, {order.routeStep.lng?.toFixed(4)}
-                                            </span>
+                                            <span className="text-gray-600">Dài:</span>{" "}
+                                            <span className="font-medium">{order.length} cm</span>
                                           </div>
                                           <div>
-                                            <span className="text-gray-600">Thời gian đến:</span>{" "}
-                                            <span className="font-medium">
-                                              {formatTime(order.routeStep.arrival)}
-                                            </span>
+                                            <span className="text-gray-600">Rộng:</span>{" "}
+                                            <span className="font-medium">{order.width} cm</span>
                                           </div>
                                           <div>
-                                            <span className="text-gray-600">Khoảng cách:</span>{" "}
-                                            <span className="font-medium">
-                                              {formatDistance(order.routeStep.distance)} km
-                                            </span>
+                                            <span className="text-gray-600">Cao:</span>{" "}
+                                            <span className="font-medium">{order.height} cm</span>
                                           </div>
                                           <div>
-                                            <span className="text-gray-600">Thời gian giao:</span>{" "}
-                                            <span className="font-medium">
-                                              {order.routeStep.duration} phút
-                                            </span>
-                                          </div>
-                                          <div>
-                                            <span className="text-gray-600">Tải hàng:</span>{" "}
-                                            <span className="font-medium">{order.routeStep.load}</span>
-                                          </div>
-                                          <div>
-                                            <span className="text-gray-600">Trạng thái bước:</span>{" "}
-                                            <span className="font-medium">
-                                              {order.routeStep.status || 'N/A'}
-                                            </span>
+                                            <span className="text-gray-600">Cân nặng:</span>{" "}
+                                            <span className="font-medium">{order.weight} kg</span>
                                           </div>
                                         </div>
                                       </div>
-                                    )}
+                                    </div>
 
-                                    {order.products && order.products.length > 0 && (
-                                      <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
-                                        <h4 className="font-semibold text-xs text-gray-700 mb-2">
-                                          Danh sách sản phẩm
-                                        </h4>
-                                        <div className="space-y-2">
-                                          {order.products.map((product) => (
-                                            <div
-                                              key={product.id}
-                                              className="bg-white p-2 rounded text-xs"
-                                            >
-                                              <p className="font-medium text-gray-800">
-                                                {product.name}
-                                              </p>
-                                              <div className="flex gap-4 text-gray-600 mt-1">
-                                                <span>SL: {product.quantity}</span>
-                                                <span>Cân nặng: {product.weight} kg</span>
-                                              </div>
+                                    <div className="space-y-3">
+                                      {order.routeStep && (
+                                        <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                                          <h4 className="font-semibold text-xs text-gray-700 mb-2 flex items-center gap-1">
+                                            <Navigation fontSize="small" />
+                                            Thông tin tuyến đường
+                                          </h4>
+                                          <div className="grid grid-cols-2 gap-2 text-xs">
+                                            <div>
+                                              <span className="text-gray-600">Vị trí:</span>{" "}
+                                              <span className="font-medium">
+                                                {order.routeStep.lat?.toFixed(4)}, {order.routeStep.lng?.toFixed(4)}
+                                              </span>
                                             </div>
-                                          ))}
+                                            <div>
+                                              <span className="text-gray-600">Thời gian đến:</span>{" "}
+                                              <span className="font-medium">
+                                                {formatTime(order.routeStep.arrival)}
+                                              </span>
+                                            </div>
+                                            <div>
+                                              <span className="text-gray-600">Khoảng cách:</span>{" "}
+                                              <span className="font-medium">
+                                                {formatDistance(order.routeStep.distance)} km
+                                              </span>
+                                            </div>
+                                            <div>
+                                              <span className="text-gray-600">Thời gian giao:</span>{" "}
+                                              <span className="font-medium">
+                                                {order.routeStep.duration} phút
+                                              </span>
+                                            </div>
+                                            <div>
+                                              <span className="text-gray-600">Tải hàng:</span>{" "}
+                                              <span className="font-medium">{order.routeStep.load}</span>
+                                            </div>
+                                            <div>
+                                              <span className="text-gray-600">Trạng thái bước:</span>{" "}
+                                              <span className="font-medium">
+                                                {order.routeStep.status || 'N/A'}
+                                              </span>
+                                            </div>
+                                          </div>
                                         </div>
-                                      </div>
-                                    )}
-
-                                    <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-                                      <h4 className="font-semibold text-xs text-gray-700 mb-2">
-                                        Thông tin bổ sung
-                                      </h4>
-                                      <div className="text-xs space-y-1">
-                                        <p>
-                                          <span className="text-gray-600">Sẵn sàng giao:</span>{" "}
-                                          <span className="font-medium">
-                                            {order.isReadyForDelivery ? "Có" : "Không"}
-                                          </span>
-                                        </p>
-                                        <p>
-                                          <span className="text-gray-600">KC đến người nhận:</span>{" "}
-                                          <span className="font-medium">
-                                            {order.distanceToReceiver} km
-                                          </span>
-                                        </p>
-                                        <p>
-                                          <span className="text-gray-600">KC bưu cục gần nhất:</span>{" "}
-                                          <span className="font-medium">
-                                            {order.nearestPostOfficeDistance} km
-                                          </span>
-                                        </p>
-                                        <p>
-                                          <span className="text-gray-600">Tạo lúc:</span>{" "}
-                                          <span className="font-medium">
-                                            {formatDateTime(order.created_at)}
-                                          </span>
-                                        </p>
-                                      </div>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -455,7 +413,7 @@ const DeliveryScheduleModal = ({ open, shipper, onClose, routes, loading, fetchS
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="8" className="text-center py-4 text-gray-500">
+                        <td colSpan="7" className="text-center py-4 text-gray-500">
                           Không có đơn hàng nào trong tuyến đường này.
                         </td>
                       </tr>

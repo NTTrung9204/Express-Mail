@@ -6,6 +6,7 @@ import Orders from "../components/Orders";
 import EmptyState from "../components/EmptyState";
 import { useOrderStore } from "../stores/useOrderStore";
 import { ORDER_TABS } from "../constants/orderTabs";
+import ProtectedComponent from "../components/common/ProtectedComponent"
 
 const OrdersLayoutPage = () => {
   const { tabId } = useParams();            
@@ -57,7 +58,9 @@ const OrdersLayoutPage = () => {
 
   return (
     <div className="flex-1 flex flex-col">
-      <TopNav />
+      <ProtectedComponent perm="order_external_app.can_create_order">
+        <TopNav />
+      </ProtectedComponent>
 
       <Tabs
         activeTab={activeTab}

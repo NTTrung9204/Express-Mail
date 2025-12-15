@@ -3,6 +3,7 @@ import { IconButton, Switch, CircularProgress } from "@mui/material";
 import { Visibility, Add } from "@mui/icons-material";
 import { useShippingRateStore } from "../store/shippingRateStore";
 import ShippingRateModal from "../components/shipping-rate/ShippingRateModal";
+import ProtectedComponent from '../components/common/ProtectedComponent';
 import { getPageNumbers } from "../utils/pagination";
 import { toast } from "react-toastify";
 
@@ -55,12 +56,14 @@ export default function ShippingRate() {
       </div>
 
       <div className="flex justify-end gap-2 mb-6">
-        <button
-          onClick={() => handleOpen("add")}
-          className="flex items-center gap-1 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition cursor-pointer"
-        >
-          <Add fontSize="small" /> Thêm Phí Ship
-        </button>
+        <ProtectedComponent perm="shipping.add_shippingrate">
+          <button
+            onClick={() => handleOpen("add")}
+            className="flex items-center gap-1 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition cursor-pointer"
+          >
+            <Add fontSize="small" /> Thêm Phí Ship
+          </button>
+        </ProtectedComponent>
       </div>
 
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
@@ -71,7 +74,9 @@ export default function ShippingRate() {
               <th className="py-3 px-4 font-semibold text-center">Phí mỗi km</th>
               <th className="py-3 px-4 font-semibold text-center">Hệ số chia thể tích</th>
               <th className="py-3 px-4 font-semibold text-center">Phí mỗi kg</th>
-              <th className="py-3 px-4 font-semibold text-center">Trạng thái</th>
+              <ProtectedComponent perm="shipping.change_shippingrate_status">
+                <th className="py-3 px-4 font-semibold text-center">Trạng thái</th>
+              </ProtectedComponent>
               <th className="py-3 px-4 font-semibold text-center">Ngày tạo</th>
               <th className="py-3 px-4 font-semibold text-center">Hành động</th>
             </tr>
@@ -111,24 +116,26 @@ export default function ShippingRate() {
                   <td className="py-3 px-4 text-center">
                     {item.ratePerKg.toLocaleString()}đ
                   </td>
-                  <td className="py-3 px-4 text-center">
-                    <div className="flex justify-center items-center gap-2">
-                      <Switch
-                        checked={item.isActive}
-                        onChange={() => handleSwitchToggle(item.id, item.isActive)}
-                        color="success"
-                      />
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          item.isActive
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {item.isActive ? "Đang dùng" : "Ngừng"}
-                      </span>
-                    </div>
-                  </td>
+                    <ProtectedComponent perm="shipping.change_shippingrate_status">
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex justify-center items-center gap-2">
+                          <Switch
+                            checked={item.isActive}
+                            onChange={() => handleSwitchToggle(item.id, item.isActive)}
+                            color="success"
+                          />
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              item.isActive
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-100 text-red-700"
+                            }`}
+                          >
+                            {item.isActive ? "Đang dùng" : "Ngừng"}
+                          </span>
+                        </div>
+                      </td>
+                  </ProtectedComponent>
                   <td className="py-3 px-4 text-center">
                     {new Date(item.createdAt).toLocaleString("vi-VN")}
                   </td>

@@ -6,6 +6,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import WarehouseIcon from "@mui/icons-material/Warehouse";
 import { LocalShipping } from "@mui/icons-material";
 import { authService } from "../../api/authService";
+import ProtectedComponent from '../../components/common/ProtectedComponent'
 
 const Sidebar = ({ setTitle }) => {
   const linkStyle =
@@ -30,39 +31,43 @@ const Sidebar = ({ setTitle }) => {
         <h1 className="text-xl font-bold mb-4 text-center">Admin</h1>
         <hr className="border-t border-orange-400 mb-6" />
         <nav className="flex flex-col gap-2">
+          <ProtectedComponent perm="users.view_user">
+            <NavLink
+              to="users"
+              className={({ isActive }) =>
+                `${linkStyle} ${isActive ? activeStyle : ""}`
+              }
+              onClick={() => setTitle && setTitle("Quản lý người dùng")}
+            >
+              <PeopleIcon className="w-5 h-5 mr-3" />
+              Quản lý Người dùng
+            </NavLink>
+          </ProtectedComponent>
 
-          <NavLink
-            to="users"
-            className={({ isActive }) =>
-              `${linkStyle} ${isActive ? activeStyle : ""}`
-            }
-            onClick={() => setTitle && setTitle("Quản lý người dùng")}
-          >
-            <PeopleIcon className="w-5 h-5 mr-3" />
-            Quản lý Người dùng
-          </NavLink>
-
-          <NavLink
-            to="warehouses" 
-            className={({ isActive }) =>
-              `${linkStyle} ${isActive ? activeStyle : ""}`
-            }
-            onClick={() => setTitle && setTitle("Quản lý kho")}
-          >
-            <WarehouseIcon className="w-5 h-5 mr-3" />
-            Quản lý Kho
-          </NavLink>
-
-          <NavLink
-            to="shipping-rate"
-            className={({ isActive }) =>
-              `${linkStyle} ${isActive ? activeStyle : ""}`
-            }
-            onClick={() => setTitle && setTitle("Quản lý phí Ship")}
-          >
-            <LocalShipping className="w-5 h-5 mr-3" />
-            Quản lý Phí ship
-          </NavLink>
+          <ProtectedComponent perm="post_offices.view_postoffice">
+            <NavLink
+              to="warehouses" 
+              className={({ isActive }) =>
+                `${linkStyle} ${isActive ? activeStyle : ""}`
+              }
+              onClick={() => setTitle && setTitle("Quản lý kho")}
+            >
+              <WarehouseIcon className="w-5 h-5 mr-3" />
+              Quản lý Kho
+            </NavLink>
+          </ProtectedComponent>
+          <ProtectedComponent perm="shipping.view_shippingrate">  
+            <NavLink
+              to="shipping-rate"
+              className={({ isActive }) =>
+                `${linkStyle} ${isActive ? activeStyle : ""}`
+              }
+              onClick={() => setTitle && setTitle("Quản lý phí Ship")}
+            >
+              <LocalShipping className="w-5 h-5 mr-3" />
+              Quản lý Phí ship
+            </NavLink>
+          </ProtectedComponent>
         </nav>
       </div>
 
