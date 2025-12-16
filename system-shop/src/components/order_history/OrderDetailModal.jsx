@@ -8,7 +8,7 @@ import LocalShippingOutlined from '@mui/icons-material/LocalShippingOutlined';
 import OrderTimeline from './OrderTimeline';
 import ShippingJourney from './ShippingJourney';
 
-import img_placeholder from "../../assets/img_placeholder.jpg";
+import ProtectedImage from '../ProtectedImage';
 
 
 const OrderDetailModal = ({ order, isOpen, onClose }) => {
@@ -103,14 +103,10 @@ const OrderDetailModal = ({ order, isOpen, onClose }) => {
                 {order.products.map((product, index) => (
                   <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     {product.img_url && (
-                      <img 
+                      <ProtectedImage
                         src={product.img_url} 
                         alt={product.name}
                         className="w-16 h-16 object-cover rounded-lg"
-                        onError={(e) => {
-                          e.target.src = {img_placeholder};
-                          e.target.onerror = null; 
-                        }}
                       />
                     )}
                     <div className="flex-1">

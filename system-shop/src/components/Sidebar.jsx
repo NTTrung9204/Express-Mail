@@ -1,7 +1,8 @@
 import React from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
-import HistoryIcon from "@mui/icons-material/History";   
+import HistoryIcon from "@mui/icons-material/History";
+import LockIcon from "@mui/icons-material/Lock";
 import LogoutIcon from "@mui/icons-material/Logout";
 import avatar from "../assets/avatar.jpg";
 import { authService } from "../api/authService";
@@ -22,6 +23,7 @@ const Sidebar = () => {
 
   const isOrdersActive = location.pathname.startsWith("/orders");
   const isHistoryActive = location.pathname.startsWith("/order-history");
+  const isChangePasswordActive = location.pathname.startsWith("/change-password");
 
   return (
     <aside className="bg-white w-64 min-h-screen border-r border-gray-200 flex flex-col p-3 shadow-sm">
@@ -79,6 +81,22 @@ const Sidebar = () => {
               </NavLink>
             </li>
           </ProtectedComponent>
+
+          <li className="mt-2">
+              <NavLink
+                to="/change-password"
+                className={`w-full flex items-center px-4 py-2 text-left transition font-medium cursor-pointer rounded-lg ${
+                  isChangePasswordActive
+                    ? "bg-orange-100 text-orange-600"
+                    : "text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                <span className="mr-3 text-lg">
+                  <LockIcon />
+                </span>
+                Đổi mật khẩu
+              </NavLink>
+            </li>
 
           <li className="mt-2">
             <button

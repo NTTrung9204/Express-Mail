@@ -2,14 +2,14 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 
 export const nestJSAPI = axios.create({
-  baseURL: import.meta.env.VITE_API_NESTJS_BASE_URL || 'http://localhost:3000',
+  baseURL: import.meta.env.VITE_API_NESTJS_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
 export const djangoAPI = axios.create({
-  baseURL: import.meta.env.VITE_API_DJANGO_BASE_URL || 'http://localhost:8000',
+  baseURL: import.meta.env.VITE_API_DJANGO_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },

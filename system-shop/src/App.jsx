@@ -4,6 +4,7 @@ import { ToastContainer } from "react-toastify";
 import MainLayout from "./pages/MainLayout";
 import OrderHistoryPage from "./pages/OrderHistoryPage";
 import OrdersLayoutPage from "./pages/OrdersLayoutPage";
+import ChangePasswordPage from "./pages/ChangePasswordPage";
 
 const App = () => {
 
@@ -18,6 +19,7 @@ const App = () => {
           </Route>
 
           <Route path="order-history" element={<OrderHistoryPage />} />
+          <Route path="change-password" element={<ChangePasswordPage />} />
         </Route>
       </Routes>
     </div>
