@@ -8,7 +8,7 @@ on:
       - develop
 
 concurrency:
-  group: admin-${{ github.ref }}
+  group: fe-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
