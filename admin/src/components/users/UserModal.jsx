@@ -5,11 +5,11 @@ import PermissionModal from "./PermissionModal";
 import ProtectedComponent from "../common/ProtectedComponent";
 
 const ROLE_GROUP_MAP = {
-  admin: 1, 
-  post_office_manager: 2, 
-  post_office_staff: 3, 
-  shop: 4, 
-  shipper: 5, 
+  admin: 1,
+  post_office_manager: 2,
+  post_office_staff: 3,
+  shop: 4,
+  shipper: 5,
 };
 
 const ROLE_PERMISSIONS = {
@@ -54,7 +54,7 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
   const isView = mode === "view";
 
   useEffect(() => {
-    const safeUser = user || {}; 
+    const safeUser = user || {};
     setEditableUser(safeUser);
     setCurrentRole(safeUser.role || "");
 
@@ -67,7 +67,7 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
         firstName: safeUser.firstName || "",
         lastName: safeUser.lastName || "",
       });
-      setExcludePermissions(safeUser.excludePermissions || []); 
+      setExcludePermissions(safeUser.excludePermissions || []);
     } else if (mode === "add") {
       setForm({
         username: "",
@@ -77,7 +77,7 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
         firstName: "",
         lastName: "",
       });
-      setExcludePermissions([]); 
+      setExcludePermissions([]);
     }
     setErrors({});
   }, [open, mode, user]);
@@ -90,22 +90,22 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
 
   const handleRoleChange = (newRole) => {
     setCurrentRole(newRole);
-    setEditableUser(prev => ({ ...prev, role: newRole })); 
+    setEditableUser(prev => ({ ...prev, role: newRole }));
   };
 
   const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const validate = () => {
     const newErrors = {};
-    if (!form.firstName) newErrors.firstName = "Vui lòng nhập họ.";
-    if (!form.lastName) newErrors.lastName = "Vui lòng nhập tên.";
-    if (!form.username) newErrors.username = "Vui lòng nhập tên đăng nhập.";
-    if (!form.email) newErrors.email = "Vui lòng nhập email.";
+    if (!form.firstName.trim()) newErrors.firstName = "Vui lòng nhập họ.";
+    if (!form.lastName.trim()) newErrors.lastName = "Vui lòng nhập tên.";
+    if (!form.username.trim()) newErrors.username = "Vui lòng nhập tên đăng nhập.";
+    if (!form.email.trim()) newErrors.email = "Vui lòng nhập email.";
     else if (!isValidEmail(form.email)) newErrors.email = "Email không hợp lệ.";
 
-    if (mode === "add" || form.password) {
-      if (!form.password) newErrors.password = "Vui lòng nhập mật khẩu.";
-      else if (form.password.length < 6)
+    // Chỉ validate mật khẩu khi đang edit và có nhập password
+    if (mode === "edit" && form.password) {
+      if (form.password.length < 6)
         newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự.";
       if (form.password !== form.confirmPassword)
         newErrors.confirmPassword = "Mật khẩu xác nhận không khớp.";
@@ -118,10 +118,25 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
   const handleSave = async () => {
     if (!validate()) return;
 
-    const dataToSend = { ...form, excludePermissions: excludePermissions };
-    delete dataToSend.confirmPassword;
-    if (mode === "edit" && !form.password) delete dataToSend.password;
-    
+    // Tạo payload cơ bản
+    let dataToSend = {
+      username: form.username.trim(),
+      email: form.email.trim(),
+      firstName: form.firstName.trim(),
+      lastName: form.lastName.trim(),
+      excludePermissions: excludePermissions,
+    };
+
+    // === QUAN TRỌNG: Xử lý password theo mode ===
+    if (mode === "edit") {
+      // Chỉ gửi password nếu người dùng nhập (muốn đổi mật khẩu)
+      if (form.password) {
+        dataToSend.password = form.password;
+      }
+      // Nếu để trống → không gửi field password → backend giữ nguyên mật khẩu cũ
+    }
+    // mode === "add" → KHÔNG gửi password chút nào (backend tự xử lý)
+
     const result = await onSave(dataToSend);
 
     if (!result?.success) {
@@ -148,10 +163,8 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
   };
 
   const userGroupId = ROLE_GROUP_MAP[currentRole] || 1;
-
   const rolePermissions = ROLE_PERMISSIONS[currentRole];
   const viewPermission = rolePermissions?.view;
-
   const hasValidRole = currentRole && currentRole.trim() !== "";
 
   if (!open) return null;
@@ -271,24 +284,19 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
             </div>
           </div>
 
-          {!isView && (
+          {/* Chỉ hiển thị mật khẩu khi đang sửa (edit) */}
+          {mode === "edit" && (
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block mb-1 font-medium">Mật khẩu</label>
+                <label className="block mb-1 font-medium">Mật khẩu mới</label>
                 <input
                   name="password"
                   type="password"
                   value={form.password}
                   onChange={handleChange}
-                  placeholder={
-                    mode === "edit"
-                      ? "Để trống nếu không đổi mật khẩu"
-                      : "Nhập mật khẩu"
-                  }
+                  placeholder="Để trống nếu không muốn đổi mật khẩu"
                   className={`w-full p-2 border rounded-lg outline-none ${
-                    errors.password
-                      ? "border-red-500"
-                      : "focus:border-orange-500"
+                    errors.password ? "border-red-500" : "focus:border-orange-500"
                   }`}
                 />
                 {errors.password && (
@@ -297,17 +305,15 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
               </div>
 
               <div>
-                <label className="block mb-1 font-medium">Xác nhận mật khẩu</label>
+                <label className="block mb-1 font-medium">Xác nhận mật khẩu mới</label>
                 <input
                   name="confirmPassword"
                   type="password"
                   value={form.confirmPassword}
                   onChange={handleChange}
-                  placeholder="Nhập lại mật khẩu"
+                  placeholder="Nhập lại mật khẩu mới"
                   className={`w-full p-2 border rounded-lg outline-none ${
-                    errors.confirmPassword
-                      ? "border-red-500"
-                      : "focus:border-orange-500"
+                    errors.confirmPassword ? "border-red-500" : "focus:border-orange-500"
                   }`}
                 />
                 {errors.confirmPassword && (
@@ -385,7 +391,7 @@ const UserModal = ({ open, onClose, mode = "add", user = {}, onSave }) => {
           targetGroupId={userGroupId}
           isView={isView}
           user={editableUser}
-          onRoleChange={handleRoleChange} 
+          onRoleChange={handleRoleChange}
         />
       )}
     </>

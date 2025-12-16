@@ -82,7 +82,7 @@ export const useOrderHistoryStore = () => {
       updatedAt: o.updated_at,
       products: (o.products || []).map(p => ({
         ...p,
-        img_url: p.img_url && !p.img_url.startsWith('http') 
+        img_url: p.img_url && !p.img_url.startsWith('https') 
           ? `${baseURL}${p.img_url}` 
           : p.img_url                   
       })),

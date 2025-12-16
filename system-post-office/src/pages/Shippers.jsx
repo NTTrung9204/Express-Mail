@@ -41,8 +41,6 @@ const Shippers = () => {
 
   const [formData, setFormData] = useState({
     username: "",
-    password: "",
-    confirmPassword: "", 
     firstName: "",
     lastName: "",
     email: "",
@@ -195,36 +193,13 @@ const Shippers = () => {
     }
   };
 
-  const validateField = (name, value, fullFormData = formData) => {
+  const validateField = (name, value) => {
     const newErrors = { ...formErrors };
     delete newErrors[name]; 
 
     switch (name) {
       case 'username':
         if (!value.trim()) newErrors.username = "Username là bắt buộc";
-        break;
-
-      case 'password':
-        if (!value.trim()) {
-          newErrors.password = "Mật khẩu là bắt buộc";
-        } else if (value.length < 6) {
-          newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
-        }
-
-        if (fullFormData.confirmPassword.trim()) {
-          delete newErrors.confirmPassword;
-          if (value !== fullFormData.confirmPassword) {
-            newErrors.confirmPassword = "Xác nhận mật khẩu không khớp";
-          }
-        }
-        break;
-
-      case 'confirmPassword':
-        if (!value.trim()) {
-          newErrors.confirmPassword = "Xác nhận mật khẩu là bắt buộc";
-        } else if (value !== fullFormData.password) {
-          newErrors.confirmPassword = "Xác nhận mật khẩu không khớp";
-        }
         break;
 
       case 'email':
@@ -317,13 +292,7 @@ const Shippers = () => {
   const validateForm = () => {
     const errors = {};
 
-    if (!formData.username.trim()) errors.username = "Username là bắt buộc";
-    
-    if (!formData.password.trim()) errors.password = "Mật khẩu là bắt buộc";
-    else if (formData.password.length < 6) errors.password = "Mật khẩu phải có ít nhất 6 ký tự";
-    
-    if (!formData.confirmPassword.trim()) errors.confirmPassword = "Xác nhận mật khẩu là bắt buộc";
-    else if (formData.password !== formData.confirmPassword) errors.confirmPassword = "Xác nhận mật khẩu không khớp"; 
+    if (!formData.username.trim()) errors.username = "Username là bắt buộc"; 
 
     if (!formData.firstName.trim()) errors.firstName = "Họ là bắt buộc";
     if (!formData.lastName.trim()) errors.lastName = "Tên là bắt buộc";
@@ -346,8 +315,6 @@ const Shippers = () => {
 
   const isFormValid = () => {
     return formData.username.trim() &&
-      formData.password.trim() &&
-      formData.confirmPassword.trim() && 
       formData.firstName.trim() &&
       formData.lastName.trim() &&
       formData.email.trim() &&
@@ -383,8 +350,6 @@ const Shippers = () => {
       
       setFormData({
         username: "",
-        password: "",
-        confirmPassword: "", 
         firstName: "",
         lastName: "",
         email: "",
@@ -630,48 +595,6 @@ const Shippers = () => {
                     />
                     {formErrors.username && (
                       <p className="text-red-500 text-xs mt-1">{formErrors.username}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Mật khẩu <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      name="password"
-                      type="password"
-                      placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
-                      value={formData.password}
-                      onChange={handleChange}
-                      className={`w-full px-4 py-2 border ${
-                        formErrors.password 
-                          ? 'border-red-500' 
-                          : 'border-gray-300'
-                      } rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-500 outline-none transition`}
-                    />
-                    {formErrors.password && (
-                      <p className="text-red-500 text-xs mt-1">{formErrors.password}</p>
-                    )}
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Xác nhận Mật khẩu <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      name="confirmPassword"
-                      type="password"
-                      placeholder="Xác nhận lại mật khẩu"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      className={`w-full px-4 py-2 border ${
-                        formErrors.confirmPassword
-                          ? 'border-red-500' 
-                          : 'border-gray-300'
-                      } rounded-lg focus:ring-2 focus:ring-orange-400 focus:border-orange-500 outline-none transition`}
-                    />
-                    {formErrors.confirmPassword && (
-                      <p className="text-red-500 text-xs mt-1">{formErrors.confirmPassword}</p>
                     )}
                   </div>
 

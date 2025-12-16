@@ -34,7 +34,6 @@ export const createShipper = async (postOfficeId, shipperData) => {
     const formData = new FormData();
     
     formData.append('user.username', shipperData.username);
-    formData.append('user.password', shipperData.password);
     formData.append('user.email', shipperData.email);
     formData.append('user.firstName', shipperData.firstName);
     formData.append('user.lastName', shipperData.lastName);

@@ -1,8 +1,8 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import LogoutIcon from "@mui/icons-material/Logout";
-import DashboardIcon from "@mui/icons-material/Dashboard";
 import PeopleIcon from "@mui/icons-material/People";
+import LockIcon from "@mui/icons-material/Lock";
 import WarehouseIcon from "@mui/icons-material/Warehouse";
 import { LocalShipping } from "@mui/icons-material";
 import { authService } from "../../api/authService";
@@ -68,6 +68,17 @@ const Sidebar = ({ setTitle }) => {
               Quản lý Phí ship
             </NavLink>
           </ProtectedComponent>
+
+          <NavLink
+            to="change-password"
+            className={({ isActive }) =>
+              `${linkStyle} ${isActive ? activeStyle : ""}`
+            }
+            onClick={() => setTitle && setTitle("Đổi mật khẩu")}
+          >
+            <LockIcon className="w-5 h-5 mr-3" />
+            Đổi mật khẩu
+          </NavLink>
         </nav>
       </div>
 

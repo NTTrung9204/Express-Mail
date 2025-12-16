@@ -14,8 +14,6 @@ import ProtectedComponent from "../components/common/ProtectedComponent";
 const Staffs = () => {
   const [formData, setFormData] = useState({
     username: "",
-    password: "",
-    confirmPassword: "",
     firstName: "",
     lastName: "",
     email: "",
@@ -153,22 +151,6 @@ const Staffs = () => {
         }
         break;
 
-      case "password":
-        if (!value) {
-          error = "Mật khẩu không được để trống";
-        } else if (value.length < 6) {
-          error = "Mật khẩu phải có ít nhất 6 ký tự";
-        }
-        break;
-
-      case "confirmPassword":
-        if (!value) {
-          error = "Vui lòng xác nhận mật khẩu";
-        } else if (value !== formData.password) {
-          error = "Mật khẩu xác nhận không khớp";
-        }
-        break;
-
       case "firstName":
         if (!value.trim()) {
           error = "Họ không được để trống";
@@ -205,23 +187,11 @@ const Staffs = () => {
       ...prev,
       [name]: error
     }));
-
-    if (name === "password" && formData.confirmPassword) {
-      const confirmError = formData.confirmPassword !== value 
-        ? "Mật khẩu xác nhận không khớp" 
-        : "";
-      setFormErrors(prev => ({
-        ...prev,
-        confirmPassword: confirmError
-      }));
-    }
   };
 
   const isFormValid = () => {
     const hasAllFields = 
       formData.username &&
-      formData.password &&
-      formData.confirmPassword &&
       formData.firstName &&
       formData.lastName &&
       formData.email;
@@ -247,8 +217,6 @@ const Staffs = () => {
       
       setFormData({
         username: "",
-        password: "",
-        confirmPassword: "",
         firstName: "",
         lastName: "",
         email: "",
@@ -269,9 +237,6 @@ const Staffs = () => {
           }
           if (apiErrors.user.email) {
             newErrors.email = apiErrors.user.email[0];
-          }
-          if (apiErrors.user.password) {
-            newErrors.password = apiErrors.user.password[0];
           }
           if (apiErrors.user.firstName) {
             newErrors.firstName = apiErrors.user.firstName[0];
@@ -487,48 +452,6 @@ const Staffs = () => {
                 />
                 {formErrors.lastName && (
                   <p className="text-red-500 text-xs mt-1">{formErrors.lastName}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm mb-1">
-                  Mật khẩu <span className="text-red-500">*</span>
-                </label>
-                <input
-                  name="password"
-                  type="password"
-                  placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                    formErrors.password
-                      ? "border-red-500 focus:ring-red-500"
-                      : "border-orange-200 focus:ring-orange-400"
-                  }`}
-                />
-                {formErrors.password && (
-                  <p className="text-red-500 text-xs mt-1">{formErrors.password}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm mb-1">
-                  Xác nhận mật khẩu <span className="text-red-500">*</span>
-                </label>
-                <input
-                  name="confirmPassword"
-                  type="password"
-                  placeholder="Nhập lại mật khẩu"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
-                    formErrors.confirmPassword
-                      ? "border-red-500 focus:ring-red-500"
-                      : "border-orange-200 focus:ring-orange-400"
-                  }`}
-                />
-                {formErrors.confirmPassword && (
-                  <p className="text-red-500 text-xs mt-1">{formErrors.confirmPassword}</p>
                 )}
               </div>
             </div>

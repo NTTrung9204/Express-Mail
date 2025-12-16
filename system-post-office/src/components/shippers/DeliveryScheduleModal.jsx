@@ -8,9 +8,10 @@ import {
   Email,
   Navigation,
 } from "@mui/icons-material";
+import ProtectedImage from "../common/ProtectedImage";
 
 const DeliveryScheduleModal = ({ open, shipper, onClose, routes, loading, fetchScheduleData }) => {
-  const baseURL = import.meta.env.VITE_NESTJS_API_URL;
+  const baseURL = 'https://pbl6-express-mail-nestjs.work.gd';
   
   const getTodayDate = () => {
     const today = new Date();
@@ -265,7 +266,7 @@ const DeliveryScheduleModal = ({ open, shipper, onClose, routes, loading, fetchS
                                       </h4>
                                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                         {order.products.map((product) => {
-                                          const imgUrl = product.img_url && !product.img_url.startsWith('http') 
+                                          const imgUrl = product.img_url && !product.img_url.startsWith('https') 
                                             ? `${baseURL}${product.img_url}` 
                                             : product.img_url;
                                           
@@ -275,14 +276,10 @@ const DeliveryScheduleModal = ({ open, shipper, onClose, routes, loading, fetchS
                                               className="bg-white p-3 rounded-lg shadow-sm flex gap-3 items-start"
                                             >
                                               {imgUrl && (
-                                                <img
-                                                  src={imgUrl}
-                                                  alt={product.name}
-                                                  className="w-16 h-16 object-cover rounded border border-gray-200"
-                                                  onError={(e) => {
-                                                    e.target.style.display = 'none';
-                                                  }}
-                                                />
+                                                <ProtectedImage
+                                                    src={imgUrl} 
+                                                    alt={product.name}
+                                                    className="w-16 h-16 object-cover rounded-lg" />
                                               )}
                                               <div className="flex-1 text-xs">
                                                 <p className="font-semibold text-gray-800 mb-1">

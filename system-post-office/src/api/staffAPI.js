@@ -34,7 +34,6 @@ export const createStaff = async (postOfficeId, staffData) => {
     const payload = {
       user: {
         username: staffData.username,
-        password: staffData.password,
         email: staffData.email,
         firstName: staffData.firstName,
         lastName: staffData.lastName,

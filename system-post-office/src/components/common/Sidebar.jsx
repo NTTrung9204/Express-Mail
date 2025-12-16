@@ -1,6 +1,7 @@
 import React from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { LocalShipping, Inventory2, People, RouteOutlined } from "@mui/icons-material";
+import LockIcon from "@mui/icons-material/Lock";
 import LogoutIcon from '@mui/icons-material/Logout';
 import { toast } from "react-toastify";
 import authAPI from "../../api/authAPI";
@@ -45,6 +46,18 @@ const Sidebar = () => {
             </NavLink>
           </li>
         </ProtectedComponent>
+        <ProtectedComponent perm="post_offices.view_user">
+          <li>
+            <NavLink
+              to="/post-office/staffs"
+              className={({ isActive }) =>
+                `${linkClasses} ${isActive ? activeClasses : ""}`
+              }
+            >
+              <People className="mr-3 text-base" /> Quản lý Nhân viên
+            </NavLink>
+          </li>
+        </ProtectedComponent>
         <ProtectedComponent perm="order_external_app.can_view_all_orders">
           <li>
             <NavLink
@@ -71,18 +84,16 @@ const Sidebar = () => {
             <RouteOutlined className="mr-3 text-base" /> Kế hoạch giao hàng
           </NavLink>
         </li>
-        <ProtectedComponent perm="post_offices.view_user">
-          <li>
-            <NavLink
-              to="/post-office/staffs"
-              className={({ isActive }) =>
-                `${linkClasses} ${isActive ? activeClasses : ""}`
-              }
-            >
-              <People className="mr-3 text-base" /> Quản lý Nhân viên
-            </NavLink>
-          </li>
-        </ProtectedComponent>
+        <li>
+          <NavLink
+            to="/post-office/change-password"
+            className={({ isActive }) =>
+              `${linkClasses} ${isActive ? activeClasses : ""}`
+            }
+          >
+            <LockIcon className="mr-3 text-base" /> Đổi mật khẩu
+          </NavLink>
+        </li>
         <li>
           <button
             onClick={handleLogout}

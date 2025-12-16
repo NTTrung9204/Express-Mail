@@ -16,6 +16,7 @@ import Staffs from "./pages/Staffs";
 import { ProtectedRoute, PublicRoute } from "./components/ProtectedRoute";
 import authAPI from "./api/authAPI";
 import { setupAuthInterceptor } from "./interceptor/authInterceptor";
+import ChangePasswordPage from "./pages/ChangePasswordPage";
 
 export default function App() {
    useEffect(() => {
@@ -38,6 +39,7 @@ export default function App() {
           }
         >
           <Route path="shippers" element={<Shippers />} />
+          <Route path="change-password" element={<ChangePasswordPage />} />
 
           <Route path="orders" element={<Orders />}>
             <Route path="received" element={<ReceivedOrders />} />
