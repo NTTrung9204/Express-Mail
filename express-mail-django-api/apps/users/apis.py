@@ -5,7 +5,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import status
 
-from apps.permissions.constants import Roles
+from apps.permissions.constants import Roles, Groups
 from apps.users.constants import PROFILE_VIEWSET_ACTION_PERMISSIONS
 from apps.users.filters import UserFilter
 from apps.users.models import User
@@ -176,6 +176,8 @@ class UserViewSet(ModelViewSet, BaseAPIViewSet):
         created_shop_profile = ProfileService.create_shop_profile(
             profile_validated_data
         )
+
+        created_user.groups.add(GroupService.get_group_by_name(Groups.SHOP.value))
 
         shop_register_data = {
             "user": created_user,
