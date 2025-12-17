@@ -756,7 +756,8 @@ export class OrderService {
 
       if (
         status === PostOfficeOrderStatus.CLASSIFIED &&
-        postOfficeId == latestEvent?.currentPostOfficeId
+        postOfficeId == latestEvent?.currentPostOfficeId &&
+        eventStatus === OrderTransitionStatus.PENDING
       ) {
         return true;
       }

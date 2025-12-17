@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Visibility, LocalShipping, Search, Autorenew } from "@mui/icons-material";
 import HistoryModal from "../../components/orders/received_orders/HistoryModal";
 import Pagination from "../../components/common/Pagination";
@@ -6,6 +6,7 @@ import TransferModal from "../../components/orders/received_orders/TransferModal
 import CreatePlanModal from "../../components/orders/received_orders/CreatePlanModal";
 import { ordersAPI } from "../../api/ordersAPI";
 import { nestJSAPI } from "../../api/axiosInstances";
+import { postOfficeAPI } from "../../api/postOfficeAPI";
 import { toast } from "react-toastify";
 import authAPI from "../../api/authAPI";
 import { fetchUserPostOfficeId } from "../../api/profileAPI";
@@ -25,6 +26,8 @@ const ReceivedOrders = () => {
   const [transferSelectedIds, setTransferSelectedIds] = useState(new Set());
   const [planCreating, setPlanCreating] = useState(false);
   const [postOfficeId, setPostOfficeId] = useState(null);
+  const [postOfficeDetailsMap, setPostOfficeDetailsMap] = useState({});
+  const prevPostOfficeIdsRef = useRef(null);
 
   // Get post office ID from user data via API
   useEffect(() => {
@@ -77,8 +80,34 @@ const ReceivedOrders = () => {
   }, [postOfficeId, page, limit]);
 
   // Separate orders into ready and transfer
-  const readyOrders = orders.filter((order) => order.isReadyForDelivery === true);
-  const transferOrders = orders.filter((order) => order.isReadyForDelivery !== true);
+  const readyOrders = useMemo(() => 
+    orders.filter((order) => order.isReadyForDelivery === true),
+    [orders]
+  );
+  
+  const transferOrders = useMemo(() => 
+    orders.filter((order) => order.isReadyForDelivery !== true),
+    [orders]
+  );
+
+  // Fetch post office details for transfer orders
+  useEffect(() => {
+    if (tab === "transfer" && transferOrders.length > 0) {
+      const postOfficeIds = [
+        ...new Set(transferOrders.map(order => order.nearestPostOfficeId).filter(Boolean))
+      ];
+      
+      // Only fetch if post office IDs have changed
+      const postOfficeIdsStr = JSON.stringify(postOfficeIds.sort((a, b) => a - b));
+      
+      if (postOfficeIds.length > 0 && prevPostOfficeIdsRef.current !== postOfficeIdsStr) {
+        prevPostOfficeIdsRef.current = postOfficeIdsStr;
+        postOfficeAPI.getMultiplePostOffices(postOfficeIds).then(details => {
+          setPostOfficeDetailsMap(details);
+        });
+      }
+    }
+  }, [transferOrders, tab]);
 
   // Filter orders based on search term
   const filteredOrders = (tab === "ready" ? readyOrders : transferOrders).filter((order) =>
@@ -306,7 +335,7 @@ const ReceivedOrders = () => {
                       <td className="p-3 font-semibold">{order.code}</td>
                       <td className="p-3">{order.shopProfile?.username || "N/A"}</td>
                       <td className="p-3">
-                        Anonymous
+                        {order.receiver_name || "N/A"}
                         <div className="text-xs text-gray-500">-</div>
                       </td>
                       <td className="p-3">{(order.cod || 0).toLocaleString('vi-VN')} đ</td>
@@ -314,7 +343,7 @@ const ReceivedOrders = () => {
                       {tab === "transfer" && (
                         <td className="p-3 text-xs">
                           <span className="text-blue-600">
-                            PO #{order.nearestPostOfficeId}
+                            {postOfficeDetailsMap[order.nearestPostOfficeId]?.name || `PO #${order.nearestPostOfficeId}`}
                           </span>
                           <div className="text-gray-500 mt-1">
                             {order.distanceToReceiver?.toFixed(2)} km
@@ -324,8 +353,7 @@ const ReceivedOrders = () => {
                       <td className="p-3 text-center">
                         <button
                           onClick={() => {
-                            setSelectedOrder(order);
-                            setOpenHistory(true);
+                            window.open(`/post-office/orders/history?code=${order.code}`, '_blank');
                           }}
                           className="flex items-center gap-1 px-3 py-1 border border-orange-200 rounded-lg text-orange-700 hover:bg-orange-50 text-sm transition cursor-pointer"
                           title="Xem lịch sử"

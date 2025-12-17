@@ -4,6 +4,7 @@ import OrderDetailModal from "../../components/orders/classified_orders/OrderDet
 import Pagination from "../../components/common/Pagination";
 import { ordersAPI } from "../../api/ordersAPI";
 import { nestJSAPI } from "../../api/axiosInstances";
+import { postOfficeAPI } from "../../api/postOfficeAPI";
 import { toast } from "react-toastify";
 import authAPI from "../../api/authAPI";
 import { fetchUserPostOfficeId } from "../../api/profileAPI";
@@ -20,6 +21,30 @@ const ClassifiedOrders = () => {
   const [selectedOrderIds, setSelectedOrderIds] = useState(new Set());
   const [transitionProcessing, setTransitionProcessing] = useState(false);
   const [postOfficeId, setPostOfficeId] = useState(null);
+  const [postOfficeCache, setPostOfficeCache] = useState({});
+
+  // Fetch post office info when orders change
+  useEffect(() => {
+    const fetchPostOfficeInfo = async () => {
+      if (!orders || orders.length === 0) return;
+
+      const postOfficeIds = new Set();
+      orders.forEach(order => {
+        if (order.nearestPostOfficeId) {
+          postOfficeIds.add(order.nearestPostOfficeId);
+        }
+      });
+
+      if (postOfficeIds.size > 0) {
+        const details = await postOfficeAPI.getMultiplePostOffices(Array.from(postOfficeIds));
+        const newCache = { ...postOfficeCache };
+        Object.assign(newCache, details);
+        setPostOfficeCache(newCache);
+      }
+    };
+
+    fetchPostOfficeInfo();
+  }, [orders]);
 
   // Get post office ID from user data via API
   useEffect(() => {
@@ -97,6 +122,11 @@ const ClassifiedOrders = () => {
       const allIds = new Set(filteredOrders.map(order => order.id));
       setSelectedOrderIds(allIds);
     }
+  };
+
+  // Helper function to get post office details
+  const getPostOfficeDetails = (order) => {
+    return postOfficeCache[order.nearestPostOfficeId] || null;
   };
 
   // Transition orders to next post office
@@ -223,15 +253,30 @@ const ClassifiedOrders = () => {
                       </td>
                       <td className="p-3 font-semibold">{order.code}</td>
                       <td className="p-3">{order.shopProfile?.username || "N/A"}</td>
-                      <td className="p-3">Anonymous</td>
+                      <td className="p-3">{order.receiver_name || "N/A"}</td>
                       <td className="p-3">{order.receiver_province_city || "N/A"}</td>
                       <td className="p-3 text-xs">
-                        <span className="text-blue-600">
-                          PO #{order.nearestPostOfficeId}
-                        </span>
-                        <div className="text-gray-500 mt-1">
-                          {order.distanceToReceiver?.toFixed(2)} km
-                        </div>
+                        {(() => {
+                          const poDetails = getPostOfficeDetails(order);
+                          if (poDetails) {
+                            return (
+                              
+                                <p className="font-semibold text-blue-700 text-xs">{poDetails.name} ({order.distanceToReceiver} km)</p>
+
+                            );
+                          } else {
+                            return (
+                              <>
+                                <span className="text-blue-600">
+                                  PO #{order.nearestPostOfficeId}
+                                </span>
+                                <div className="text-gray-500 mt-1">
+                                  {order.distanceToReceiver?.toFixed(2)} km
+                                </div>
+                              </>
+                            );
+                          }
+                        })()}
                       </td>
                       <td className="p-3">
                         <span
@@ -248,8 +293,7 @@ const ClassifiedOrders = () => {
                       <td className="p-3 text-center">
                         <button
                           onClick={() => {
-                            setSelectedOrder(order);
-                            setOpenDetail(true);
+                            window.open(`/post-office/orders/history?code=${order.code}`, '_blank');
                           }}
                           className="border border-orange-200 text-orange-700 hover:bg-orange-50 text-sm transition px-3 py-1 rounded-lg items-center gap-1 inline-flex cursor-pointer"
                         >

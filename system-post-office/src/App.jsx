@@ -11,6 +11,7 @@ import RequestOrders from "./pages/orders/RequestOrders";
 import InComingOrders from "./pages/orders/InComingOrders";
 import OrderHistory from "./pages/orders/OrderHistory";
 import ClassifiedOrders from "./pages/orders/ClassifiedOrders";
+import TransitingOrders from "./pages/orders/TransitingOrders";
 import DeliveryPlans from "./pages/orders/DeliveryPlans";
 import Staffs from "./pages/Staffs";
 import { ProtectedRoute, PublicRoute } from "./components/ProtectedRoute";
@@ -43,6 +44,7 @@ export default function App() {
             <Route path="request" element={<RequestOrders />} />
             <Route path="classified" element={<ClassifiedOrders />} />
             <Route path="incoming" element={<InComingOrders />} />
+            <Route path="transiting" element={<TransitingOrders />} />
           </Route>
 
           <Route path="delivery-plans" element={<DeliveryPlans />} />

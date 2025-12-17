@@ -7,6 +7,7 @@ const tabs = [
   { name: "Đơn yêu cầu", path: "request" },
   { name: "Đơn đã phân loại", path: "classified" },
   { name: "Đơn sắp đến", path: "incoming" },
+  { name: "Đơn trung chuyển", path: "transiting" },
 ];
 
 const TopNavOrders = () => {

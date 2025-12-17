@@ -11,6 +11,8 @@ import {
 } from "@mui/icons-material";
 import { useSearchParams } from "react-router-dom";
 import { ordersAPI } from "../../api/ordersAPI";
+import { postOfficeAPI } from "../../api/postOfficeAPI";
+import shippersAPI from "../../api/shippersAPI";
 import { toast } from "react-toastify";
 
 const OrderHistory = () => {
@@ -20,6 +22,8 @@ const OrderHistory = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [timeline, setTimeline] = useState([]);
+  const [postOfficeCache, setPostOfficeCache] = useState({});
+  const [shipperCache, setShipperCache] = useState({});
 
   const translateStatus = (s) => {
     if (!s) return "Chưa có thông tin";
@@ -57,7 +61,7 @@ const OrderHistory = () => {
       if (response.success) {
         const orderData = response.data;
         setOrder(orderData);
-        buildTimeline(orderData);
+        await buildTimeline(orderData);
       } else {
         toast.error("Lỗi khi lấy thông tin đơn hàng");
       }
@@ -69,8 +73,50 @@ const OrderHistory = () => {
     }
   };
 
-  const buildTimeline = (orderData) => {
+  const buildTimeline = async (orderData) => {
     const events = [];
+
+    // Collect all post office IDs that need to be fetched
+    const postOfficeIds = new Set();
+    
+    if (orderData.orderPostOffices && orderData.orderPostOffices.length > 0) {
+      orderData.orderPostOffices.forEach(po => {
+        if (po.postOfficeId) postOfficeIds.add(po.postOfficeId);
+      });
+    }
+
+    if (orderData.transitions && orderData.transitions.length > 0) {
+      orderData.transitions.forEach(transition => {
+        if (transition.currentPostOfficeId) postOfficeIds.add(transition.currentPostOfficeId);
+        if (transition.nextPostOfficeId) postOfficeIds.add(transition.nextPostOfficeId);
+      });
+    }
+
+    // Fetch all post office details - use local variable, not state
+    let poCache = {};
+    if (postOfficeIds.size > 0) {
+      poCache = await postOfficeAPI.getMultiplePostOffices(Array.from(postOfficeIds));
+    }
+    setPostOfficeCache(poCache);
+
+    // Fetch all shipper details by post office
+    let sCache = {};
+    if (postOfficeIds.size > 0) {
+      // Fetch shippers for each post office
+      for (const postOfficeId of postOfficeIds) {
+        try {
+          const response = await shippersAPI.getShippers(postOfficeId, 1, 100);
+          if (response.success && response.data.length > 0) {
+            response.data.forEach(shipper => {
+              sCache[shipper.id] = `${shipper.firstName || ""} ${shipper.lastName || ""}`.trim();
+            });
+          }
+        } catch (error) {
+          console.error(`Error fetching shippers for post office ${postOfficeId}:`, error);
+        }
+      }
+    }
+    setShipperCache(sCache);
 
     // Add order creation event
     events.push({
@@ -93,13 +139,16 @@ const OrderHistory = () => {
           IN_WAREHOUSE: "Đang được lưu trữ trong kho",
         };
 
+        const poDetails = poCache[po.postOfficeId];
+        const poName = poDetails?.name || `Bưu cục #${po.postOfficeId}`;
+
         events.push({
           id: `po-${po.id}-${index}`,
           type: "postoffice",
           timestamp: new Date(po.created_at),
           status: po.status,
           title: statusMessages[po.status] || po.status,
-          description: `Bưu cục #${po.postOfficeId}`,
+          description: poName,
           icon:
             po.status === "PICKUP_REQUESTED" ? (
               <Inventory2 className="text-orange-600" />
@@ -116,6 +165,7 @@ const OrderHistory = () => {
     // Add transition events
     if (orderData.transitions && orderData.transitions.length > 0) {
       orderData.transitions.forEach((transition) => {
+        console.log("Processing transition:", transition);
         const statusMessages = {
           PENDING: "Chuẩn bị chuyển hàng",
           TRANSITING: "Đang chuyển hàng",
@@ -132,13 +182,23 @@ const OrderHistory = () => {
             <Schedule className="text-yellow-600" />
           );
 
+        const nextPODetails = poCache[transition.nextPostOfficeId];
+
+        console.log('poCache', poCache);
+        console.log('postOfficeCache', postOfficeCache);
+        console.log('transition', transition);
+
+        
+        const currentPOName = poCache[transition.currentPostOfficeId]?.name || `người gửi`;
+        const nextPOName = nextPODetails?.name || `Bưu cục #${transition.nextPostOfficeId}`;
+
         events.push({
           id: `tr-${transition.id}`,
           type: "transition",
           timestamp: new Date(transition.createdAt),
           status: transition.status,
           title: statusMessages[transition.status] || transition.status,
-          description: `Từ bưu cục ${transition.currentPostOfficeId || "nguồn"} → bưu cục ${transition.nextPostOfficeId}`,
+          description: `Từ ${currentPOName} → ${nextPOName}`,
           icon,
           color: isSuccess ? "green" : transition.status === "TRANSITING" ? "blue" : "yellow",
         });
@@ -195,7 +255,7 @@ const OrderHistory = () => {
           timestamp: new Date(ship.createdAt),
           status: ship.status,
           title: statusMessages[ship.status] || ship.status,
-          description: `Shipper #${ship.shipperId}`,
+          description: `${sCache[ship.shipperId] || `Shipper #${ship.shipperId}` || "N/A"}`,
           icon,
           color,
         });
@@ -206,6 +266,7 @@ const OrderHistory = () => {
     events.sort((a, b) => a.timestamp - b.timestamp);
     setTimeline(events);
   };
+
 
   const getColorClasses = (color) => {
     const colors = {

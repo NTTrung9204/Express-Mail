@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Close, Navigation } from "@mui/icons-material";
 import plansAPI from "../../../api/plansAPI";
+import shippersAPI from "../../../api/shippersAPI";
 import { toast } from "react-toastify";
 
 const RouteDetailModal = ({ open, onClose, vehicleRouteId }) => {
   const [vehicleRoute, setVehicleRoute] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [shipperName, setShipperName] = useState(null);
 
   useEffect(() => {
     if (open && vehicleRouteId) {
@@ -19,7 +21,15 @@ const RouteDetailModal = ({ open, onClose, vehicleRouteId }) => {
     try {
       const response = await plansAPI.getVehicleRoute(vehicleRouteId);
       if (response.success) {
-        setVehicleRoute(response.data.vehicleRoute);
+        const route = response.data.vehicleRoute;
+        setVehicleRoute(route);
+
+        // Fetch shipper name if shipperId exists
+        if (route.vehicleId) {
+          await fetchShipperName(route.vehicleId, route.routePlan.postOfficeId);
+        } else {
+          setShipperName(null);
+        }
       } else {
         toast.error("Không thể lấy thông tin tuyến đường");
       }
@@ -28,6 +38,26 @@ const RouteDetailModal = ({ open, onClose, vehicleRouteId }) => {
       toast.error("Lỗi khi lấy thông tin tuyến đường");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchShipperName = async (shipperId, postOfficeId) => {
+    try {
+      const response = await shippersAPI.getShippers(postOfficeId, 1, 100);
+      if (response.success && response.data.length > 0) {
+        console.log("Shippers data:", response.data);
+        const shipper = response.data.find(s => s.id == shipperId);
+        if (shipper) {
+          setShipperName(`${shipper.firstName} ${shipper.lastName}`);
+        } else {
+          setShipperName(`Shipper #${shipperId}`);
+        }
+      } else {
+        setShipperName(`Shipper #${shipperId}`);
+      }
+    } catch (error) {
+      console.error("Error fetching shipper name:", error);
+      setShipperName(`Shipper #${shipperId}`);
     }
   };
 
@@ -87,9 +117,9 @@ const RouteDetailModal = ({ open, onClose, vehicleRouteId }) => {
                 </p>
               </div>
               <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                <p className="text-xs text-gray-600 mb-1">Xe giao hàng</p>
+                <p className="text-xs text-gray-600 mb-1">Xe giao hàng / Shipper</p>
                 <p className="text-xl font-bold text-orange-600">
-                  {vehicleRoute.vehicleId ? `Xe ${vehicleRoute.vehicleId}` : "Chưa gán"}
+                  {shipperName ? shipperName : vehicleRoute.vehicleId ? `Xe ${vehicleRoute.vehicleId}` : "Chưa gán"}
                 </p>
               </div>
             </div>

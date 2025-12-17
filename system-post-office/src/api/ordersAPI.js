@@ -28,6 +28,10 @@ export const ordersAPI = {
     return ordersAPI.getOrdersByStatus(postOfficeId, 'TRANSITING', page, limit);
   },
 
+  getTransitingOrders: async (postOfficeId, page = 1, limit = 10) => {
+    return ordersAPI.getOrdersByStatus(postOfficeId, 'TRANSITING', page, limit);
+  },
+
   // Get classified orders (CLASSIFIED status)
   getClassifiedOrders: async (postOfficeId, page = 1, limit = 10) => {
     return ordersAPI.getOrdersByStatus(postOfficeId, 'CLASSIFIED', page, limit);
