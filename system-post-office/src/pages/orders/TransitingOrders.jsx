@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { Visibility, Replay, Search } from "@mui/icons-material";
-import OrderDetailModal from "../../components/orders/failed_orders/OrderDetailModal";
-import ConfirmResendModal from "../../components/orders/failed_orders/ConfirmResendModal";
+import { Visibility, Search } from "@mui/icons-material";
+import OrderDetailModal from "../../components/orders/transiting_orders/OrderDetailModal";
 import Pagination from "../../components/common/Pagination";
 import { ordersAPI } from "../../api/ordersAPI";
+import { djangoAPI } from "../../api/axiosInstances";
 import { toast } from "react-toastify";
 import authAPI from "../../api/authAPI";
 import { fetchUserPostOfficeId } from "../../api/profileAPI";
 
-const FailedOrders = () => {
+const TransitingOrders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [openDetail, setOpenDetail] = useState(false);
-  const [openConfirm, setOpenConfirm] = useState(false);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -19,6 +18,41 @@ const FailedOrders = () => {
   const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [postOfficeId, setPostOfficeId] = useState(null);
+  const [postOfficeCache, setPostOfficeCache] = useState({});
+
+  // Fetch post office info when orders change
+  useEffect(() => {
+    const fetchPostOfficeInfo = async () => {
+      if (!orders || orders.length === 0) return;
+
+      // Get unique post office IDs
+      const postOfficeIds = new Set();
+      orders.forEach(order => {
+        const transitingTransition = order.transitions?.find(t => t.status === "TRANSITING");
+        if (transitingTransition?.nextPostOfficeId) {
+          postOfficeIds.add(transitingTransition.nextPostOfficeId);
+        }
+      });
+
+      // Fetch info for post offices not in cache
+      const newCache = { ...postOfficeCache };
+      for (const id of postOfficeIds) {
+        if (!newCache[id]) {
+          try {
+            const response = await djangoAPI.get(`/api/v1/post-offices/${id}`);
+            if (response.data) {
+              newCache[id] = response.data;
+            }
+          } catch (error) {
+            console.error(`Error fetching post office ${id}:`, error);
+          }
+        }
+      }
+      setPostOfficeCache(newCache);
+    };
+
+    fetchPostOfficeInfo();
+  }, [orders]);
 
   // Get post office ID from user data via API
   useEffect(() => {
@@ -48,11 +82,11 @@ const FailedOrders = () => {
 
     setLoading(true);
     try {
-      const response = await ordersAPI.getFailedOrders(postOfficeId, page, limit);
+      const response = await ordersAPI.getTransitingOrders(postOfficeId, page, limit);
       
       if (response.success) {
         setOrders(response.data.data || []);
-        setTotal(response.data.total || response.data.meta?.total || 0);
+        setTotal(response.data.meta?.total || 0);
       } else {
         toast.error("Lỗi khi lấy danh sách đơn hàng");
       }
@@ -77,6 +111,23 @@ const FailedOrders = () => {
     (order.shopProfile?.username || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Helper function to get next post office ID from transitions
+  const getNextPostOfficeId = (order) => {
+    const transitingTransition = order.transitions?.find(
+      (t) => t.status === "TRANSITING"
+    );
+    return transitingTransition?.nextPostOfficeId || "N/A";
+  };
+
+  // Helper function to get post office details
+  const getPostOfficeDetails = (order) => {
+    const transitingTransition = order.transitions?.find(
+      (t) => t.status === "TRANSITING"
+    );
+    const postOfficeId = transitingTransition?.nextPostOfficeId;
+    return postOfficeCache[postOfficeId] || null;
+  };
+
   return (
     <div className="bg-[#fff6f1] min-h-screen">
       <div className="bg-white rounded-xl shadow p-4">
@@ -100,7 +151,7 @@ const FailedOrders = () => {
           </div>
         ) : filteredOrders.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-500">Không có đơn hàng nào</p>
+            <p className="text-gray-500">Không có đơn hàng nào đang trung chuyển</p>
           </div>
         ) : (
           <>
@@ -111,9 +162,10 @@ const FailedOrders = () => {
                     <th className="text-left p-3">Mã đơn</th>
                     <th className="text-left p-3">Người gửi</th>
                     <th className="text-left p-3">Người nhận</th>
+                    <th className="text-left p-3">Địa chỉ nhận</th>
                     <th className="text-left p-3">COD</th>
-                    <th className="text-left p-3">Lý do thất bại</th>
-                    <th className="text-left p-3">Ngày thất bại</th>
+                    <th className="text-left p-3">Bưu cục tiếp theo</th>
+                    <th className="text-left p-3">Ngày gửi</th>
                     <th className="text-center p-3">Hành động</th>
                   </tr>
                 </thead>
@@ -127,14 +179,30 @@ const FailedOrders = () => {
                       <td className="p-3 font-semibold">{order.code}</td>
                       <td className="p-3">{order.shopProfile?.username || "N/A"}</td>
                       <td className="p-3">{order.receiver_name || "N/A"}</td>
+                      <td className="p-3 text-xs max-w-xs truncate">
+                        {order.receiver_address || "N/A"}
+                      </td>
                       <td className="p-3">{(order.cod || 0).toLocaleString('vi-VN')} đ</td>
                       <td className="p-3">
-                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                          {order.shipping_status || "Không xác định"}
-                        </span>
+                        {(() => {
+                          const poDetails = getPostOfficeDetails(order);
+                          if (poDetails) {
+                            return (
+                                <p className="font-semibold text-blue-700 text-xs">{poDetails.name}</p>
+                            );
+                          } else {
+                            return (
+                              <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-semibold">
+                                {getNextPostOfficeId(order)}
+                              </span>
+                            );
+                          }
+                        })()}
                       </td>
-                      <td className="p-3">{new Date(order.updated_at).toLocaleDateString('vi-VN')}</td>
-                      <td className="p-3 text-center space-x-2">
+                      <td className="p-3 text-xs">
+                        {new Date(order.created_at).toLocaleDateString('vi-VN')}
+                      </td>
+                      <td className="p-3 text-center">
                         <button
                           onClick={() => {
                             window.open(`/post-office/orders/history?code=${order.code}`, '_blank');
@@ -143,15 +211,6 @@ const FailedOrders = () => {
                         >
                           <Visibility fontSize="small" /> Chi tiết
                         </button>
-                        <button
-                          onClick={() => {
-                            setSelectedOrder(order);
-                            setOpenConfirm(true);
-                          }}
-                          className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg items-center gap-1 inline-flex cursor-pointer"
-                        >
-                          <Replay fontSize="small" /> Giao lại
-                        </button>
                       </td>
                     </tr>
                   ))}
@@ -159,22 +218,31 @@ const FailedOrders = () => {
               </table>
             </div>
 
-            <Pagination
-              page={page}
-              limit={limit}
-              total={total}
-              onPageChange={setPage}
-              onLimitChange={setLimit}
-            />
+            {total > limit && (
+              <div className="mt-4">
+                <Pagination
+                  currentPage={page}
+                  totalPages={Math.ceil(total / limit)}
+                  onPageChange={setPage}
+                />
+              </div>
+            )}
           </>
         )}
       </div>
 
-      {/* Hai modal */}
-      <OrderDetailModal open={openDetail} onClose={() => setOpenDetail(false)} order={selectedOrder}/>
-      <ConfirmResendModal open={openConfirm} onClose={() => setOpenConfirm(false)} order={selectedOrder}/>
+      {selectedOrder && (
+        <OrderDetailModal
+          open={openDetail}
+          onClose={() => {
+            setOpenDetail(false);
+            setSelectedOrder(null);
+          }}
+          order={selectedOrder}
+        />
+      )}
     </div>
   );
 };
 
-export default FailedOrders;
+export default TransitingOrders;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Info, LocationOn, ExpandLess, ExpandMore } from '@mui/icons-material';
 import { nestJSAPI, djangoAPI } from '../../../api/axiosInstances';
+import { postOfficeAPI } from '../../../api/postOfficeAPI';
 import { toast } from 'react-toastify';
 
 const TransferModal = ({ open, onClose, selectedOrders, onTransferComplete }) => {
@@ -25,13 +26,13 @@ const TransferModal = ({ open, onClose, selectedOrders, onTransferComplete }) =>
   const fetchPostOfficeDetails = async () => {
     setLoading(true);
     try {
-      const response = await djangoAPI.get("/api/v1/post-offices");
-      if (response.data && response.data.results) {
-        const poMap = {};
-        response.data.results.forEach((po) => {
-          poMap[po.id] = po;
-        });
-        setPostOffices(poMap);
+      const postOfficeIds = [
+        ...new Set(selectedOrders.map(order => order.nearestPostOfficeId).filter(Boolean))
+      ];
+
+      if (postOfficeIds.length > 0) {
+        const details = await postOfficeAPI.getMultiplePostOffices(postOfficeIds);
+        setPostOffices(details);
       }
     } catch (error) {
       console.error("Error fetching post offices:", error);

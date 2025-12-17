@@ -45,7 +45,7 @@ const AssignShipperModal = ({ open, onClose, vehicleRouteId, postOfficeId, onAss
       const response = await plansAPI.assignVehicleRoutes([
         {
           vehicle_route_id: vehicleRouteId,
-          shipper_id: selectedShipperId,
+          shipper_id: String(selectedShipperId),
         },
       ]);
 
@@ -108,7 +108,7 @@ const AssignShipperModal = ({ open, onClose, vehicleRouteId, postOfficeId, onAss
                     name="shipper"
                     value={shipper.id}
                     checked={selectedShipperId === shipper.id}
-                    onChange={(e) => setSelectedShipperId(e.target.value)}
+                    onChange={(e) => setSelectedShipperId(parseInt(e.target.value))}
                     className="w-4 h-4 cursor-pointer"
                   />
                   <Person className="ml-3 text-orange-600" fontSize="small" />

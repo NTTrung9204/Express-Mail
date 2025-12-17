@@ -255,7 +255,7 @@ const RequestOrders = () => {
                       </td>
                       <td className="p-3 font-semibold">{order.code}</td>
                       <td className="p-3">{order.shopProfile?.username || "N/A"}</td>
-                      <td className="p-3">Anonymous</td>
+                      <td className="p-3">{order.receiver_name || "N/A"}</td>
                       <td className="p-3">{(order.cod || 0).toLocaleString('vi-VN')} đ</td>
                       <td className="p-3">
                         <span
