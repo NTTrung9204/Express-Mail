@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Visibility, CheckCircle, Search } from "@mui/icons-material";
 import Pagination from "../../components/common/Pagination";
+import ConfirmArrivedModal from "../../components/orders/request_orders/ConfirmArriveModal";
 import { ordersAPI } from "../../api/ordersAPI";
 import { toast } from "react-toastify";
 import authAPI from "../../api/authAPI";
@@ -14,6 +15,8 @@ const InComingOrders = () => {
   const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [postOfficeId, setPostOfficeId] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [openConfirm, setOpenConfirm] = useState(false);
 
   // Get post office ID from user data via API
   useEffect(() => {
@@ -132,7 +135,7 @@ const InComingOrders = () => {
                       <td className="p-3 text-center space-x-2">
                         <button
                           onClick={() => {
-                            // Handle view detail
+                            window.open(`/post-office/orders/history?code=${order.code}`, '_blank');
                           }}
                           className="border border-orange-200 text-orange-700 hover:bg-orange-50 text-sm transition px-3 py-1 rounded-lg items-center gap-1 inline-flex cursor-pointer"
                         >
@@ -141,7 +144,8 @@ const InComingOrders = () => {
 
                         <button
                           onClick={() => {
-                            // Handle confirm arrival
+                            setSelectedOrder(order);
+                            setOpenConfirm(true);
                           }}
                           className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg items-center gap-1 inline-flex cursor-pointer"
                         >
@@ -164,6 +168,16 @@ const InComingOrders = () => {
           </>
         )}
       </div>
+
+      <ConfirmArrivedModal
+        open={openConfirm}
+        onClose={() => setOpenConfirm(false)}
+        order={selectedOrder}
+        onConfirmed={() => {
+          setOpenConfirm(false);
+          fetchOrders();
+        }}
+      />
     </div>
   );
 };

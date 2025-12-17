@@ -99,6 +99,8 @@ export class PlanService {
         let lat: string;
         let lon: string;
 
+        console.log(dto.mode, 'mode for order', order.id, RouteMode.PICKUP);
+
         // Get coordinates based on mode
         if (dto.mode === RouteMode.PICKUP) {
           // For pickup mode: get shop coordinates
@@ -120,6 +122,9 @@ export class PlanService {
 
           lat = shopProfile.latitude.toString();
           lon = shopProfile.longitude.toString();
+          console.log(
+            `Order ${order.id} shop coordinates: lat=${lat}, lon=${lon}`,
+          );
         } else {
           // For delivery mode: get receiver coordinates
           if (!order.receiver_coordinate) {
@@ -161,6 +166,10 @@ export class PlanService {
         };
       }),
     );
+
+    console.log('Jobs for VRP calculation:', jobs);
+
+    console.log('Vehicles for VRP calculation:', vehicles);
 
     // Call Django service
     const response = await this.djangoService.calculateVehicleRoutingProblem(

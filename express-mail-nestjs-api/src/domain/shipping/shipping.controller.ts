@@ -55,6 +55,7 @@ export class ShippingController {
     RoleEnum.SUPER_ADMIN,
     RoleEnum.POST_OFFICE_STAFF,
     RoleEnum.POST_OFFICE_MANAGER,
+    RoleEnum.SHIPPER,
   )
   @ApiOperation({ summary: 'Create shipping' })
   @ApiBody({ type: CreateShippingDto })
@@ -142,6 +143,7 @@ export class ShippingController {
     RoleEnum.SUPER_ADMIN,
     RoleEnum.POST_OFFICE_STAFF,
     RoleEnum.POST_OFFICE_MANAGER,
+    RoleEnum.SHIPPER,
   )
   @ApiOperation({ summary: 'Update shipping' })
   @ApiParam({ name: 'id', type: 'number' })
@@ -162,6 +164,7 @@ export class ShippingController {
     RoleEnum.SUPER_ADMIN,
     RoleEnum.POST_OFFICE_STAFF,
     RoleEnum.POST_OFFICE_MANAGER,
+    RoleEnum.SHIPPER,
   )
   @ApiOperation({ summary: 'Assign shipper to shipping' })
   @ApiParam({ name: 'id', type: 'number' })
@@ -202,6 +205,8 @@ export class ShippingController {
     RoleEnum.ADMIN,
     RoleEnum.SUPER_ADMIN,
     RoleEnum.POST_OFFICE_MANAGER,
+    RoleEnum.POST_OFFICE_STAFF,
+    RoleEnum.SHIPPER,
   )
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Soft delete shipping' })
