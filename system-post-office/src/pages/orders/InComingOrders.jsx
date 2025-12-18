@@ -6,6 +6,7 @@ import { ordersAPI } from "../../api/ordersAPI";
 import { toast } from "react-toastify";
 import authAPI from "../../api/authAPI";
 import { fetchUserPostOfficeId } from "../../api/profileAPI";
+import ProtectedComponent from "../../components/common/ProtectedComponent";
 
 const InComingOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -133,14 +134,16 @@ const InComingOrders = () => {
                         </span>
                       </td>
                       <td className="p-3 text-center space-x-2">
-                        <button
-                          onClick={() => {
-                            window.open(`/post-office/orders/history?code=${order.code}`, '_blank');
-                          }}
-                          className="border border-orange-200 text-orange-700 hover:bg-orange-50 text-sm transition px-3 py-1 rounded-lg items-center gap-1 inline-flex cursor-pointer"
-                        >
-                          <Visibility fontSize="small" /> Chi tiết
-                        </button>
+                        <ProtectedComponent perm="order_external_app.can_view_order_details">
+                          <button
+                            onClick={() => {
+                              window.open(`/post-office/orders/history?code=${order.code}`, '_blank');
+                            }}
+                            className="border border-orange-200 text-orange-700 hover:bg-orange-50 text-sm transition px-3 py-1 rounded-lg items-center gap-1 inline-flex cursor-pointer"
+                          >
+                            <Visibility fontSize="small" /> Chi tiết
+                          </button>
+                        </ProtectedComponent>
 
                         <button
                           onClick={() => {

@@ -290,7 +290,9 @@ const Staffs = () => {
                     <th className="py-2 px-2">Tên</th>
                     <th className="py-2 px-2">Username</th>
                     <th className="py-2 px-2">Email</th>
-                    <th className="py-2 px-2">Trạng thái</th>
+                    <ProtectedComponent perm="post_offices.edit_user">
+                      <th className="py-2 px-2">Trạng thái</th>
+                    </ProtectedComponent>
                     <th className="py-2 px-2">Hành động</th>
                   </tr>
                 </thead>
@@ -312,26 +314,28 @@ const Staffs = () => {
                         </td>
                         <td className="px-2 text-center">{staff.username}</td>
                         <td className="px-2 text-center">{staff.email}</td>
-                        <td className="px-2 text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            <Switch
-                                checked={staff.isActive}
-                                onChange={() => handleToggleStaffStatus(staff)}
-                                disabled={togglingStaff === staff.id}
-                                color="success"
-                                size="small"
-                              />
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                staff.isActive
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-red-100 text-red-700"
-                              }`}
-                            >
-                              {staff.isActive ? "Hoạt động" : "Vô hiệu"}
-                            </span>
-                          </div>
-                        </td>
+                        <ProtectedComponent perm="post_offices.edit_user">
+                          <td className="px-2 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <Switch
+                                  checked={staff.isActive}
+                                  onChange={() => handleToggleStaffStatus(staff)}
+                                  disabled={togglingStaff === staff.id}
+                                  color="success"
+                                  size="small"
+                                />
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  staff.isActive
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-red-100 text-red-700"
+                                }`}
+                              >
+                                {staff.isActive ? "Hoạt động" : "Vô hiệu"}
+                              </span>
+                            </div>
+                          </td>
+                        </ProtectedComponent>
                         <ProtectedComponent perm="post_offices.edit_user">
                           <td className="px-2">
                             <div className="flex items-center justify-center gap-3">

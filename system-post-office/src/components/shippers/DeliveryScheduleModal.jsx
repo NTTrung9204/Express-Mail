@@ -103,7 +103,7 @@ const DeliveryScheduleModal = ({ open, shipper, onClose, routes, loading, fetchS
       id="schedule-modal-overlay"
       className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
     >
-      <div className="bg-white rounded-xl w-[1100px] shadow-lg p-6 relative max-h-[90vh] overflow-y-auto">
+      <div className="bg-white w-[1100px] shadow-lg p-6 relative max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-600 hover:text-black cursor-pointer"

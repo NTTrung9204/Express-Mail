@@ -106,9 +106,9 @@ const AssignShipperModal = ({ open, onClose, vehicleRouteId, postOfficeId, onAss
                   <input
                     type="radio"
                     name="shipper"
-                    value={shipper.id}
-                    checked={selectedShipperId === shipper.id}
-                    onChange={(e) => setSelectedShipperId(parseInt(e.target.value))}
+                    value={String(shipper.id)}
+                    checked={selectedShipperId === String(shipper.id)}
+                    onChange={(e) => setSelectedShipperId(e.target.value)} 
                     className="w-4 h-4 cursor-pointer"
                   />
                   <Person className="ml-3 text-orange-600" fontSize="small" />

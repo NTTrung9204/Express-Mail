@@ -8,6 +8,7 @@ import { postOfficeAPI } from "../../api/postOfficeAPI";
 import { toast } from "react-toastify";
 import authAPI from "../../api/authAPI";
 import { fetchUserPostOfficeId } from "../../api/profileAPI";
+import ProtectedComponent from "../../components/common/ProtectedComponent";
 
 const ClassifiedOrders = () => {
   const [openDetail, setOpenDetail] = useState(false);
@@ -233,7 +234,9 @@ const ClassifiedOrders = () => {
                     <th className="p-3">Bưu cục tiếp theo</th>
                     <th className="p-3">Trạng thái</th>
                     <th className="p-3">Ngày phân loại</th>
-                    <th className="p-3 text-center">Hành động</th>
+                    <ProtectedComponent perm="order_external_app.can_view_order_details">
+                      <th className="p-3 text-center">Hành động</th>    
+                    </ProtectedComponent>
                   </tr>
                 </thead>
 
@@ -290,8 +293,9 @@ const ClassifiedOrders = () => {
                         </span>
                       </td>
                       <td className="p-3 text-gray-700">{new Date(order.created_at).toLocaleDateString('vi-VN')}</td>
-                      <td className="p-3 text-center">
-                        <button
+                      <ProtectedComponent perm="order_external_app.can_view_order_details">
+                        <td className="p-3 text-center">
+                          <button
                           onClick={() => {
                             window.open(`/post-office/orders/history?code=${order.code}`, '_blank');
                           }}
@@ -299,7 +303,8 @@ const ClassifiedOrders = () => {
                         >
                           <Visibility fontSize="small" /> Chi tiết
                         </button>
-                      </td>
+                        </td>
+                      </ProtectedComponent>
                     </tr>
                   ))}
                 </tbody>

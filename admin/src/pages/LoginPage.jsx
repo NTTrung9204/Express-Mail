@@ -6,11 +6,8 @@ import { Visibility, VisibilityOff } from '@mui/icons-material';
 import bgImg from "../assets/ghn.png";
 import logoImg from "../assets/logo.png";
 
-
 const LoginPage = () => {
-
   const API_URL = import.meta.env.VITE_API_URL;
-
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -25,6 +22,54 @@ const LoginPage = () => {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const getFirstAdminRoute = (permissions) => {
+    const adminRoutes = [
+      { path: "/users", perm: "users.view_user" },
+      { path: "/warehouses", perm: "post_offices.view_postoffice" },
+      { path: "/shipping-rate", perm: "shipping.view_shippingrate" },
+      { path: "/change-password", perm: null }
+    ];
+
+    for (const route of adminRoutes) {
+      if (!route.perm || permissions.includes(route.perm)) {
+        return route.path;
+      }
+    }
+    return "/change-password";
+  };
+
+  const getFirstPostOfficeRoute = (permissions) => {
+    const postOfficeRoutes = [
+      { path: "/post-office/shippers", perm: "post_offices.view_user" },
+      { path: "/post-office/staffs", perm: "post_offices.view_user" },
+      { path: "/post-office/orders/received", perm: "order_external_app.can_view_all_orders" },
+      { path: "/post-office/delivery-plans", perm: "plan_external_app.can_view_shipping_plan" },
+      { path: "/post-office/change-password", perm: null }
+    ];
+
+    for (const route of postOfficeRoutes) {
+      if (!route.perm || permissions.includes(route.perm)) {
+        return route.path;
+      }
+    }
+    return "/post-office/change-password";
+  };
+
+  const getFirstShopRoute = (permissions) => {
+    const shopRoutes = [
+      { path: "/shop/orders/order-pickup-requested", perm: "order_external_app.can_view_shop_orders" },
+      { path: "/shop/order-history", perm: "order_external_app.can_view_order_details" },
+      { path: "/shop/change-password", perm: null }
+    ];
+
+    for (const route of shopRoutes) {
+      if (!route.perm || permissions.includes(route.perm)) {
+        return route.path;
+      }
+    }
+    return "/change-password";
   };
 
   const handleLogin = async (e) => {
@@ -44,15 +89,19 @@ const LoginPage = () => {
       });
 
       const { user } = res;
+      const permissions = JSON.parse(localStorage.getItem("permissions") || "[]");;
 
       toast.success("Đăng nhập thành công");
 
       if (user.role === "superadmin" || user.role === "admin") {
-        navigate("/users");
+        const firstRoute = getFirstAdminRoute(permissions);
+        navigate(firstRoute);
       } else if (user.role === "post_office_manager" || user.role === "post_office_staff") {
-        window.location.href = `${API_URL}/post-office/shippers`;
+        const firstRoute = getFirstPostOfficeRoute(permissions);
+        window.location.href = `${API_URL}${firstRoute}`;
       } else if (user.role === "shop") {
-        window.location.href = `${API_URL}/shop/orders/pending`;
+        const firstRoute = getFirstShopRoute(permissions);
+        window.location.href = `${API_URL}${firstRoute}`;
       }
     } catch (err) {
       console.error("Login failed:", err);

@@ -207,12 +207,33 @@ export const usePermissionStore = () => {
       );
       return data;
     } catch (err) {
-      const apiErrorDetail = err.response?.data?.message || err.response?.data?.detail;
-      const errorMsg = apiErrorDetail || err.message;
-      setError(errorMsg);
-      console.error("Lỗi API update quyền chi tiết:", err.response?.data || err);
-      throw new Error(apiErrorDetail || "Cập nhật quyền thất bại. Vui lòng kiểm tra dữ liệu đầu vào.");
-    } finally {
+      console.error("Full API error:", err.response?.data);
+
+      let errorMessage = "Cập nhật quyền thất bại.";
+
+      const apiError = err.response?.data;
+
+      if (apiError) {
+        if (apiError.errors?.detail) {
+          const detail = apiError.errors.detail;
+          errorMessage = Array.isArray(detail) ? detail[0] : detail;
+        }
+        else if (apiError.message) {
+          errorMessage = apiError.message;
+        }
+        else if (apiError.errors) {
+          errorMessage = "Dữ liệu không hợp lệ.";
+        }
+      } else {
+        errorMessage = err.message || "Lỗi kết nối server.";
+      }
+
+      setError(errorMessage);
+      console.error("Lỗi update quyền:", errorMessage);
+
+      throw new Error(errorMessage);
+    }
+    finally {
       setLoading(false);
     }
   };

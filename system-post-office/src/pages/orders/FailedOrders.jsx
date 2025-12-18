@@ -7,6 +7,7 @@ import { ordersAPI } from "../../api/ordersAPI";
 import { toast } from "react-toastify";
 import authAPI from "../../api/authAPI";
 import { fetchUserPostOfficeId } from "../../api/profileAPI";
+import ProtectedComponent from "../../components/common/ProtectedComponent";
 
 const FailedOrders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -135,7 +136,8 @@ const FailedOrders = () => {
                       </td>
                       <td className="p-3">{new Date(order.updated_at).toLocaleDateString('vi-VN')}</td>
                       <td className="p-3 text-center space-x-2">
-                        <button
+                        <ProtectedComponent perm="order_external_app.can_view_order_details">
+                          <button
                           onClick={() => {
                             window.open(`/post-office/orders/history?code=${order.code}`, '_blank');
                           }}
@@ -143,6 +145,7 @@ const FailedOrders = () => {
                         >
                           <Visibility fontSize="small" /> Chi tiết
                         </button>
+                        </ProtectedComponent>
                         <button
                           onClick={() => {
                             setSelectedOrder(order);

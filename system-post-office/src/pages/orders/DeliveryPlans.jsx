@@ -7,6 +7,7 @@ import plansAPI from "../../api/plansAPI";
 import authAPI from "../../api/authAPI";
 import { fetchUserPostOfficeId } from "../../api/profileAPI";
 import { toast } from "react-toastify";
+import ProtectedComponent from "../../components/common/ProtectedComponent";
 
 const DeliveryPlans = () => {
   const [plans, setPlans] = useState([]);
@@ -246,23 +247,27 @@ const DeliveryPlans = () => {
                                 </div>
                               </div>
                               <div className="ml-4 flex gap-2">
-                                {!route.vehicleId && (
+                                <ProtectedComponent perm="plan_external_app.can_assign_vehicle_routes_to_shippers">
+                                  {!route.vehicleId && (
+                                      <button
+                                        onClick={() => {
+                                          setSelectedVehicleRouteForAssign(route.id);
+                                          setOpenAssignShipper(true);
+                                        }}
+                                        className="px-3 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg text-sm font-medium inline-flex items-center gap-2 transition cursor-pointer"
+                                      >
+                                        <PersonAdd fontSize="small" /> Gán
+                                      </button>
+                                  )}
+                                </ProtectedComponent>
+                                <ProtectedComponent perm="plan_external_app.can_view_shipping_plan">
                                   <button
-                                    onClick={() => {
-                                      setSelectedVehicleRouteForAssign(route.id);
-                                      setOpenAssignShipper(true);
-                                    }}
-                                    className="px-3 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg text-sm font-medium inline-flex items-center gap-2 transition cursor-pointer"
+                                    onClick={() => handleViewRoute(route.id)}
+                                    className="px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium inline-flex items-center gap-2 transition cursor-pointer"
                                   >
-                                    <PersonAdd fontSize="small" /> Gán
+                                    <Visibility fontSize="small" /> Chi tiết
                                   </button>
-                                )}
-                                <button
-                                  onClick={() => handleViewRoute(route.id)}
-                                  className="px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium inline-flex items-center gap-2 transition cursor-pointer"
-                                >
-                                  <Visibility fontSize="small" /> Chi tiết
-                                </button>
+                                </ProtectedComponent>
                               </div>
                             </div>
                           ))}
