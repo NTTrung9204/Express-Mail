@@ -11,7 +11,11 @@ export const authAPI = {
 
   logout: async () => {
     try {
-      await API.post('/api/v1/auth/logout');
+      await API.post('/api/v1/auth/logout', {}, {
+        headers: {
+          'X-Logout-Request': 'true'  
+        }
+      });
     } catch (error) {
       console.error('Logout error:', error);
     } finally {

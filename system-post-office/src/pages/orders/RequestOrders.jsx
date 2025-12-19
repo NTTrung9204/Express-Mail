@@ -10,6 +10,7 @@ import { nestJSAPI } from "../../api/axiosInstances";
 import { toast } from "react-toastify";
 import authAPI from "../../api/authAPI";
 import { fetchUserPostOfficeId } from "../../api/profileAPI";
+import ProtectedComponent from "../../components/common/ProtectedComponent";
 
 const RequestOrders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -280,14 +281,16 @@ const RequestOrders = () => {
                         )}
                       </td>
                       <td className="p-3 text-center space-x-2">
-                        <button
-                          onClick={() => {
-                            window.open(`/post-office/orders/history?code=${order.code}`, '_blank');
-                          }}
-                          className="border border-orange-200 text-orange-700 hover:bg-orange-50 text-sm transition px-3 py-1 rounded-lg items-center gap-1 inline-flex cursor-pointer"
-                        >
-                          <Visibility fontSize="small" /> Lịch sử
-                        </button>
+                        <ProtectedComponent perm="order_external_app.can_view_order_details">
+                          <button
+                            onClick={() => {
+                              window.open(`/post-office/orders/history?code=${order.code}`, '_blank');
+                            }}
+                            className="border border-orange-200 text-orange-700 hover:bg-orange-50 text-sm transition px-3 py-1 rounded-lg items-center gap-1 inline-flex cursor-pointer"
+                          >
+                            <Visibility fontSize="small" /> Lịch sử
+                          </button>
+                        </ProtectedComponent>
 
                         <button
                           onClick={() => {

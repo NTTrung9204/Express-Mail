@@ -437,7 +437,9 @@ const Shippers = () => {
                     <th className="py-2 px-4 w-[20%] text-center">Email</th>
                     <th className="py-2 px-4 w-[12%] text-center">Số điện thoại</th>
                     <th className="py-2 px-4 w-[15%] text-center">Biển số xe</th>
-                    <th className="py-2 px-4 w-[18%] text-center">Trạng thái</th>
+                    <ProtectedComponent perm="post_offices.edit_user">
+                      <th className="py-2 px-4 w-[18%] text-center">Trạng thái</th>
+                    </ProtectedComponent>
                     <ProtectedComponent perm={["plan_external_app.can_view_shipping_plan", "post_offices.edit_user"]}>
                       <th className="py-2 px-4 w-[20%] text-center">Hành động</th>
                     </ProtectedComponent>
@@ -457,26 +459,28 @@ const Shippers = () => {
                           <td className="px-4 text-center">{shipper.email || 'N/A'}</td>
                           <td className="px-4 text-center">{shipper.profile?.phoneNumber || 'N/A'}</td>
                           <td className="px-4 text-center">{shipper.profile?.licensePlateNumber || 'N/A'}</td>
-                          <td className="px-4 text-center">
-                            <div className="flex items-center justify-center gap-2">
-                               <Switch
-                                checked={shipper.isActive}
-                                onChange={() => handleToggleShipperStatus(shipper)}
-                                disabled={togglingShipper === shipper.id}
-                                color="success"
-                                size="small"
-                              />
-                              <span
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  shipper.isActive
-                                    ? "bg-green-100 text-green-700"
-                                    : "bg-red-100 text-red-700"
-                                }`}
-                              >
-                                {shipper.isActive ? "Hoạt động" : "Vô hiệu"}
-                              </span>
-                            </div>
-                          </td>
+                          <ProtectedComponent perm="post_offices.edit_user">
+                            <td className="px-4 text-center">
+                              <div className="flex items-center justify-center gap-2">
+                                <Switch
+                                  checked={shipper.isActive}
+                                  onChange={() => handleToggleShipperStatus(shipper)}
+                                  disabled={togglingShipper === shipper.id}
+                                  color="success"
+                                  size="small"
+                                />
+                                <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    shipper.isActive
+                                      ? "bg-green-100 text-green-700"
+                                      : "bg-red-100 text-red-700"
+                                  }`}
+                                >
+                                  {shipper.isActive ? "Hoạt động" : "Vô hiệu"}
+                                </span>
+                              </div>
+                            </td>
+                          </ProtectedComponent>
                           <td className="px-4 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <ProtectedComponent perm="plan_external_app.can_view_shipping_plan">

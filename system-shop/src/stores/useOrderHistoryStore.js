@@ -3,6 +3,8 @@ import { orderService } from "../api/orderService";
 
 export const useOrderHistoryStore = () => {
   const baseURL = import.meta.env.VITE_NESTJS_API_URL;
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const shopId = user.id;
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -106,7 +108,7 @@ export const useOrderHistoryStore = () => {
         return acc;
       }, {});
 
-      const res = await orderService.getOrders(page, limit, activeFilters);
+      const res = await orderService.getOrdersByShopId(shopId,page, limit, activeFilters);
 
       if (res && res.data) {
         const responseData = res.data;

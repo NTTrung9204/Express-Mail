@@ -169,7 +169,7 @@ export default function PermissionModal({
       onRoleChange?.(groupToRoleMap[selectedGroup]);
       onClose();
     } catch (err) {
-      toast.error("Lỗi lưu quyền: " + (err.message || "Không xác định"));
+      toast.error(err.message || "Lỗi lưu quyền không xác định.");
     }
   };
   
@@ -361,7 +361,7 @@ export default function PermissionModal({
                   <input
                     type="text"
                     placeholder="Địa chỉ"
-                    className={`w-full rounded-md border p-3 text-sm focus:ring-2 focus:ring-orange-300 ${
+                    className={`w-full rounded-md border p-3 text-sm focus:ring-2 focus:ring-orange-300 outline-none ${
                       errors.address ? "border-red-500" : "border-gray-300"
                     }`}
                     value={userProfile.address || ""}
@@ -374,7 +374,7 @@ export default function PermissionModal({
                   <input
                     type="text"
                     placeholder="Số điện thoại"
-                    className={`w-full rounded-md border p-3 text-sm focus:ring-2 focus:ring-orange-300 ${
+                    className={`w-full rounded-md border p-3 text-sm focus:ring-2 focus:ring-orange-300 outline-none ${
                       errors.phoneNumber ? "border-red-500" : "border-gray-300"
                     }`}
                     value={userProfile.phoneNumber || ""}

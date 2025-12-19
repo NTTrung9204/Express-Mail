@@ -48,7 +48,7 @@ const handleAuthError = async () => {
   if (!isLoggingOut) {
     isLoggingOut = true;
     
-    toast.error('Quyền bị thay đổi. Vui lòng đăng nhập lại!', {
+    toast.error('Quyền bị thay đổi hoặc phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!', {
       autoClose: 3000,
       onClose: () => {
         // Clear tokens
@@ -73,6 +73,10 @@ nestJSAPI.interceptors.response.use(
       const errorMessage = error.response?.data?.message || 
                          error.response?.data?.detail || 
                          '';
+      const isLogoutRequest = originalRequest.headers['X-Logout-Request'] === 'true';
+      if (isLogoutRequest) {
+        return Promise.reject(error);
+      }
             if (
         errorMessage.includes('Chưa xác thực') ||
         errorMessage.includes('authentication') ||

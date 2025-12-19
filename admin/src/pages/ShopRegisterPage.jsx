@@ -122,17 +122,38 @@ const ShopRegisterPage = () => {
         toast.success(result.message || "Đăng ký shop thành công!");
         setTimeout(() => navigate("/login"), 1500);
       } else {
+        if (result.errors?.profile?.detail) {
+          const detailError = Array.isArray(result.errors.profile.detail) 
+            ? result.errors.profile.detail[0] 
+            : result.errors.profile.detail;
+          toast.error(detailError);
+          return; 
+        }
+
         toast.error(result.message || "Đăng ký thất bại.");
+        
         if (result.errors) {
           const formatted = {};
-          Object.entries(result.errors).forEach(([k, v]) => {
-            formatted[k] = Array.isArray(v) ? v[0] : v;
+          Object.entries(result.errors).forEach(([section, fields]) => {
+            if (typeof fields === 'object' && fields !== null) {
+              Object.entries(fields).forEach(([field, messages]) => {
+                const errorMsg = Array.isArray(messages) ? messages[0] : messages;
+                formatted[`${section}.${field}`] = errorMsg;
+              });
+            }
           });
           setFieldErrors(formatted);
         }
       }
     } catch (err) {
-      toast.error(err.message || "Lỗi kết nối máy chủ.");
+      if (err.errors?.profile?.detail) {
+        const detailError = Array.isArray(err.errors.profile.detail) 
+          ? err.errors.profile.detail[0] 
+          : err.errors.profile.detail;
+        toast.error(detailError);
+      } else {
+        toast.error(err.message || "Lỗi kết nối máy chủ.");
+      }
     } finally {
       setIsLoading(false);
     }

@@ -155,9 +155,11 @@ const Users = () => {
                   <th className="px-3 py-3 font-semibold w-[20%] text-center">
                     Vai trò
                   </th>
-                  <th className="px-3 py-3 font-semibold w-[15%] text-center">
-                    Trạng thái
-                  </th>
+                  <ProtectedComponent perm="users.change_user">
+                    <th className="px-3 py-3 font-semibold w-[15%] text-center">
+                      Trạng thái
+                    </th>
+                  </ProtectedComponent>
                   <th className="pl-3 pr-6 py-3 font-semibold w-[20%] text-center rounded-tr-lg">
                     Hành động
                   </th>
@@ -182,20 +184,21 @@ const Users = () => {
                       <td className="px-3 py-3 text-orange-700 font-medium">
                         {getRoleLabel(user.role)}
                       </td>
-
-                      <td className="px-3 py-3">
-                        <div className="flex items-center justify-center gap-2">
-                          <Switch
-                            checked={user.isActive || false}
-                            onChange={(e) => handleStatusToggle(user.id, user.isActive, e)}
-                            color="success"
-                            size="small"
-                          />
-                          <span className={`text-sm font-medium ${user.isActive ? "text-green-600" : "text-red-600"}`}>
-                            {user.isActive ? "Hoạt động" : "Bị khóa"}
-                          </span>
-                        </div>
-                      </td>
+                      <ProtectedComponent perm="users.change_user">
+                        <td className="px-3 py-3">
+                          <div className="flex items-center justify-center gap-2">
+                            <Switch
+                              checked={user.isActive || false}
+                              onChange={(e) => handleStatusToggle(user.id, user.isActive, e)}
+                              color="success"
+                              size="small"
+                            />
+                            <span className={`text-sm font-medium ${user.isActive ? "text-green-600" : "text-red-600"}`}>
+                              {user.isActive ? "Hoạt động" : "Bị khóa"}
+                            </span>
+                          </div>
+                        </td>
+                      </ProtectedComponent>
 
                       <td className="pl-3 pr-6 py-3 space-x-2">
                         <ProtectedComponent perm="users.view_user">
