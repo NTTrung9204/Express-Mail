@@ -108,7 +108,7 @@ export const useOrderHistoryStore = () => {
         return acc;
       }, {});
 
-      const res = await orderService.getOrdersByShopId(shopId,page, limit, activeFilters);
+      const res = await orderService.getOrders(shopId,page, limit, activeFilters);
 
       if (res && res.data) {
         const responseData = res.data;

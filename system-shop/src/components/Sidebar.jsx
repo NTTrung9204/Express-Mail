@@ -99,7 +99,7 @@ const Sidebar = () => {
             </li>
           </ProtectedComponent>
 
-          <ProtectedComponent perm="order_external_app.can_view_order_details">
+          <ProtectedComponent perm="order_external_app.can_view_shop_orders">
             <li className="mt-2">
               <NavLink
                 to="/order-history"
