@@ -1,40 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import djangoAPI from '../../api/axiosConfig';
+import React from 'react';
 
 const ShippingJourney = ({ transitions, shipping, orderPostOffices }) => {
-  const [postOfficeCache, setPostOfficeCache] = useState({});
-
-  // Fetch post office info when transitions change
-  useEffect(() => {
-    const fetchPostOfficeInfo = async () => {
-      if (!transitions || transitions.length === 0) return;
-
-      // Get unique post office IDs
-      const postOfficeIds = new Set();
-      transitions.forEach(t => {
-        if (t.nextPostOfficeId) postOfficeIds.add(t.nextPostOfficeId);
-        if (t.currentPostOfficeId) postOfficeIds.add(t.currentPostOfficeId);
-      });
-
-      // Fetch info for post offices not in cache
-      const newCache = { ...postOfficeCache };
-      for (const id of postOfficeIds) {
-        if (!newCache[id]) {
-          try {
-            const response = await djangoAPI.get(`/post-offices/${id}`);
-            if (response.data) {
-              newCache[id] = response.data;
-            }
-          } catch (error) {
-            console.error(`Error fetching post office ${id}:`, error);
-          }
-        }
-      }
-      setPostOfficeCache(newCache);
-    };
-
-    fetchPostOfficeInfo();
-  }, [transitions]);
   const allEvents = [
     ...(transitions || []).map(t => ({
       type: 'transition',
@@ -131,32 +97,10 @@ const ShippingJourney = ({ transitions, shipping, orderPostOffices }) => {
                 <p>• Shipper ID: {event.shipperId}</p>
               )}
               {event.type === 'transition' && event.postOffice && (
-                <>
-                  {postOfficeCache[event.postOffice] ? (
-                    <div className="bg-blue-50 p-2 rounded border border-blue-200 mt-2 space-y-1">
-                      <p className="font-semibold text-blue-700">Bưu cục tiếp theo:</p>
-                      <p className="text-gray-700"><strong>{postOfficeCache[event.postOffice].name}</strong></p>
-                      <p className="text-gray-600">{postOfficeCache[event.postOffice].address}</p>
-                      <p className="text-gray-500 text-xs">ID: {event.postOffice}</p>
-                    </div>
-                  ) : (
-                    <p>• Bưu cục tiếp theo: {event.postOffice}</p>
-                  )}
-                </>
+                <p>• Bưu cục tiếp theo ID: {event.postOffice}</p>
               )}
               {event.type === 'post_office' && event.postOfficeId && (
-                <>
-                  {postOfficeCache[event.postOfficeId] ? (
-                    <div className="bg-orange-50 p-2 rounded border border-orange-200 mt-2 space-y-1">
-                      <p className="font-semibold text-orange-700">Bưu cục:</p>
-                      <p className="text-gray-700"><strong>{postOfficeCache[event.postOfficeId].name}</strong></p>
-                      <p className="text-gray-600">{postOfficeCache[event.postOfficeId].address}</p>
-                      <p className="text-gray-500 text-xs">ID: {event.postOfficeId}</p>
-                    </div>
-                  ) : (
-                    <p>• Bưu cục: {event.postOfficeId}</p>
-                  )}
-                </>
+                <p>• Bưu cục ID: {event.postOfficeId}</p>
               )}
             </div>
           </div>

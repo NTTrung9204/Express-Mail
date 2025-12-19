@@ -11,10 +11,8 @@ import Close from '@mui/icons-material/Close';
 import AttachMoney from '@mui/icons-material/AttachMoney';
 import PhoneOutlined from '@mui/icons-material/PhoneOutlined';
 import ExpandMore from '@mui/icons-material/ExpandMore';
-import CheckCircle from '@mui/icons-material/CheckCircle';
 
 import { useOrderCreationStore } from '../stores/useCreateOrderStore';
-
 import VietmapPicker from '../components/VietmapPicker';
 
 const LocationSelect = ({ label, value, onChange, options, loading, placeholder, disabled, name }) => (
@@ -83,7 +81,7 @@ const ImageUploader = ({ previews = [], onChange, onRemove }) => {
   );
 };
 
-const ProductItem = ({ product, index, onChange, onRemove, onImageChange, onImageRemove }) => {
+const ProductItem = ({ product, index, onChange, onRemove, onImageChange, onImageRemove, errors }) => {
   useEffect(() => {
     return () => {
       if (product.localPreviews) {
@@ -99,8 +97,8 @@ const ProductItem = ({ product, index, onChange, onRemove, onImageChange, onImag
     }
   };
 
-  const removeImage = (imageIndex) => {
-    onImageRemove(index, imageIndex);
+  const removeImage = () => {
+    onImageRemove(index);
   };
 
   return (
@@ -125,9 +123,13 @@ const ProductItem = ({ product, index, onChange, onRemove, onImageChange, onImag
               placeholder="Ví dụ: Laptop Dell XPS 13"
               value={product.name}
               onChange={(e) => onChange(index, e)}
-              required
-              className="w-full border border-orange-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
+              className={`w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:outline-none transition-colors ${
+                errors.name ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-orange-300 focus:ring-orange-500 focus:border-orange-500'
+              }`}
             />
+            {errors.name && (
+              <p className="mt-1 text-xs text-red-600">{errors.name}</p>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -141,9 +143,13 @@ const ProductItem = ({ product, index, onChange, onRemove, onImageChange, onImag
                 placeholder="1"
                 value={product.quantity}
                 onChange={(e) => onChange(index, e)}
-                required
-                className="w-full border border-orange-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
+                className={`w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:outline-none transition-colors ${
+                  errors.quantity ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-orange-300 focus:ring-orange-500 focus:border-orange-500'
+                }`}
               />
+              {errors.quantity && (
+                <p className="mt-1 text-xs text-red-600">{errors.quantity}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium mb-1.5 text-gray-700">
@@ -157,9 +163,13 @@ const ProductItem = ({ product, index, onChange, onRemove, onImageChange, onImag
                 placeholder="1.2"
                 value={product.weight}
                 onChange={(e) => onChange(index, e)}
-                required
-                className="w-full border border-orange-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
+                className={`w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:outline-none transition-colors ${
+                  errors.weight ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-orange-300 focus:ring-orange-500 focus:border-orange-500'
+                }`}
               />
+              {errors.weight && (
+                <p className="mt-1 text-xs text-red-600">{errors.weight}</p>
+              )}
             </div>
           </div>
         </div>
@@ -180,7 +190,6 @@ const ProductItem = ({ product, index, onChange, onRemove, onImageChange, onImag
 };
 
 const CreateOrderPage = () => {
-  
   const {
     provinces,
     districts,
@@ -209,15 +218,23 @@ const CreateOrderPage = () => {
     cod: 0,
     is_receiver_pay_shipping: false,
     products: [
-      { 
-        name: "", 
-        quantity: 1, 
-        weight: "", 
-        img_urls: [],
-        localPreviews: []
-      }
+      { name: "", quantity: 1, weight: "", img_urls: [], localPreviews: [] }
     ],
     order_status: "PENDING"
+  });
+
+  const [errors, setErrors] = useState({
+    receiver_name: "",
+    receiver_phone: "",
+    province: "",
+    district: "",
+    ward: "",
+    address: "",
+    length: "",
+    width: "",
+    height: "",
+    cod: "",
+    products: [{ name: "", quantity: "", weight: "" }]
   });
 
   const [mapInfo, setMapInfo] = useState({
@@ -240,8 +257,101 @@ const CreateOrderPage = () => {
     }));
   }, [orderData.products]);
 
+  const validatePhone = (phone) => {
+    const cleaned = phone.replace(/\D/g, '');
+    if (!phone.trim()) return "Vui lòng nhập số điện thoại người nhận";
+    if (cleaned.length !== 10) return "Số điện thoại phải có đúng 10 chữ số";
+    if (!/^0[3-9][0-9]{8}$/.test(cleaned)) return "Số điện thoại không hợp lệ (bắt đầu bằng 03-09)";
+    return "";
+  };
+
+  const validateDimension = (value, fieldName) => {
+    const num = parseFloat(value);
+    if (!value || isNaN(num) || num <= 0) {
+      return `${fieldName} phải lớn hơn 0`;
+    }
+    return "";
+  };
+
+  const validateCod = (value) => {
+    const num = parseInt(value, 10);
+    if (value === "" || value === "0") return ""; 
+    if (isNaN(num) || num < 0) return "Số tiền thu hộ không hợp lệ";
+    if (num % 1000 !== 0) return "Số tiền thu hộ phải là bội số của 1.000";
+    return "";
+  };
+
+  const validateForm = () => {
+    const newErrors = {
+      receiver_name: "",
+      receiver_phone: "",
+      province: "",
+      district: "",
+      ward: "",
+      address: "",
+      length: "",
+      width: "",
+      height: "",
+      cod: "",
+      products: orderData.products.map(() => ({}))
+    };
+
+    if (!orderData.receiver_name.trim()) {
+      newErrors.receiver_name = "Vui lòng nhập tên người nhận";
+    }
+
+    newErrors.receiver_phone = validatePhone(orderData.receiver_phone);
+
+    if (!orderData.receiver_province_city) newErrors.province = "Vui lòng chọn Tỉnh/Thành phố";
+    if (!orderData.receiver_district) newErrors.district = "Vui lòng chọn Quận/Huyện";
+    if (!orderData.receiver_ward_commune) newErrors.ward = "Vui lòng chọn Phường/Xã";
+    if (!orderData.receiver_address.trim()) newErrors.address = "Vui lòng chọn địa chỉ cụ thể trên bản đồ";
+
+    newErrors.length = validateDimension(orderData.length, "Chiều dài");
+    newErrors.width = validateDimension(orderData.width, "Chiều rộng");
+    newErrors.height = validateDimension(orderData.height, "Chiều cao");
+    newErrors.cod = validateCod(orderData.cod);
+
+    orderData.products.forEach((p, idx) => {
+      newErrors.products[idx] = {
+        name: !p.name.trim() ? "Vui lòng nhập tên sản phẩm" : "",
+        quantity: !p.quantity || p.quantity < 1 ? "Số lượng phải lớn hơn 0" : "",
+        weight: !p.weight || parseFloat(p.weight) <= 0 ? "Cân nặng phải lớn hơn 0" : ""
+      };
+    });
+
+    setErrors(newErrors);
+
+    const hasError = Object.values(newErrors).some(err => {
+      if (typeof err === 'string') return !!err;
+      if (Array.isArray(err)) return err.some(e => typeof e === 'object' ? Object.values(e).some(v => !!v) : !!e);
+      if (typeof err === 'object') return Object.values(err).some(v => !!v);
+      return false;
+    });
+
+    if (hasError) {
+      toast.error("Vui lòng kiểm tra lại các trường thông tin bắt buộc");
+    }
+
+    return !hasError;
+  };
+
   const handleSimpleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    
+    if (name === "receiver_name") {
+      setErrors(prev => ({ ...prev, receiver_name: value.trim() ? "" : "Vui lòng nhập tên người nhận" }));
+    }
+    if (name === "receiver_phone") {
+      setErrors(prev => ({ ...prev, receiver_phone: validatePhone(value) }));
+    }
+    if (["length", "width", "height"].includes(name)) {
+      setErrors(prev => ({ ...prev, [name]: validateDimension(value, name === "length" ? "Chiều dài" : name === "width" ? "Chiều rộng" : "Chiều cao") }));
+    }
+    if (name === "cod") {
+      setErrors(prev => ({ ...prev, cod: validateCod(value) }));
+    }
+
     setOrderData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -254,20 +364,20 @@ const CreateOrderPage = () => {
     setOrderData(prev => ({
       ...prev,
       [name]: value,
-      ...(name === 'receiver_province_city' && { 
-        receiver_district: '', 
-        receiver_ward_commune: '' 
-      }),
-      ...(name === 'receiver_district' && { 
-        receiver_ward_commune: '' 
-      }),
+      ...(name === 'receiver_province_city' && { receiver_district: '', receiver_ward_commune: '' }),
+      ...(name === 'receiver_district' && { receiver_ward_commune: '' }),
     }));
 
     if (name === 'receiver_province_city') {
+      setErrors(prev => ({ ...prev, province: "", district: "", ward: "" }));
       fetchDistrictsAction(value);
     }
     if (name === 'receiver_district') {
+      setErrors(prev => ({ ...prev, district: "", ward: "" }));
       fetchWardsAction(value);
+    }
+    if (name === 'receiver_ward_commune') {
+      setErrors(prev => ({ ...prev, ward: "" }));
     }
   };
 
@@ -278,12 +388,21 @@ const CreateOrderPage = () => {
       receiver_address: address || prev.receiver_address
     }));
     setMapInfo({ latitude, longitude, address });
+    setErrors(prev => ({ ...prev, address: address ? "" : "Vui lòng chọn địa chỉ cụ thể" }));
   };
 
   const handleProductChange = (index, e) => {
     const { name, value } = e.target;
     const newProducts = [...orderData.products];
     newProducts[index] = { ...newProducts[index], [name]: value };
+
+    const newProductErrors = [...errors.products];
+    if (!newProductErrors[index]) newProductErrors[index] = {};
+    if (name === "name") newProductErrors[index].name = value.trim() ? "" : "Vui lòng nhập tên sản phẩm";
+    if (name === "quantity") newProductErrors[index].quantity = value >= 1 ? "" : "Số lượng phải lớn hơn 0";
+    if (name === "weight") newProductErrors[index].weight = parseFloat(value) > 0 ? "" : "Cân nặng phải lớn hơn 0";
+    setErrors(prev => ({ ...prev, products: newProductErrors }));
+
     setOrderData(prev => ({ ...prev, products: newProducts }));
   };
 
@@ -311,7 +430,7 @@ const CreateOrderPage = () => {
     const newProducts = [...orderData.products];
     const currentProduct = newProducts[productIndex];
 
-    if (currentProduct.localPreviews[0]) {
+    if (currentProduct.localPreviews?.[0]) {
       URL.revokeObjectURL(currentProduct.localPreviews[0]);
     }
 
@@ -324,63 +443,37 @@ const CreateOrderPage = () => {
   const addProduct = () => {
     setOrderData(prev => ({
       ...prev,
-      products: [
-        ...prev.products,
-        { 
-          name: "", 
-          quantity: 1, 
-          weight: "", 
-          img_urls: [],
-          localPreviews: []
-        }
-      ]
+      products: [...prev.products, { name: "", quantity: 1, weight: "", img_urls: [], localPreviews: [] }]
+    }));
+    setErrors(prev => ({
+      ...prev,
+      products: [...prev.products, { name: "", quantity: "", weight: "" }]
     }));
   };
 
   const removeProduct = (index) => {
     const productToRemove = orderData.products[index];
-    
     if (productToRemove.localPreviews) {
       productToRemove.localPreviews.forEach(preview => URL.revokeObjectURL(preview));
     }
     
     const newProducts = orderData.products.filter((_, i) => i !== index);
-    
     if (newProducts.length === 0) {
       toast.warning("Phải có ít nhất 1 sản phẩm");
       return;
     }
     
     setOrderData(prev => ({ ...prev, products: newProducts }));
+    setErrors(prev => ({
+      ...prev,
+      products: prev.products.filter((_, i) => i !== index)
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if(!orderData.receiver_name) {
-      toast.error("Vui lòng nhập tên người nhận");
-      return;
-    }
 
-    if (!orderData.receiver_phone) {
-      toast.error("Vui lòng nhập số điện thoại người nhận");
-      return;
-    }
-    if (!orderData.receiver_name) {
-      toast.error("Vui lòng nhập tên người nhận");
-      return;
-    }
-    if (!orderData.receiver_province_city || !orderData.receiver_district || !orderData.receiver_ward_commune) {
-      toast.error("Vui lòng chọn đầy đủ địa chỉ");
-      return;
-    }
-    if (!orderData.receiver_address) {
-      toast.error("Vui lòng chọn địa chỉ cụ thể trên bản đồ");
-      return;
-    }
-    if (orderData.products.some(p => !p.name || !p.quantity || !p.weight)) {
-      toast.error("Vui lòng điền đầy đủ thông tin sản phẩm");
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
       const productsForAPI = orderData.products.map(p => ({
@@ -413,22 +506,15 @@ const CreateOrderPage = () => {
         weight: "",
         cod: 0,
         is_receiver_pay_shipping: false,
-        products: [
-          { 
-            name: "", 
-            quantity: 1, 
-            weight: "", 
-            img_urls: [],
-            localPreviews: []
-          }
-        ],
+        products: [{ name: "", quantity: 1, weight: "", img_urls: [], localPreviews: [] }],
         order_status: "PENDING"
       });
 
-      setMapInfo({
-        latitude: 21.0285,
-        longitude: 105.8542,
-        address: ""
+      setMapInfo({ latitude: 21.0285, longitude: 105.8542, address: "" });
+      setErrors({
+        receiver_name: "", receiver_phone: "", province: "", district: "", ward: "", address: "",
+        length: "", width: "", height: "", cod: "",
+        products: [{ name: "", quantity: "", weight: "" }]
       });
 
     } catch (error) {
@@ -454,63 +540,91 @@ const CreateOrderPage = () => {
             <div className="p-5 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1.5 text-gray-700">Tên người nhận</label>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700">Tên người nhận *</label>
                   <input
                     type="text"
                     name="receiver_name"
                     placeholder="Nhập tên người nhận"
                     value={orderData.receiver_name}
                     onChange={handleSimpleChange}
-                    className="w-full border border-orange-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
+                    className={`w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:outline-none transition-colors ${
+                      errors.receiver_name ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-orange-300 focus:ring-orange-500 focus:border-orange-500'
+                    }`}
                   />
+                  {errors.receiver_name && (
+                    <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 002 0V6zm-1 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                      </svg>
+                      {errors.receiver_name}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5 text-gray-700">Số điện thoại *</label>
                   <div className="relative">
-                    <PhoneOutlined className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <PhoneOutlined className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
                       type="tel"
                       name="receiver_phone"
                       placeholder="Nhập số điện thoại người nhận"
                       value={orderData.receiver_phone}
                       onChange={handleSimpleChange}
-                      required
-                      className="w-full border border-orange-300 rounded-lg p-2.5 pl-10 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
+                      className={`w-full border rounded-lg p-2.5 pl-10 text-sm focus:ring-2 focus:outline-none transition-colors ${
+                        errors.receiver_phone ? "border-red-500 focus:ring-red-500 focus:border-red-500" : "border-orange-300 focus:ring-orange-500 focus:border-orange-500"
+                      }`}
                     />
                   </div>
+                  {errors.receiver_phone && (
+                    <p className="mt-1 text-xs text-red-600 flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 002 0V6zm-1 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                      </svg>
+                      {errors.receiver_phone}
+                    </p>
+                  )}
                 </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <LocationSelect
-                  label="Tỉnh/Thành phố *"
-                  value={orderData.receiver_province_city}
-                  onChange={handleLocationChange}
-                  options={provinces}
-                  loading={loadingProvinces}
-                  placeholder="Chọn Tỉnh/Thành"
-                  name="receiver_province_city"
-                />
-                <LocationSelect
-                  label="Quận/Huyện *"
-                  value={orderData.receiver_district}
-                  onChange={handleLocationChange}
-                  options={districts}
-                  loading={loadingDistricts}
-                  placeholder="Chọn Quận/Huyện"
-                  name="receiver_district"
-                  disabled={!orderData.receiver_province_city || loadingDistricts}
-                />
-                <LocationSelect
-                  label="Phường/Xã *"
-                  value={orderData.receiver_ward_commune}
-                  onChange={handleLocationChange}
-                  options={wards}
-                  loading={loadingWards}
-                  placeholder="Chọn Phường/Xã"
-                  name="receiver_ward_commune"
-                  disabled={!orderData.receiver_district || loadingWards}
-                />
+                <div>
+                  <LocationSelect
+                    label="Tỉnh/Thành phố *"
+                    value={orderData.receiver_province_city}
+                    onChange={handleLocationChange}
+                    options={provinces}
+                    loading={loadingProvinces}
+                    placeholder="Chọn Tỉnh/Thành"
+                    name="receiver_province_city"
+                  />
+                  {errors.province && <p className="mt-1 text-xs text-red-600">{errors.province}</p>}
+                </div>
+                <div>
+                  <LocationSelect
+                    label="Quận/Huyện *"
+                    value={orderData.receiver_district}
+                    onChange={handleLocationChange}
+                    options={districts}
+                    loading={loadingDistricts}
+                    placeholder="Chọn Quận/Huyện"
+                    name="receiver_district"
+                    disabled={!orderData.receiver_province_city || loadingDistricts}
+                  />
+                  {errors.district && <p className="mt-1 text-xs text-red-600">{errors.district}</p>}
+                </div>
+                <div>
+                  <LocationSelect
+                    label="Phường/Xã *"
+                    value={orderData.receiver_ward_commune}
+                    onChange={handleLocationChange}
+                    options={wards}
+                    loading={loadingWards}
+                    placeholder="Chọn Phường/Xã"
+                    name="receiver_ward_commune"
+                    disabled={!orderData.receiver_district || loadingWards}
+                  />
+                  {errors.ward && <p className="mt-1 text-xs text-red-600">{errors.ward}</p>}
+                </div>
               </div>
 
               <div>
@@ -522,6 +636,14 @@ const CreateOrderPage = () => {
                   address={mapInfo.address}
                   onChange={handleMapChange}
                 />
+                {errors.address && (
+                  <p className="mt-2 text-xs text-red-600 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 002 0V6zm-1 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                    </svg>
+                    {errors.address}
+                  </p>
+                )}
                 <input type="hidden" name="receiver_address" value={orderData.receiver_address} />
                 <input type="hidden" name="receiver_coordinate" value={orderData.receiver_coordinate} />
               </div>
@@ -538,43 +660,52 @@ const CreateOrderPage = () => {
             <div className="p-5 space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1.5 text-gray-700">Dài (cm)</label>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700">Dài (cm) *</label>
                   <input
                     type="number"
                     name="length"
                     step="0.1"
-                    min="0"
+                    min="0.1"
                     placeholder="30"
                     value={orderData.length}
                     onChange={handleSimpleChange}
-                    className="w-full border border-orange-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
+                    className={`w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:outline-none transition-colors ${
+                      errors.length ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-orange-300 focus:ring-orange-500 focus:border-orange-500'
+                    }`}
                   />
+                  {errors.length && <p className="mt-1 text-xs text-red-600">{errors.length}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1.5 text-gray-700">Rộng (cm)</label>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700">Rộng (cm) *</label>
                   <input
                     type="number"
                     name="width"
                     step="0.1"
-                    min="0"
+                    min="0.1"
                     placeholder="20"
                     value={orderData.width}
                     onChange={handleSimpleChange}
-                    className="w-full border border-orange-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
+                    className={`w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:outline-none transition-colors ${
+                      errors.width ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-orange-300 focus:ring-orange-500 focus:border-orange-500'
+                    }`}
                   />
+                  {errors.width && <p className="mt-1 text-xs text-red-600">{errors.width}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1.5 text-gray-700">Cao (cm)</label>
+                  <label className="block text-sm font-medium mb-1.5 text-gray-700">Cao (cm) *</label>
                   <input
                     type="number"
                     name="height"
                     step="0.1"
-                    min="0"
+                    min="0.1"
                     placeholder="10"
                     value={orderData.height}
                     onChange={handleSimpleChange}
-                    className="w-full border border-orange-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
+                    className={`w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:outline-none transition-colors ${
+                      errors.height ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-orange-300 focus:ring-orange-500 focus:border-orange-500'
+                    }`}
                   />
+                  {errors.height && <p className="mt-1 text-xs text-red-600">{errors.height}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5 text-gray-700">Tổng nặng (kg) *</label>
@@ -586,7 +717,6 @@ const CreateOrderPage = () => {
                     placeholder="Tự động"
                     value={orderData.weight}
                     readOnly
-                    required
                     className="w-full border border-orange-300 rounded-lg p-2.5 text-sm bg-gray-100 outline-none cursor-not-allowed"
                   />
                 </div>
@@ -619,6 +749,7 @@ const CreateOrderPage = () => {
                   onRemove={removeProduct}
                   onImageChange={handleImageChange}
                   onImageRemove={handleImageRemove}
+                  errors={errors.products[index] || {}}
                 />
               ))}
             </div>
@@ -645,9 +776,12 @@ const CreateOrderPage = () => {
                   placeholder="0"
                   value={orderData.cod}
                   onChange={handleSimpleChange}
-                  className="w-full border border-orange-300 rounded-r-lg p-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-colors"
+                  className={`w-full border rounded-r-lg p-2.5 text-sm focus:ring-2 focus:outline-none transition-colors ${
+                    errors.cod ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : 'border-orange-300 focus:ring-orange-500 focus:border-orange-500'
+                  }`}
                 />
               </div>
+              {errors.cod && <p className="mt-1 text-xs text-red-600">{errors.cod}</p>}
             </div>
 
             <div className="relative flex items-start">
@@ -658,7 +792,7 @@ const CreateOrderPage = () => {
                   type="checkbox"
                   checked={orderData.is_receiver_pay_shipping}
                   onChange={handleSimpleChange}
-                  className="h-4 w-4 rounded border-orage-300 text-orange-600 focus:ring-2 focus:ring-orange-500 outline-none transition-colors cursor-pointer"
+                  className="h-4 w-4 rounded border-orange-300 text-orange-600 focus:ring-2 focus:ring-orange-500 outline-none transition-colors cursor-pointer"
                 />
               </div>
               <div className="ml-3 text-sm leading-6">

@@ -1,8 +1,14 @@
 import nestAPI from './axiosNestConfig';
 
 export const orderService = {
-  getOrders: async (page = 1, limit = 9, filters = {}) => {
-    const params = { page, limit, ...filters };
+  getOrders: async (shopId, page = 1, limit = 10, filters = {}) => {
+    const params = {
+      page,
+      limit,
+      shopId,       
+      ...filters   
+    };
+
     const response = await nestAPI.get('/orders', { params });
     return response.data;
   },

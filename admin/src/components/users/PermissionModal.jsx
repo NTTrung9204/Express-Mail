@@ -293,7 +293,7 @@ export default function PermissionModal({
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40" onClick={onClose}>
       <div
-        className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-xl shadow-2xl"
+        className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white p-6">
@@ -374,7 +374,7 @@ export default function PermissionModal({
                   <input
                     type="text"
                     placeholder="Số điện thoại"
-                    className={`w-full rounded-md border p-3 text-sm focus:ring-2 focus:ring-orange-300 outline-none ${
+                    className={`w-full border p-3 text-sm focus:ring-2 focus:ring-orange-300 outline-none ${
                       errors.phoneNumber ? "border-red-500" : "border-gray-300"
                     }`}
                     value={userProfile.phoneNumber || ""}

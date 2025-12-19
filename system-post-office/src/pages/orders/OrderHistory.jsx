@@ -14,8 +14,10 @@ import { ordersAPI } from "../../api/ordersAPI";
 import { postOfficeAPI } from "../../api/postOfficeAPI";
 import shippersAPI from "../../api/shippersAPI";
 import { toast } from "react-toastify";
+import ProtectedImage from "../../components/common/ProtectedImage";
 
 const OrderHistory = () => {
+  const baseURL = 'https://pbl6-express-mail-nestjs.work.gd';
   const [searchParams] = useSearchParams();
   const code = searchParams.get("code");
 
@@ -352,11 +354,12 @@ const OrderHistory = () => {
             <div className="grid grid-cols-1 gap-3">
               {order.products?.map((product) => (
                 <div key={product.id} className="flex items-center gap-4 p-3 bg-white rounded-lg shadow-sm border border-orange-50">
-                  <img
-                    src={product.img_url || product.image || "https://via.placeholder.com/80"}
-                    alt={product.name}
-                    className="w-16 h-16 object-cover rounded-md"
-                  />
+                  {product.img_url && (
+                    <ProtectedImage
+                        src={baseURL+product.img_url} 
+                        alt={product.name}
+                        className="w-16 h-16 object-cover rounded-lg" />
+                  )}
                   <div className="flex-1">
                     <div className="text-sm font-semibold text-[#4b1d09]">{product.name}</div>
                     <div className="text-xs text-gray-500 mt-1">Số lượng: {product.quantity}</div>
