@@ -112,23 +112,63 @@ const VietmapPicker = forwardRef(
 
       markerInstance.current = marker;
 
-      const update = (lngLat) => {
+      const update = async (lngLat) => {
         if (disabled) return;
-        onChange({
-          latitude: lngLat.lat.toFixed(6),
-          longitude: lngLat.lng.toFixed(6),
-        });
+        
+        // Cập nhật marker và map ngay lập tức
         markerInstance.current.setLngLat(lngLat);
         mapInstance.current.flyTo({
           center: lngLat,
           zoom: 16,
           essential: true,
         });
+
+        // Gọi reverse geocoding để lấy địa chỉ thực tế
+        try {
+          const res = await fetch(
+            `https://maps.vietmap.vn/api/reverse/v3?apikey=${apiKeySuggestPlace}&lng=${lngLat.lng}&lat=${lngLat.lat}`
+          );
+          const data = await res.json();
+          
+          console.log("Reverse geocoding response:", data);
+          
+          // Xử lý các format response khác nhau
+          let newAddress = "";
+          
+          if (data.display) {
+            newAddress = data.display;
+          } else if (data.name) {
+            newAddress = data.name;
+          } else if (data.address) {
+            newAddress = data.address;
+          } else if (Array.isArray(data) && data.length > 0) {
+            newAddress = data[0].display || data[0].name || data[0].address;
+          }
+          
+          // Fallback nếu không có địa chỉ
+          if (!newAddress) {
+            newAddress = `${lngLat.lat.toFixed(6)}, ${lngLat.lng.toFixed(6)}`;
+          }
+          
+          onChange({
+            latitude: lngLat.lat.toFixed(6),
+            longitude: lngLat.lng.toFixed(6),
+            address: newAddress,
+          });
+        } catch (error) {
+          console.error("Lỗi reverse geocoding:", error);
+          // Fallback nếu API lỗi
+          onChange({
+            latitude: lngLat.lat.toFixed(6),
+            longitude: lngLat.lng.toFixed(6),
+            address: `${lngLat.lat.toFixed(6)}, ${lngLat.lng.toFixed(6)}`,
+          });
+        }
       };
 
       map.on("click", (e) => update(e.lngLat));
       marker.on("dragend", () => update(marker.getLngLat()));
-    }, [mapReady, latitude, longitude, disabled, apiKeyLoadMap, onChange]);
+    }, [mapReady, latitude, longitude, disabled, apiKeyLoadMap, apiKeySuggestPlace, onChange]);
 
     const fetchSuggestions = async (query) => {
       if (!query.trim()) {

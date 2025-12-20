@@ -106,9 +106,9 @@ const ProductItem = ({ product, index, onChange, onRemove, onImageChange, onImag
       <button
         type="button"
         onClick={() => onRemove(index)}
-        className="absolute top-4 right-4 w-7 h-7 bg-red-100 text-red-600 rounded-full flex items-center justify-center hover:bg-red-200 transition-colors"
+        className="absolute top-0 right-0 w-7 h-7 bg-red-100 text-red-600 rounded-full flex items-center justify-center hover:bg-red-200 transition-colors"
       >
-        <DeleteOutline className="w-5 h-5" />
+        <DeleteOutline className="w-5 h-5 mb-0.5 ml-0.5" />
       </button>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -388,7 +388,9 @@ const CreateOrderPage = () => {
       receiver_address: address || prev.receiver_address
     }));
     setMapInfo({ latitude, longitude, address });
-    setErrors(prev => ({ ...prev, address: address ? "" : "Vui lòng chọn địa chỉ cụ thể" }));
+    if (latitude && longitude && address) {
+      setErrors(prev => ({ ...prev, address: "" }));
+    }
   };
 
   const handleProductChange = (index, e) => {
@@ -407,21 +409,22 @@ const CreateOrderPage = () => {
   };
 
   const handleImageChange = (index, file) => {
-    const newProducts = [...orderData.products];
-    const currentProduct = newProducts[index];
-
-    if (currentProduct.localPreviews && currentProduct.localPreviews.length > 0) {
-      currentProduct.localPreviews.forEach(preview => URL.revokeObjectURL(preview));
-    }
-
     if (file.size > 5 * 1024 * 1024) {
       toast.error(`File ${file.name} vượt quá 5MB`);
       return;
     }
 
+    const newProducts = [...orderData.products];
+    const currentProduct = { ...newProducts[index] };
+
+    if (currentProduct.localPreviews && currentProduct.localPreviews.length > 0) {
+      currentProduct.localPreviews.forEach(preview => URL.revokeObjectURL(preview));
+    }
+
     const newPreview = URL.createObjectURL(file);
     currentProduct.img_urls = [file];
     currentProduct.localPreviews = [newPreview];
+    newProducts[index] = currentProduct;
 
     setOrderData(prev => ({ ...prev, products: newProducts }));
   };
@@ -577,11 +580,17 @@ const CreateOrderPage = () => {
                   <div className="relative">
                     <PhoneOutlined className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <input
-                      type="tel"
+                      type="text"
                       name="receiver_phone"
+                      inputMode="numeric"
                       placeholder="Nhập số điện thoại người nhận"
                       value={orderData.receiver_phone}
-                      onChange={handleSimpleChange}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, '');
+                        e.target.value = value;
+                        handleSimpleChange(e);
+                      }}
+                      maxLength="10"
                       className={`w-full border rounded-lg p-2.5 pl-10 text-sm focus:ring-2 focus:outline-none transition-colors ${
                         errors.receiver_phone ? "border-red-500 focus:ring-red-500 focus:border-red-500" : "border-orange-300 focus:ring-orange-500 focus:border-orange-500"
                       }`}
