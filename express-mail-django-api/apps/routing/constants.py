@@ -15,8 +15,8 @@ class VRPMode(EnumChoices):
 VEHICLE_CAPACITY_MAP = {
     Vehicles.BIKE.value: {
         "max_orders": 15,
-        "max_volume": 250000,  # cm³
-        "max_weight": 30000,  # g
+        "max_volume": 25000000,  # cm³
+        "max_weight": 3000000,  # g
     },
     Vehicles.TRUCK.value: {
         "max_orders": 100,
