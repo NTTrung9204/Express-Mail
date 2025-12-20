@@ -518,7 +518,19 @@ const CreateOrderPage = () => {
       });
 
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || "Tạo đơn hàng thất bại";
+      // Xử lý lỗi từ NestJS API
+      let errorMessage = "Tạo đơn hàng thất bại";
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.statusText) {
+        errorMessage = error.response.statusText;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast.error(errorMessage);
       console.error("Create order error:", error);
     }

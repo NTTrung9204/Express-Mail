@@ -69,6 +69,31 @@ export class OrderService {
     return R * c;
   }
 
+  private async checkNearestPostOffice(
+    longitude: number,
+    latitude: number,
+  ): Promise<boolean> {
+    const distanceThreshold = 50;
+    const allPostOffices = await this.djangoService.fetchAllPostOffices();
+    for (const postOffice of allPostOffices) {
+      const poLat = parseFloat(postOffice.latitude);
+      const poLon = parseFloat(postOffice.longitude);
+
+      const distance = this.calculateDistance(
+        poLat,
+        poLon,
+        latitude,
+        longitude,
+      );
+
+      if (distance < distanceThreshold) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   private async checkIsReadyForDelivery(
     order: Order,
     currentPostOfficeId: number,
@@ -150,8 +175,8 @@ export class OrderService {
         }
       }
 
-      // Consider ready for delivery if current post office distance is under 30km
-      const isReady = currentDistance < 30;
+      // Consider ready for delivery if current post office distance is under 50km
+      const isReady = currentDistance < 50;
 
       return {
         isReady,
@@ -258,6 +283,17 @@ export class OrderService {
       const [receiverLatitude = '', receiverLongitude = ''] =
         createOrderDto.receiver_coordinate?.split(',').map((s) => s.trim()) ||
         [];
+
+      const isReadyPickup = await this.checkNearestPostOffice(
+        parseFloat(receiverLongitude),
+        parseFloat(receiverLatitude),
+      );
+
+      if (!isReadyPickup) {
+        throw new BadRequestException(
+          'No nearby post office found within 50km of receiver coordinates',
+        );
+      }
 
       Logger.log(
         `Fetching shipping rates for coordinates: ${receiverLatitude}, ${receiverLongitude}`,
