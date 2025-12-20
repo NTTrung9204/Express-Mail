@@ -4,6 +4,7 @@ from shared.enum_choices import EnumChoices
 class Vehicles(EnumChoices):
     BIKE = "bike"
     TRUCK = "truck"
+    CAR = "car"
 
 
 class VRPMode(EnumChoices):
