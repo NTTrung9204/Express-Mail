@@ -150,8 +150,8 @@ export class OrderService {
         }
       }
 
-      // Consider ready for delivery if current post office distance is under 30km
-      const isReady = currentDistance < 30;
+      // Consider ready for delivery if current post office distance is under 50km
+      const isReady = currentDistance < 50;
 
       return {
         isReady,
