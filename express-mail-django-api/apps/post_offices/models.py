@@ -9,9 +9,9 @@ class PostOffice(BaseModel):
     """
 
     name = models.CharField(max_length=100)
-    district = models.PositiveIntegerField()
-    province_city = models.PositiveIntegerField()
-    ward_commune = models.PositiveIntegerField()
+    district = models.CharField(max_length=20)
+    province_city = models.CharField(max_length=20)
+    ward_commune = models.CharField(max_length=20)
     address = models.TextField()
     latitude = models.DecimalField(max_digits=9, decimal_places=6)
     longitude = models.DecimalField(max_digits=9, decimal_places=6)
