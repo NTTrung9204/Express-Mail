@@ -268,7 +268,7 @@ class ResetPasswordViewSet(BaseAPIViewSet):
         if user:
             otp = Generator.generate_otp()
             PasswordResetOTPService.create_password_reset_otp(user, otp)
-            send_reset_password_otp_task.delay.send_reset_password_otp(user.email, otp)
+            send_reset_password_otp_task.delay(user.email, otp)
 
         return self.response_ok()
 
