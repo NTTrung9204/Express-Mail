@@ -814,6 +814,10 @@ export class OrderService {
         return true;
       }
 
+      if (status === PostOfficeOrderStatus.PICKUP_REQUESTED) {
+        return true;
+      }
+
       // Check if the latest event's status matches the requested status
       const matches = String(eventStatus) === String(status);
       return matches;
@@ -918,11 +922,6 @@ export class OrderService {
           (opo) => String(opo.postOfficeId) === String(postOfficeId),
         ),
       );
-    }
-
-    // Add shipping events
-    if (order.shipping) {
-      allRelevantEvents.push(...order.shipping);
     }
 
     // Add transitions events for this post office
