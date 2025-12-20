@@ -181,7 +181,7 @@ const DeliveryPlans = () => {
                     </div>
 
                     {/* Plan Statistics */}
-                    <div className="grid grid-cols-4 gap-3 mb-4">
+                    <div className="grid grid-cols-2 gap-3 mb-4">
                       <div className="bg-orange-50 p-3 rounded border border-orange-200">
                         <p className="text-xs text-gray-600">Tổng khoảng cách</p>
                         <p className="font-semibold text-orange-600">{formatDistance(plan.totalDistance)} km</p>
@@ -189,14 +189,6 @@ const DeliveryPlans = () => {
                       <div className="bg-orange-50 p-3 rounded border border-orange-200">
                         <p className="text-xs text-gray-600">Thời gian</p>
                         <p className="font-semibold text-orange-600">{formatTime(plan.totalDuration)}</p>
-                      </div>
-                      <div className="bg-orange-50 p-3 rounded border border-orange-200">
-                        <p className="text-xs text-gray-600">Chi phí</p>
-                        <p className="font-semibold text-orange-600">{plan.totalCost.toLocaleString("vi-VN")} đ</p>
-                      </div>
-                      <div className="bg-orange-50 p-3 rounded border border-orange-200">
-                        <p className="text-xs text-gray-600">Chưa gán</p>
-                        <p className="font-semibold text-orange-600">{plan.unassignedCount}</p>
                       </div>
                     </div>
 
@@ -243,7 +235,6 @@ const DeliveryPlans = () => {
                                 <div className="flex gap-4 text-xs text-gray-600">
                                   <span>KM: {formatDistance(route.distance)}</span>
                                   <span>Thời gian: {formatTime(route.duration)}</span>
-                                  <span>Chi phí: {route.cost.toLocaleString("vi-VN")} đ</span>
                                 </div>
                               </div>
                               <div className="ml-4 flex gap-2">
@@ -295,6 +286,7 @@ const DeliveryPlans = () => {
         open={openRouteDetail}
         onClose={() => setOpenRouteDetail(false)}
         vehicleRouteId={selectedVehicleRouteId}
+        mode={mode}
       />
 
       {/* Assign Shipper Modal */}

@@ -414,13 +414,21 @@ export class PlanService {
         (step) => step.type === RouteStepType.JOB && step.jobId !== null,
       );
 
+      const mode = vehicleRoute.mode;
+      const shippingStatus =
+        mode === RouteMode.PICKUP
+          ? ShippingStatus.PICKUP_REQUESTED
+          : ShippingStatus.SHIPPING;
+      console.log(
+        `Creating shipping records for vehicle route ${vehicleRoute.id} in mode ${mode}`,
+      );
       for (const step of jobSteps) {
         if (step.jobId) {
           try {
             await this.shippingService.create({
               orderId: step.jobId,
               shipperId: assignment.shipper_id,
-              status: ShippingStatus.PICKUP_REQUESTED,
+              status: shippingStatus,
               routeStepId: step.id,
             });
           } catch (error) {

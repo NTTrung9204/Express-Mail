@@ -4,7 +4,7 @@ import plansAPI from "../../../api/plansAPI";
 import shippersAPI from "../../../api/shippersAPI";
 import { toast } from "react-toastify";
 
-const RouteDetailModal = ({ open, onClose, vehicleRouteId }) => {
+const RouteDetailModal = ({ open, onClose, vehicleRouteId, mode = "delivery" }) => {
   const [vehicleRoute, setVehicleRoute] = useState(null);
   const [loading, setLoading] = useState(false);
   const [shipperName, setShipperName] = useState(null);
@@ -88,7 +88,7 @@ const RouteDetailModal = ({ open, onClose, vehicleRouteId }) => {
           <Close />
         </button>
 
-        <h2 className="text-2xl font-bold text-[#4b1d09] mb-6">Chi tiết tuyến đường giao hàng</h2>
+        <h2 className="text-2xl font-bold text-[#4b1d09] mb-6">Chi tiết tuyến đường {mode === "pickup" ? "lấy hàng" : "giao hàng"}</h2>
 
         {loading ? (
           <div className="text-center py-8">
@@ -97,7 +97,7 @@ const RouteDetailModal = ({ open, onClose, vehicleRouteId }) => {
         ) : vehicleRoute ? (
           <>
             {/* Route Statistics */}
-            <div className="grid grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
                 <p className="text-xs text-gray-600 mb-1">Tổng khoảng cách</p>
                 <p className="text-xl font-bold text-orange-600">
@@ -105,21 +105,15 @@ const RouteDetailModal = ({ open, onClose, vehicleRouteId }) => {
                 </p>
               </div>
               <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                <p className="text-xs text-gray-600 mb-1">Thời gian</p>
-                <p className="text-xl font-bold text-orange-600">
-                  {formatTime(vehicleRoute.duration)}
-                </p>
-              </div>
-              <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                <p className="text-xs text-gray-600 mb-1">Chi phí</p>
-                <p className="text-xl font-bold text-orange-600">
-                  {vehicleRoute.cost.toLocaleString("vi-VN")} đ
-                </p>
-              </div>
-              <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                <p className="text-xs text-gray-600 mb-1">Xe giao hàng / Shipper</p>
+                <p className="text-xs text-gray-600 mb-1">Shipper</p>
                 <p className="text-xl font-bold text-orange-600">
                   {shipperName ? shipperName : vehicleRoute.vehicleId ? `Xe ${vehicleRoute.vehicleId}` : "Chưa gán"}
+                </p>
+              </div>
+              <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                <p className="text-xs text-gray-600 mb-1">Số điểm {mode === "pickup" ? "lấy hàng" : "giao hàng"}</p>
+                <p className="text-xl font-bold text-orange-600">
+                  {vehicleRoute.routeSteps.filter((s) => s.type === "job").length}
                 </p>
               </div>
             </div>
@@ -127,7 +121,7 @@ const RouteDetailModal = ({ open, onClose, vehicleRouteId }) => {
             {/* Route Steps */}
             <div className="border border-orange-200 rounded-lg overflow-hidden">
               <div className="bg-orange-100 p-4">
-                <h3 className="font-semibold text-[#4b1d09]">Các điểm giao hàng ({vehicleRoute.routeSteps.length})</h3>
+                <h3 className="font-semibold text-[#4b1d09]">Các điểm {mode === "pickup" ? "lấy hàng" : "giao hàng"} ({vehicleRoute.routeSteps.length})</h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -137,9 +131,7 @@ const RouteDetailModal = ({ open, onClose, vehicleRouteId }) => {
                       <th className="text-left p-3">Loại</th>
                       <th className="text-left p-3">Mã đơn</th>
                       <th className="text-left p-3">Vị trí (Lat, Lng)</th>
-                      <th className="text-left p-3">Thời gian đến</th>
                       <th className="text-left p-3">Khoảng cách</th>
-                      <th className="text-left p-3">Tải hàng</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -160,7 +152,7 @@ const RouteDetailModal = ({ open, onClose, vehicleRouteId }) => {
                               ? "Bắt đầu"
                               : step.type === "end"
                               ? "Kết thúc"
-                              : "Giao hàng"}
+                              : mode === "pickup" ? "Lấy hàng" : "Giao hàng"}
                           </span>
                         </td>
                         <td className="p-3 font-semibold">
@@ -169,9 +161,7 @@ const RouteDetailModal = ({ open, onClose, vehicleRouteId }) => {
                         <td className="p-3 text-xs">
                           {step.lat.toFixed(4)}, {step.lng.toFixed(4)}
                         </td>
-                        <td className="p-3">{formatTime(step.arrival)}</td>
                         <td className="p-3">{formatDistance(step.distance)} km</td>
-                        <td className="p-3 font-medium">{step.load}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -183,7 +173,7 @@ const RouteDetailModal = ({ open, onClose, vehicleRouteId }) => {
             <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
               <h4 className="font-semibold text-[#4b1d09] mb-3 flex items-center gap-2">
                 <Navigation fontSize="small" />
-                Thông tin tuyến đường
+                Thông tin tuyến đường {mode === "pickup" ? "lấy hàng" : "giao hàng"}
               </h4>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
@@ -200,15 +190,9 @@ const RouteDetailModal = ({ open, onClose, vehicleRouteId }) => {
                   </p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Số điểm giao hàng:</p>
+                  <p className="text-gray-600">Số điểm {mode === "pickup" ? "lấy hàng" : "giao hàng"}:</p>
                   <p className="font-medium">
                     {vehicleRoute.routeSteps.filter((s) => s.type === "job").length}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-600">Tổng tải trọng:</p>
-                  <p className="font-medium">
-                    {vehicleRoute.routeSteps[vehicleRoute.routeSteps.length - 1]?.load || 0}
                   </p>
                 </div>
               </div>

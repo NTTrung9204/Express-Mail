@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  InternalServerErrorException,
   Inject,
   forwardRef,
   Logger,
@@ -30,6 +31,7 @@ import { Shipping } from '../shipping/entities/shipping.entity';
 import { OrderResponseDto } from './dto/order-response.dto';
 import { ShopProfileDto } from '../shop/dto/shop-profile.dto';
 import { RouteStep } from '../plan/entities/route-step.entity';
+import { OrderStatus } from './enums/order-status.enum';
 
 @Injectable()
 export class OrderService {
@@ -374,7 +376,22 @@ export class OrderService {
       return await this.findOne(savedOrder.id);
     } catch (error) {
       console.error('Error creating order:', error);
-      throw new BadRequestException('Failed to create order');
+
+      // Handle BadRequest exceptions (validation errors, business logic errors)
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      // Handle other exceptions
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
+      // Handle system/database errors
+      Logger.error('System error while creating order:', error);
+      throw new InternalServerErrorException(
+        error.message || 'An error occurred while creating the order',
+      );
     }
   }
 
@@ -773,6 +790,11 @@ export class OrderService {
     let filteredOrders = allOrders.filter((order) => {
       if (!status) return true;
 
+      console.log('Filtering order ID:', order.id);
+      console.log('Order status:', order.order_status);
+      // Exclude completed orders
+      if (order.order_status === OrderStatus.COMPLETED) return false;
+
       // Get latest event from all 3 sources
       const latestEvent = this.getLatestEventAcrossAllSources(
         order,
@@ -798,9 +820,26 @@ export class OrderService {
         return true;
       }
 
-      // Check if the latest event's status matches the requested status
-      const matches = String(eventStatus) === String(status);
-      return matches;
+      if (
+        status === PostOfficeOrderStatus.TRANSITING &&
+        postOfficeId == latestEvent?.currentPostOfficeId
+      ) {
+        return true;
+      }
+
+      if (
+        status === PostOfficeOrderStatus.PICKUP_REQUESTED &&
+        eventStatus === OrderPostOfficeStatus.PICKUP_REQUESTED
+      ) {
+        return true;
+      }
+
+      if (
+        status === PostOfficeOrderStatus.IN_WAREHOUSE &&
+        eventStatus == PostOfficeOrderStatus.IN_WAREHOUSE
+      ) {
+        return true;
+      }
     });
 
     // Sort by latest event timestamp (descending - newest first)
@@ -833,7 +872,10 @@ export class OrderService {
 
     // Fetch route steps if status is PICKUP_REQUESTED
     const routeStepMap = new Map<number, RouteStep[]>();
-    if (status === PostOfficeOrderStatus.PICKUP_REQUESTED) {
+    if (
+      status === PostOfficeOrderStatus.PICKUP_REQUESTED ||
+      status === PostOfficeOrderStatus.IN_WAREHOUSE
+    ) {
       const orderIds = enrichedOrders.map((order) => order.id);
       if (orderIds.length > 0) {
         const routeSteps = await this.routeStepRepository.find({
@@ -902,11 +944,6 @@ export class OrderService {
           (opo) => String(opo.postOfficeId) === String(postOfficeId),
         ),
       );
-    }
-
-    // Add shipping events
-    if (order.shipping) {
-      allRelevantEvents.push(...order.shipping);
     }
 
     // Add transitions events for this post office

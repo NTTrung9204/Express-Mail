@@ -91,17 +91,19 @@ const RequestOrders = () => {
 
   // Format time for route step
   const formatRouteStepTime = (routeSteps) => {
+    console.log("Route steps:", routeSteps);
     if (!routeSteps || routeSteps.length === 0) {
       return "Chưa có";
     }
-    // Get first route step
-    const firstStep = routeSteps[0];
-    if (!firstStep.createdAt) {
+    // Get lastest route step
+    const lastestStep = routeSteps[routeSteps.length - 1];
+    console.log("Latest route step:", lastestStep);
+    if (!lastestStep.createdAt) {
       return "Chưa có";
     }
     
     // Parse the ISO date string and convert to Vietnam time (UTC+7)
-    const utcDate = new Date(firstStep.createdAt);
+    const utcDate = new Date(lastestStep.createdAt);
     const vietnamDate = new Date(utcDate.getTime() + 14 * 60 * 60 * 1000);
     
     // Format date as DD/MM/YYYY
