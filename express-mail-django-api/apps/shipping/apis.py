@@ -108,7 +108,7 @@ class ShippingRateViewSet(
             distance = ShippingRateService.calculate_distance(
                 (post_office.latitude, post_office.longitude),
                 (receiver_latitude, receiver_longitude),
-                Vehicles.TRUCK.value,
+                Vehicles.CAR.value,
                 int(VEHICLE_CAPACITY_MAP[Vehicles.TRUCK.value]["max_weight"] / 1000),
             )
             if distance is None:
