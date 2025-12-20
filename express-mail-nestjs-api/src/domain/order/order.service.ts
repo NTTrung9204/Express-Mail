@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  InternalServerErrorException,
   Inject,
   forwardRef,
   Logger,
@@ -374,7 +375,22 @@ export class OrderService {
       return await this.findOne(savedOrder.id);
     } catch (error) {
       console.error('Error creating order:', error);
-      throw new BadRequestException('Failed to create order');
+
+      // Handle BadRequest exceptions (validation errors, business logic errors)
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      // Handle other exceptions
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
+      // Handle system/database errors
+      Logger.error('System error while creating order:', error);
+      throw new InternalServerErrorException(
+        error.message || 'An error occurred while creating the order',
+      );
     }
   }
 
