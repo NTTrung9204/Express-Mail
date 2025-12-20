@@ -293,7 +293,7 @@ export class OrderService {
 
       if (!isReadyPickup) {
         throw new BadRequestException(
-          'No nearby post office found within 50km of receiver coordinates',
+          'Không có bưu cục gần địa chỉ người nhận, vui lòng kiểm tra lại.',
         );
       }
 
