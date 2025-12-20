@@ -54,7 +54,8 @@ const VietmapPicker = forwardRef(
     const debounceTimer = useRef(null);
     const searchInputRef = useRef(null);
 
-    const apiKey = import.meta.env.VITE_VIETMAP_API_KEY;
+    const apiKeyLoadMap = import.meta.env.VITE_VIETMAP_API_KEY_LOAD_MAP;
+    const apiKeySuggestPlace = import.meta.env.VITE_VIETMAP_API_KEY_SUGGEST_PLACE;
 
     useImperativeHandle(ref, () => ({
       flyTo: (lngLat) => {
@@ -69,7 +70,7 @@ const VietmapPicker = forwardRef(
     }));
 
     useEffect(() => {
-      if (hasInitialized.current || !apiKey) return;
+      if (hasInitialized.current || !apiKeyLoadMap) return;
 
       hasInitialized.current = true;
       setIsLoadingScripts(true);
@@ -79,7 +80,7 @@ const VietmapPicker = forwardRef(
 
       loadScript("vietmap-gl-js", "https://unpkg.com/@vietmap/vietmap-gl-js@6.0.0/dist/vietmap-gl.js")
         .then(() => {
-          window.vietmapgl.accessToken = apiKey;
+          window.vietmapgl.accessToken = apiKeyLoadMap;
           setMapReady(true);
           setIsLoadingScripts(false);
         })
@@ -88,7 +89,7 @@ const VietmapPicker = forwardRef(
           setIsLoadingScripts(false);
           toast.error("Không tải được Vietmap SDK!");
         });
-    }, [apiKey]);
+    }, [apiKeyLoadMap]);
 
     useEffect(() => {
       if (!mapReady || !mapRef.current || mapInstance.current || disabled) return;
@@ -98,7 +99,7 @@ const VietmapPicker = forwardRef(
 
       const map = new window.vietmapgl.Map({
         container: mapRef.current,
-        style: `https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=${apiKey}`,
+        style: `https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=${apiKeyLoadMap}`,
         center: [lng, lat],
         zoom: 15,
       });
@@ -111,23 +112,63 @@ const VietmapPicker = forwardRef(
 
       markerInstance.current = marker;
 
-      const update = (lngLat) => {
+      const update = async (lngLat) => {
         if (disabled) return;
-        onChange({
-          latitude: lngLat.lat.toFixed(6),
-          longitude: lngLat.lng.toFixed(6),
-        });
+        
+        // Cập nhật marker và map ngay lập tức
         markerInstance.current.setLngLat(lngLat);
         mapInstance.current.flyTo({
           center: lngLat,
           zoom: 16,
           essential: true,
         });
+
+        // Gọi reverse geocoding để lấy địa chỉ thực tế
+        try {
+          const res = await fetch(
+            `https://maps.vietmap.vn/api/reverse/v3?apikey=${apiKeySuggestPlace}&lng=${lngLat.lng}&lat=${lngLat.lat}`
+          );
+          const data = await res.json();
+          
+          console.log("Reverse geocoding response:", data);
+          
+          // Xử lý các format response khác nhau
+          let newAddress = "";
+          
+          if (data.display) {
+            newAddress = data.display;
+          } else if (data.name) {
+            newAddress = data.name;
+          } else if (data.address) {
+            newAddress = data.address;
+          } else if (Array.isArray(data) && data.length > 0) {
+            newAddress = data[0].display || data[0].name || data[0].address;
+          }
+          
+          // Fallback nếu không có địa chỉ
+          if (!newAddress) {
+            newAddress = `${lngLat.lat.toFixed(6)}, ${lngLat.lng.toFixed(6)}`;
+          }
+          
+          onChange({
+            latitude: lngLat.lat.toFixed(6),
+            longitude: lngLat.lng.toFixed(6),
+            address: newAddress,
+          });
+        } catch (error) {
+          console.error("Lỗi reverse geocoding:", error);
+          // Fallback nếu API lỗi
+          onChange({
+            latitude: lngLat.lat.toFixed(6),
+            longitude: lngLat.lng.toFixed(6),
+            address: `${lngLat.lat.toFixed(6)}, ${lngLat.lng.toFixed(6)}`,
+          });
+        }
       };
 
       map.on("click", (e) => update(e.lngLat));
       marker.on("dragend", () => update(marker.getLngLat()));
-    }, [mapReady, latitude, longitude, disabled, apiKey, onChange]);
+    }, [mapReady, latitude, longitude, disabled, apiKeyLoadMap, apiKeySuggestPlace, onChange]);
 
     const fetchSuggestions = async (query) => {
       if (!query.trim()) {
@@ -143,7 +184,7 @@ const VietmapPicker = forwardRef(
         const focusLng = longitude || 105.8542;
         
         const res = await fetch(
-          `https://maps.vietmap.vn/api/autocomplete/v4?apikey=${apiKey}&text=${encodeURIComponent(query)}&focus=${focusLat},${focusLng}`
+          `https://maps.vietmap.vn/api/autocomplete/v4?apikey=${apiKeySuggestPlace}&text=${encodeURIComponent(query)}&focus=${focusLat},${focusLng}`
         );
         const data = await res.json();
                 
@@ -229,7 +270,7 @@ const VietmapPicker = forwardRef(
     const fetchPlaceDetail = async (refId) => {
       try {
         const res = await fetch(
-          `https://maps.vietmap.vn/api/place/v3?apikey=${apiKey}&refid=${refId}`
+          `https://maps.vietmap.vn/api/place/v3?apikey=${apiKeySuggestPlace}&refid=${refId}`
         );
         const data = await res.json();
         
