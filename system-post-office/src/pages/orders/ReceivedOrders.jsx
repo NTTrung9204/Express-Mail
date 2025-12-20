@@ -196,6 +196,30 @@ const ReceivedOrders = () => {
     }
   };
 
+  // Format time for route step
+  const formatRouteStepTime = (routeSteps) => {
+    if (!routeSteps || routeSteps.length === 0) {
+      return "Chưa có";
+    }
+    const lastestStep = routeSteps[routeSteps.length - 1];
+    if (!lastestStep.createdAt) {
+      return "Chưa có";
+    }
+    
+    const utcDate = new Date(lastestStep.createdAt);
+    const vietnamDate = new Date(utcDate.getTime() + 14 * 60 * 60 * 1000);
+    
+    const day = String(vietnamDate.getUTCDate()).padStart(2, '0');
+    const month = String(vietnamDate.getUTCMonth() + 1).padStart(2, '0');
+    const year = vietnamDate.getUTCFullYear();
+    
+    const hours = String(vietnamDate.getUTCHours()).padStart(2, '0');
+    const minutes = String(vietnamDate.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(vietnamDate.getUTCSeconds()).padStart(2, '0');
+    
+    return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+  };
+
   const currentSelectedIds = tab === "ready" ? readySelectedIds : transferSelectedIds;
 
   return (
@@ -310,6 +334,7 @@ const ReceivedOrders = () => {
                     {tab === "transfer" && (
                       <th className="p-3 border-b border-orange-200">Bưu cục tiếp theo</th>
                     )}
+                    <th className="p-3 border-b border-orange-200">Kế hoạch giao hàng</th>
                     <th className="p-3 border-b border-orange-200 text-center">
                       Hành động
                     </th>
@@ -336,7 +361,6 @@ const ReceivedOrders = () => {
                       <td className="p-3">{order.shopProfile?.username || "N/A"}</td>
                       <td className="p-3">
                         {order.receiver_name || "N/A"}
-                        <div className="text-xs text-gray-500">-</div>
                       </td>
                       <td className="p-3">{(order.cod || 0).toLocaleString('vi-VN')} đ</td>
                       <td className="p-3">{(order.shipping_cost || 0).toLocaleString('vi-VN')} đ</td>
@@ -350,7 +374,18 @@ const ReceivedOrders = () => {
                           </div>
                         </td>
                       )}
-                      <td className="p-3 text-center">
+                      <td className="p-3">
+                        {order.routeSteps && order.routeSteps.length > 0 ? (
+                          <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-medium">
+                            {formatRouteStepTime(order.routeSteps)}
+                          </span>
+                        ) : (
+                          <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                            Chưa có
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-3 text-center items-center">
                         <button
                           onClick={() => {
                             window.open(`/post-office/orders/history?code=${order.code}`, '_blank');

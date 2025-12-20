@@ -171,7 +171,6 @@ const FailedOrders = () => {
                     <th className="text-left p-3">Người gửi</th>
                     <th className="text-left p-3">Người nhận</th>
                     <th className="text-left p-3">COD</th>
-                    <th className="text-left p-3">Lý do thất bại</th>
                     <th className="text-left p-3">Ngày thất bại</th>
                     <th className="text-center p-3">Hành động</th>
                   </tr>
@@ -187,14 +186,6 @@ const FailedOrders = () => {
                       <td className="p-3">{order.shopProfile?.username || "N/A"}</td>
                       <td className="p-3">{order.receiver_name || "N/A"}</td>
                       <td className="p-3">{(order.cod || 0).toLocaleString('vi-VN')} đ</td>
-                      <td className="p-3">
-                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                          {activeTab === "pickup" 
-                            ? order.shipping?.find(s => s.status === "PICKUP_FAILED")?.status || "Không xác định"
-                            : order.shipping?.find(s => s.status === "DELIVERY_FAILED")?.status || "Không xác định"
-                          }
-                        </span>
-                      </td>
                       <td className="p-3">{new Date(order.updated_at).toLocaleDateString('vi-VN')}</td>
                       <td className="p-3 text-center space-x-2">
                         <ProtectedComponent perm="order_external_app.can_view_order_details">
@@ -207,7 +198,7 @@ const FailedOrders = () => {
                           <Visibility fontSize="small" /> Chi tiết
                         </button>
                         </ProtectedComponent>
-                        <button
+                        {/* <button
                           onClick={() => {
                             setSelectedOrder(order);
                             setOpenConfirm(true);
@@ -215,7 +206,7 @@ const FailedOrders = () => {
                           className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg items-center gap-1 inline-flex cursor-pointer"
                         >
                           <Replay fontSize="small" /> Giao lại
-                        </button>
+                        </button> */}
                       </td>
                     </tr>
                   ))}
