@@ -315,7 +315,7 @@ export class DjangoService {
   ): Promise<ShippingCostInformationDto> {
     try {
       this.logger.log(
-        `Fetching shipping rates: ${lengthCm}x${widthCm}x${heightCm} cm, ${weightKg} kg`,
+        `Fetching shipping rates: ${lengthCm}x${widthCm}x${heightCm} cm, ${weightKg} kg, postOffice=${postOffice}`,
       );
 
       const response = await this.fetchWithAuth(

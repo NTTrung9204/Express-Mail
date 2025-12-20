@@ -20,6 +20,7 @@ const FailedOrders = () => {
   const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [postOfficeId, setPostOfficeId] = useState(null);
+  const [activeTab, setActiveTab] = useState("pickup"); // "pickup" or "delivery"
 
   // Get post office ID from user data via API
   useEffect(() => {
@@ -43,16 +44,41 @@ const FailedOrders = () => {
     fetchPostOfficeId();
   }, []);
 
+  // Filter orders by failed shipping status
+  const filterFailedOrders = (ordersData, failureStatus) => {
+    return ordersData.filter((order) => {
+      if (!order.shipping || !Array.isArray(order.shipping)) {
+        return false;
+      }
+      return order.shipping.some((ship) => ship.status === failureStatus);
+    });
+  };
+
   // Fetch orders
   const fetchOrders = async () => {
     if (!postOfficeId) return;
 
     setLoading(true);
     try {
-      const response = await ordersAPI.getFailedOrders(postOfficeId, page, limit);
+      let response;
+      
+      if (activeTab === "pickup") {
+        response = await ordersAPI.getPickupOrders(postOfficeId, page, limit);
+      } else {
+        response = await ordersAPI.getReceivedOrders(postOfficeId, page, limit);
+      }
       
       if (response.success) {
-        setOrders(response.data.data || []);
+        let fetchedOrders = response.data.data || [];
+        
+        // Filter orders based on active tab
+        if (activeTab === "pickup") {
+          fetchedOrders = filterFailedOrders(fetchedOrders, "PICKUP_FAILED");
+        } else {
+          fetchedOrders = filterFailedOrders(fetchedOrders, "DELIVERY_FAILED");
+        }
+        
+        setOrders(fetchedOrders);
         setTotal(response.data.total || response.data.meta?.total || 0);
       } else {
         toast.error("Lỗi khi lấy danh sách đơn hàng");
@@ -67,10 +93,11 @@ const FailedOrders = () => {
 
   useEffect(() => {
     if (postOfficeId) {
+      setPage(1);
       fetchOrders();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [postOfficeId, page, limit]);
+  }, [postOfficeId, activeTab]);
 
   // Filter orders based on search term
   const filteredOrders = orders.filter((order) =>
@@ -81,6 +108,37 @@ const FailedOrders = () => {
   return (
     <div className="bg-[#fff6f1] min-h-screen">
       <div className="bg-white rounded-xl shadow p-4">
+        {/* Tab Navigation */}
+        <div className="flex gap-4 mb-4 border-b border-orange-100">
+          <button
+            onClick={() => {
+              setActiveTab("pickup");
+              setPage(1);
+            }}
+            className={`pb-3 px-2 font-semibold text-sm transition-colors ${
+              activeTab === "pickup"
+                ? "text-orange-600 border-b-2 border-orange-600"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Lấy Thất Bại
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab("delivery");
+              setPage(1);
+            }}
+            className={`pb-3 px-2 font-semibold text-sm transition-colors ${
+              activeTab === "delivery"
+                ? "text-orange-600 border-b-2 border-orange-600"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Giao Thất Bại
+          </button>
+        </div>
+
+        {/* Search Bar */}
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -131,7 +189,10 @@ const FailedOrders = () => {
                       <td className="p-3">{(order.cod || 0).toLocaleString('vi-VN')} đ</td>
                       <td className="p-3">
                         <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                          {order.shipping_status || "Không xác định"}
+                          {activeTab === "pickup" 
+                            ? order.shipping?.find(s => s.status === "PICKUP_FAILED")?.status || "Không xác định"
+                            : order.shipping?.find(s => s.status === "DELIVERY_FAILED")?.status || "Không xác định"
+                          }
                         </span>
                       </td>
                       <td className="p-3">{new Date(order.updated_at).toLocaleDateString('vi-VN')}</td>
