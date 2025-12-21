@@ -12,6 +12,7 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 import { useEffect } from "react";
 import { setupAuthInterceptor } from "./interceptor/authInterceptor";
 import ChangePasswordPage from "./pages/ChangePasswordPage";
+import VietmapPostOfficeViewer from "./pages/VietmapPostOfficeViewer";
 
 function App() {
   
@@ -41,6 +42,7 @@ function App() {
           <Route path="change-password" element={<ChangePasswordPage />} />
           <Route path="users" element={<Users />} />
           <Route path="warehouses" element={<Warehouses />} />
+          <Route path="postoffice-map" element={<VietmapPostOfficeViewer />}/>
           <Route path="shipping-rate" element={<ShippingRate />} />
         </Route>
 

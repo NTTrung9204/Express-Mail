@@ -13,6 +13,7 @@ import VietmapPicker from "../common/VietmapPicker";
 import ProtectedComponent from "../common/ProtectedComponent";
 
 import permissionTranslations from "../../data/permissions.json";
+import { postOfficeService } from "../../api/postOfficeService";
 
 const contentTypeNames = {
   1: "Quản trị viên (Admin)",
@@ -52,7 +53,10 @@ export default function PermissionModal({
   const [userProfile, setUserProfile] = useState({});
   const [errors, setErrors] = useState({});
   const [isPermissionsLoading, setIsPermissionsLoading] = useState(false);
-  const [isRoleProhibited, setIsRoleProhibited] = useState(false); 
+  const [isRoleProhibited, setIsRoleProhibited] = useState(false);
+  const [vnPostOffices, setVNPostOffices] = useState([]);
+  const [isLoadingOffices, setIsLoadingOffices] = useState(false);
+
   
   const mapPickerRef = useRef(null);
 
@@ -80,6 +84,29 @@ export default function PermissionModal({
     });
     return map;
   }, []);
+
+  
+    useEffect(() => {
+      const fetchPostOffices = async () => {
+        setIsLoadingOffices(true);
+        try {
+          const response = await postOfficeService.getPostOffices(1, 100);
+          
+          console.log('Post Offices loaded:', response);
+          
+          if (response && response.results) {
+            setVNPostOffices(response.results);
+          }
+        } catch (error) {
+          console.error('Lỗi tải danh sách bưu cục:', error);
+          toast.error('Không thể tải danh sách bưu cục');
+        } finally {
+          setIsLoadingOffices(false);
+        }
+      };
+  
+      fetchPostOffices();
+    }, []); 
 
   const hasPermission = (permId) => !excludePermissions.includes(permId);
 
@@ -395,6 +422,7 @@ export default function PermissionModal({
                     latitude={userProfile.latitude}
                     longitude={userProfile.longitude}
                     address={userProfile.address}
+                    postOffices={vnPostOffices}
                     onChange={({ latitude, longitude, address }) => {
                       setUserProfile(p => ({
                         ...p,
