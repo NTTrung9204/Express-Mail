@@ -5,13 +5,13 @@ import PhoneOutlined from '@mui/icons-material/PhoneOutlined';
 import Inventory2Outlined from '@mui/icons-material/Inventory2Outlined';
 import AttachMoney from '@mui/icons-material/AttachMoney';
 import LocalShippingOutlined from '@mui/icons-material/LocalShippingOutlined';
-import OrderTimeline from './OrderTimeline';
 import ShippingJourney from './ShippingJourney';
 
 import ProtectedImage from '../ProtectedImage';
 
 
 const OrderDetailModal = ({ order, isOpen, onClose }) => {
+
   if (!isOpen || !order) return null;
 
   return (
@@ -31,10 +31,6 @@ const OrderDetailModal = ({ order, isOpen, onClose }) => {
         </div>
 
         <div className="p-4 space-y-4">
-          <div className="bg-gray-50 p-4 rounded-xl">
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">Tiến trình giao hàng</h4>
-            <OrderTimeline order={order} />
-          </div>
 
           <div className="bg-white border border-gray-200 rounded-xl p-4">
             <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
