@@ -130,7 +130,7 @@ const InComingOrders = () => {
                       <td className="p-3">{(order.shipping_cost || 0).toLocaleString('vi-VN')} đ</td>
                       <td className="p-3">
                         <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600">
-                          Đang đến
+                          {order.order_status === "CANCELED" ? "Đang hoàn hàng" : "Đang đến bưu cục"}
                         </span>
                       </td>
                       <td className="p-3 text-center space-x-2">

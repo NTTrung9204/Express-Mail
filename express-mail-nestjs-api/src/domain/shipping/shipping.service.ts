@@ -38,10 +38,15 @@ export class ShippingService {
           await this.orderService.getLastestShippingByOrderId(
             createShippingDto.orderId,
           );
+
+        const order = await this.orderService.findOne(
+          createShippingDto.orderId,
+        );
         console.log('Latest shipping:', latestShipping);
         if (
           latestShipping &&
-          latestShipping.status === ShippingStatus.SHIPPING
+          latestShipping.status === ShippingStatus.SHIPPING &&
+          order.order_status !== OrderStatus.CANCELED
         ) {
           await this.orderService.update(createShippingDto.orderId, {
             order_status: OrderStatus.COMPLETED,
@@ -189,8 +194,6 @@ export class ShippingService {
       ])
       .where('s.shipper_id = :shipperId', { shipperId })
       .groupBy('s.order_id');
-
-    console.log('Latest Shippings Query:', latestShippingsQuery.getSql());
 
     // Apply time filters if provided
     if (query.from) {

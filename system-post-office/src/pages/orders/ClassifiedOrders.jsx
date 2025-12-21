@@ -289,7 +289,7 @@ const ClassifiedOrders = () => {
                               : "bg-orange-100 text-orange-600"
                           }`}
                         >
-                          {order.shipping_status === "CLASSIFIED" ? "Đã phân loại" : "Trong kho"}
+                          {order.order_status === "CANCELED" ? "Đang hoàn hàng" : "Đã phân loại"}
                         </span>
                       </td>
                       <td className="p-3 text-gray-700">{new Date(order.created_at).toLocaleDateString('vi-VN')}</td>
