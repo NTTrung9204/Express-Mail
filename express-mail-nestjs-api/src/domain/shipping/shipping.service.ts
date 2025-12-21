@@ -190,8 +190,6 @@ export class ShippingService {
       .where('s.shipper_id = :shipperId', { shipperId })
       .groupBy('s.order_id');
 
-    console.log('Latest Shippings Query:', latestShippingsQuery.getSql());
-
     // Apply time filters if provided
     if (query.from) {
       latestShippingsQuery.andWhere('s.created_at >= :from', {
