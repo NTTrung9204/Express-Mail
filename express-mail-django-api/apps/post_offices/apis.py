@@ -2,6 +2,7 @@ from django.db import transaction
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
+from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import status
 
@@ -48,6 +49,15 @@ class PostOfficeViewSet(ModelViewSet, BaseAPIViewSet):
     serializer_class = PostOfficeSerializer
     permission_classes = [FullDjangoModelPermissions]
     filterset_class = PostOfficeFilter
+
+    def get_permissions(self):
+        """
+        If action is view, allow user to view post office.
+        """
+
+        if self.action in ["list", "retrieve"]:
+            return [AllowAny()]
+        return super().get_permissions()
 
     @extend_schema(
         request=ChangePostOfficeUserStatusRequestSerializer,
