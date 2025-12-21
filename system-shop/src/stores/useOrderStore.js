@@ -30,14 +30,16 @@ export const useOrderStore = () => {
   }, [pagination]);
 
   const STATUS_MAP = {
-    PENDING: "Đang xử lý",
-    PICKUP_REQUESTED: "Yêu cầu lấy hàng",
-    IN_TRANSIT: "Đang vận chuyển",
-    SHIPPING: 'Đang giao hàng',
-    FINISHED: "Đã hoàn tất",
-    RETURNING: "Đang hoàn hàng",
+    PICKUP_REQUESTED: "Đang lấy hàng",
     PICKUP_FAILED: "Lấy hàng thất bại",
-    DELIVERY_FAILED: "Giao hàng thất bại"
+    DELIVERY_FAILED: "Giao hàng thất bại",
+    RETURNING: "Đang trả hàng",
+    SHIPPING: "Đang giao hàng",
+    FINISHED: "Hoàn tất",
+    CREATED: "Đơn đã được tạo",
+    PENDING: "Chờ xử lý",
+    TRANSITING: "Đang trung chuyển",
+    DONE: "Đã chuyển",
   };
 
   const formatOrders = (data) => {
