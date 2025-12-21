@@ -2,10 +2,11 @@ import React, { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { userService } from "../api/userService";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
 import VietmapPicker from "../components/common/VietmapPicker";
+import { postOfficeService } from '../api/postOfficeService';
 import bgImg from "../assets/ghn.png";
 import logoImg from "../assets/logo.png";
+import { useEffect } from "react";
 
 const ShopRegisterPage = () => {
   const navigate = useNavigate();
@@ -13,6 +14,8 @@ const ShopRegisterPage = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
+  const [postOffices, setPostOffices] = useState([]);
+  const [isLoadingOffices, setIsLoadingOffices] = useState(false);
 
   const [formData, setFormData] = useState({
     user: {
@@ -158,6 +161,28 @@ const ShopRegisterPage = () => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const fetchPostOffices = async () => {
+      setIsLoadingOffices(true);
+      try {
+        const response = await postOfficeService.getPostOffices(1, 100); 
+        
+        console.log('Post Offices loaded:', response);
+        
+        if (response && response.results) {
+          setPostOffices(response.results);
+        }
+      } catch (error) {
+        console.error('Lỗi tải danh sách bưu cục:', error);
+        toast.error('Không thể tải danh sách bưu cục');
+      } finally {
+        setIsLoadingOffices(false);
+      }
+    };
+
+    fetchPostOffices();
+  }, []); 
 
   return (
     <div className="min-h-screen flex bg-white">
@@ -319,6 +344,7 @@ const ShopRegisterPage = () => {
                   latitude={formData.profile.latitude}
                   longitude={formData.profile.longitude}
                   address={formData.profile.address}
+                   postOffices={postOffices}
                   onChange={handleMapChange}
                   placeholder="Tìm kiếm địa chỉ..."
                 />

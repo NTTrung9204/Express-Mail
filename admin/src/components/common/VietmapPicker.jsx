@@ -36,13 +36,16 @@ const VietmapPicker = forwardRef(
       onChange,
       disabled = false,
       placeholder = "Nhập địa chỉ để tìm kiếm...",
-      hideSearch = false, 
+      hideSearch = false,
+      postOffices = [], 
     },
     ref
   ) => {
     const mapRef = useRef(null);
     const mapInstance = useRef(null);
-    const markerInstance = useRef(null);
+    const markerInstance = useRef(null); 
+    const postOfficeMarkersRef = useRef([]);
+    
     const [searchQuery, setSearchQuery] = useState("");
     const [suggestions, setSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -91,22 +94,27 @@ const VietmapPicker = forwardRef(
         });
     }, [apiKeyLoadMap]);
 
+    // Khởi tạo Map và Marker chính
     useEffect(() => {
       if (!mapReady || !mapRef.current || mapInstance.current || disabled) return;
 
-      const lat = latitude ? parseFloat(latitude) : 21.0285;
-      const lng = longitude ? parseFloat(longitude) : 105.8542;
+      const lat = latitude ? parseFloat(latitude) : 16.069939;
+      const lng = longitude ? parseFloat(longitude) : 108.211595;
 
       const map = new window.vietmapgl.Map({
         container: mapRef.current,
         style: `https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=${apiKeyLoadMap}`,
         center: [lng, lat],
-        zoom: 15,
+        zoom: 13,
       });
 
       mapInstance.current = map;
 
-      const marker = new window.vietmapgl.Marker({ draggable: !disabled })
+      // Marker chính (draggable) - màu đỏ
+      const marker = new window.vietmapgl.Marker({ 
+        draggable: !disabled,
+        color: '#ef4444' // Màu đỏ để phân biệt với markers bưu cục
+      })
         .setLngLat([lng, lat])
         .addTo(map);
 
@@ -115,7 +123,6 @@ const VietmapPicker = forwardRef(
       const update = async (lngLat) => {
         if (disabled) return;
         
-        // Cập nhật marker và map ngay lập tức
         markerInstance.current.setLngLat(lngLat);
         mapInstance.current.flyTo({
           center: lngLat,
@@ -123,16 +130,12 @@ const VietmapPicker = forwardRef(
           essential: true,
         });
 
-        // Gọi reverse geocoding để lấy địa chỉ thực tế
         try {
           const res = await fetch(
             `https://maps.vietmap.vn/api/reverse/v3?apikey=${apiKeySuggestPlace}&lng=${lngLat.lng}&lat=${lngLat.lat}`
           );
           const data = await res.json();
           
-          console.log("Reverse geocoding response:", data);
-          
-          // Xử lý các format response khác nhau
           let newAddress = "";
           
           if (data.display) {
@@ -145,7 +148,6 @@ const VietmapPicker = forwardRef(
             newAddress = data[0].display || data[0].name || data[0].address;
           }
           
-          // Fallback nếu không có địa chỉ
           if (!newAddress) {
             newAddress = `${lngLat.lat.toFixed(6)}, ${lngLat.lng.toFixed(6)}`;
           }
@@ -157,7 +159,6 @@ const VietmapPicker = forwardRef(
           });
         } catch (error) {
           console.error("Lỗi reverse geocoding:", error);
-          // Fallback nếu API lỗi
           onChange({
             latitude: lngLat.lat.toFixed(6),
             longitude: lngLat.lng.toFixed(6),
@@ -168,7 +169,107 @@ const VietmapPicker = forwardRef(
 
       map.on("click", (e) => update(e.lngLat));
       marker.on("dragend", () => update(marker.getLngLat()));
+
+      map.on("load", () => {
+        addPostOfficeMarkers(postOffices);
+      });
+
     }, [mapReady, latitude, longitude, disabled, apiKeyLoadMap, apiKeySuggestPlace, onChange]);
+
+    const addPostOfficeMarkers = (offices) => {
+      if (!mapInstance.current || !offices || offices.length === 0) return;
+
+      postOfficeMarkersRef.current.forEach(m => m.remove());
+      postOfficeMarkersRef.current = [];
+
+      offices.forEach((office) => {
+        const lat = parseFloat(office.latitude);
+        const lng = parseFloat(office.longitude);
+
+        if (isNaN(lat) || isNaN(lng)) return;
+
+        const el = document.createElement('div');
+        el.className = 'post-office-marker';
+        el.style.cssText = `
+          width: 32px;
+          height: 32px;
+          background-color: #3b82f6;
+          border: 3px solid white;
+          border-radius: 50%;
+          cursor: pointer;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: bold;
+          color: white;
+          font-size: 11px;
+        `;
+        el.textContent = 'PO';
+
+        const marker = new window.vietmapgl.Marker({ element: el })
+          .setLngLat([lng, lat])
+          .addTo(mapInstance.current);
+
+        const popup = new window.vietmapgl.Popup({
+          offset: 35,
+          closeButton: false,
+          closeOnClick: false,
+          maxWidth: '300px'
+        });
+
+        el.onmouseenter = () => {
+          popup
+            .setLngLat([lng, lat])
+            .setHTML(`
+              <div style="font-family: sans-serif; padding: 8px 12px;">
+                <div style="font-weight: bold; font-size: 14px; color: #1a1a1a; margin-bottom: 6px;">
+                  📍 ${office.name}
+                </div>
+                <div style="font-size: 12px; color: #666; line-height: 1.5; margin-bottom: 4px;">
+                  ${office.address}
+                </div>
+                <div style="font-size: 11px; color: #999; border-top: 1px solid #eee; padding-top: 4px; margin-top: 4px;">
+                  ID: ${office.id} | 📌 ${lat.toFixed(6)}, ${lng.toFixed(6)}
+                </div>
+              </div>
+            `)
+            .addTo(mapInstance.current);
+        };
+
+        el.onmouseleave = () => {
+          popup.remove();
+        };
+
+        el.onclick = () => {
+          mapInstance.current.flyTo({
+            center: [lng, lat],
+            zoom: 16,
+            essential: true
+          });
+        };
+
+        postOfficeMarkersRef.current.push(marker);
+      });
+
+      if (offices.length > 0) {
+        const bounds = new window.vietmapgl.LngLatBounds();
+        offices.forEach(office => {
+          const lat = parseFloat(office.latitude);
+          const lng = parseFloat(office.longitude);
+          if (!isNaN(lat) && !isNaN(lng)) {
+            bounds.extend([lng, lat]);
+          }
+        });
+        mapInstance.current.fitBounds(bounds, { padding: 50, maxZoom: 13 });
+      }
+    };
+
+    useEffect(() => {
+      if (mapReady && mapInstance.current) {
+        addPostOfficeMarkers(postOffices);
+      }
+    }, [postOffices, mapReady]);
 
     const fetchSuggestions = async (query) => {
       if (!query.trim()) {
@@ -180,8 +281,8 @@ const VietmapPicker = forwardRef(
       setIsLoadingSuggestions(true);
       
       try {
-        const focusLat = latitude || 21.0285;
-        const focusLng = longitude || 105.8542;
+        const focusLat = latitude || 16.069939;
+        const focusLng = longitude || 108.211595;
         
         const res = await fetch(
           `https://maps.vietmap.vn/api/autocomplete/v4?apikey=${apiKeySuggestPlace}&text=${encodeURIComponent(query)}&focus=${focusLat},${focusLng}`
@@ -197,7 +298,6 @@ const VietmapPicker = forwardRef(
         }
       } catch (error) {
         console.error("Lỗi tải gợi ý:", error);
-        toast.error("Lỗi tải gợi ý địa điểm");
         setSuggestions([]);
         setShowSuggestions(false);
       } finally {
@@ -216,7 +316,7 @@ const VietmapPicker = forwardRef(
       if (value.trim()) {
         debounceTimer.current = setTimeout(() => {
           fetchSuggestions(value);
-        }, 1000);
+        }, 500);
       } else {
         setSuggestions([]);
         setShowSuggestions(false);
@@ -224,7 +324,6 @@ const VietmapPicker = forwardRef(
     };
 
     const handleSelectSuggestion = (suggestion) => {
-
       let lat, lng, placeName;
       
       if (suggestion.lat !== undefined && suggestion.lng !== undefined) {
@@ -398,7 +497,7 @@ const VietmapPicker = forwardRef(
             style={{ minHeight: "320px" }}
           >
             {(isLoadingScripts || (!mapReady && !mapError)) && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-50/80">
+              <div className="absolute inset-0 flex items-center justify-center bg-gray-50/80 z-10">
                 <div className="text-center">
                   <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
                   <p className="text-orange-600 font-medium">Đang tải bản đồ...</p>
@@ -407,7 +506,7 @@ const VietmapPicker = forwardRef(
             )}
 
             {mapError && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50/90 text-red-600 p-4 text-center">
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50/90 text-red-600 p-4 text-center z-10">
                 <svg className="w-16 h-16 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -415,6 +514,22 @@ const VietmapPicker = forwardRef(
                 <p className="text-sm mt-1">Kiểm tra API key hoặc mạng.</p>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Chú thích */}
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+          <div className="flex items-center gap-4 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
+              <span className="text-gray-700">Vị trí hiện tại</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center text-white text-[8px] font-bold">
+                PO
+              </div>
+              <span className="text-gray-700">Bưu cục ({postOffices.length})</span>
+            </div>
           </div>
         </div>
 

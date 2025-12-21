@@ -5,12 +5,13 @@ import VietmapPicker from "../common/VietmapPicker";
 
 const WarehouseModal = ({ open, onClose, mode = "add", warehouse = {}, onSubmit }) => {
   const isView = mode === "view";
-  const disabledBg = "bg-orange-100";
+  const disabledBg = "bg-white";
   const defaultClass = "w-full p-2 border rounded focus:outline-none";
   const disabledClass = `${defaultClass} ${disabledBg}`;
   const enabledClass = `${defaultClass} focus:border-orange-500`;
 
   const {
+    warehouses,
     provinces,
     districts,
     wards,
@@ -102,7 +103,7 @@ const WarehouseModal = ({ open, onClose, mode = "add", warehouse = {}, onSubmit 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-orange-50 w-full max-w-3xl p-6 rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white w-full max-w-3xl p-6 rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-orange-700">
             {mode === "add"
@@ -229,6 +230,7 @@ const WarehouseModal = ({ open, onClose, mode = "add", warehouse = {}, onSubmit 
                 latitude={form.latitude}
                 longitude={form.longitude}
                 address={form.address}
+                postOffices={warehouses}
                 onChange={handleMapChange}
                 disabled={isView}
                 hideSearch={isView}

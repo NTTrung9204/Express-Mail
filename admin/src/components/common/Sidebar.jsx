@@ -7,6 +7,7 @@ import WarehouseIcon from "@mui/icons-material/Warehouse";
 import { LocalShipping } from "@mui/icons-material";
 import { authService } from "../../api/authService";
 import ProtectedComponent from '../../components/common/ProtectedComponent';
+import MapOutlinedIcon from '@mui/icons-material/MapOutlined';
 import AvatarGenerator from '../../components/common/AvatarGenerator';
 
 const Sidebar = ({ setTitle }) => {
@@ -111,6 +112,17 @@ const Sidebar = ({ setTitle }) => {
               Quản lý Kho
             </NavLink>
           </ProtectedComponent>
+
+          <NavLink
+              to="postoffice-map"
+              className={({ isActive }) =>
+                `${linkStyle} ${isActive ? activeStyle : ""}`
+              }
+              onClick={() => setTitle && setTitle("Bản đồ kho")}
+            >
+              <MapOutlinedIcon className="w-5 h-5 mr-3" />
+              Bản đồ Kho
+            </NavLink>
           
           <ProtectedComponent perm="shipping.view_shippingrate">  
             <NavLink

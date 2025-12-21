@@ -105,7 +105,7 @@ export default function ShippingRateModal({
       fullWidth
       PaperProps={{
         className: "rounded-2xl shadow-lg",
-        style: { backgroundColor: "#FFF8F0" },
+        style: { backgroundColor: "#FFFFFF" },
       }}
     >
       <DialogTitle className="text-orange-600 font-bold text-xl">
