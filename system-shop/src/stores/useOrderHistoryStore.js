@@ -53,6 +53,7 @@ export const useOrderHistoryStore = () => {
       id: o.id,
       code: o.code || "-",
       shopId: o.shopId,
+      receiver: o.receiver_name || "-",
       phone: o.receiver_phone || "-",
       province: o.receiver_province_city || "-",
       ward: o.receiver_ward_commune || "-",
@@ -73,8 +74,7 @@ export const useOrderHistoryStore = () => {
         : "Bên gửi trả phí",
       total: `${(
         (o.cod || 0) +
-        (o.shipping_cost || 0) +
-        (o.shipping_cost_payper || 0)
+        (o.is_receiver_pay_shipping ? o.shipping_cost : 0)
       ).toLocaleString()} đ`,
       shippingStatus: STATUS_MAP[o.shipping_status] || o.shipping_status || "Không rõ",
       shippingStatusRaw: o.shipping_status,

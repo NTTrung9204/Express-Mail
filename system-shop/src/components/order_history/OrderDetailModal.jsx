@@ -5,6 +5,7 @@ import PhoneOutlined from '@mui/icons-material/PhoneOutlined';
 import Inventory2Outlined from '@mui/icons-material/Inventory2Outlined';
 import AttachMoney from '@mui/icons-material/AttachMoney';
 import LocalShippingOutlined from '@mui/icons-material/LocalShippingOutlined';
+import PersonOutline from '@mui/icons-material/PersonOutline';
 import ShippingJourney from './ShippingJourney';
 
 import ProtectedImage from '../ProtectedImage';
@@ -50,6 +51,10 @@ const OrderDetailModal = ({ order, isOpen, onClose }) => {
               Thông tin người nhận
             </h4>
             <div className="space-y-2 text-sm">
+              <div className="flex items-center gap-2">
+                <PersonOutline className="w-4 h-4 text-gray-400" />
+                <span className="text-gray-900">{order.receiver}</span>
+              </div>
               <div className="flex items-center gap-2">
                 <PhoneOutlined className="w-4 h-4 text-gray-400" />
                 <span className="text-gray-900">{order.phone}</span>
@@ -140,7 +145,7 @@ const OrderDetailModal = ({ order, isOpen, onClose }) => {
                 <span className="font-medium text-gray-900">{order.payer}</span>
               </div>
               <div className="border-t border-gray-200 pt-2 mt-2 flex justify-between">
-                <span className="text-gray-900 font-semibold">Tổng cộng</span>
+                <span className="text-gray-900 font-semibold">Thanh toán</span>
                 <span className="text-orange-600 font-semibold text-lg">{order.total}</span>
               </div>
             </div>
