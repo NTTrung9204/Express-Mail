@@ -26,11 +26,14 @@ const ShippingJourney = ({ transitions, shipping, orderPostOffices }) => {
   ].sort((a, b) => new Date(b.time) - new Date(a.time));
 
   const STATUS_LABELS = {
+    'CREATED': 'Đơn đã được tạo',
     'PENDING': 'Chờ xử lý',
     'CANCELED': 'Đã hủy',
     'FINISHED': 'Hoàn thành',
+    'DONE': 'Đã chuyển thành công',
     'PICKUP_REQUESTED': 'Yêu cầu lấy hàng',
     'IN_TRANSIT': 'Đang vận chuyển',
+    'TRANSITING': 'Đang chuyển giữa bưu cục',
     'CLASSIFIED': 'Đã phân loại',
     'IN_WAREHOUSE': 'Tại kho',
     'SHIPPING': 'Đang giao hàng',
@@ -41,11 +44,14 @@ const ShippingJourney = ({ transitions, shipping, orderPostOffices }) => {
 
   const getStatusColor = (status) => {
     const colors = {
+      'CREATED': 'bg-blue-100 text-blue-700 border-blue-300',
       'PENDING': 'bg-yellow-100 text-yellow-700 border-yellow-300',
       'CANCELED': 'bg-red-100 text-red-700 border-red-300',
       'FINISHED': 'bg-green-100 text-green-700 border-green-300',
+      'DONE': 'bg-green-100 text-green-700 border-green-300',
       'PICKUP_REQUESTED': 'bg-blue-100 text-blue-700 border-blue-300',
       'IN_TRANSIT': 'bg-purple-100 text-purple-700 border-purple-300',
+      'TRANSITING': 'bg-purple-100 text-purple-700 border-purple-300',
       'CLASSIFIED': 'bg-indigo-100 text-indigo-700 border-indigo-300',
       'IN_WAREHOUSE': 'bg-orange-100 text-orange-700 border-orange-300',
       'SHIPPING': 'bg-cyan-100 text-cyan-700 border-cyan-300',

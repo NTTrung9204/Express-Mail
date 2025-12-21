@@ -13,7 +13,7 @@ export const ORDER_TABS = [
   },
   { 
     id: 'order-delivery',
-    name: "Đang vận chuyển", 
+    name: "Đang vận chuyển",  
     path: "/orders/order-delivery", 
     statuses: ["IN_TRANSIT"] 
   },
@@ -33,7 +33,7 @@ export const ORDER_TABS = [
     id: 'completed',
     name: "Hoàn tất", 
     path: "/orders/completed", 
-    statuses: ["FINISHED"] 
+    statuses: ["COMPLETED"] 
   },
   { 
     id: 'failed',

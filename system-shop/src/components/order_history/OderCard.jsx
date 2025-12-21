@@ -4,7 +4,6 @@ import LocationOnOutlined from '@mui/icons-material/LocationOnOutlined';
 import PhoneOutlined from '@mui/icons-material/PhoneOutlined';
 import Inventory2Outlined from '@mui/icons-material/Inventory2Outlined';
 import AttachMoney from '@mui/icons-material/AttachMoney';
-import OrderTimeline from './OrderTimeline';
 
 const OrderCard = ({ order, onClick }) => {
   const getStatusColor = (status) => {
@@ -46,7 +45,6 @@ const OrderCard = ({ order, onClick }) => {
       </div>
 
       <div className="p-4 space-y-3">
-        <OrderTimeline order={order} />
 
         <div className="pt-3 space-y-2">
           <div className="flex items-start gap-2 text-sm">
