@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Visibility, Replay, Search } from "@mui/icons-material";
+import { Visibility, Replay, Search, Undo } from "@mui/icons-material";
 import OrderDetailModal from "../../components/orders/failed_orders/OrderDetailModal";
 import ConfirmResendModal from "../../components/orders/failed_orders/ConfirmResendModal";
 import Pagination from "../../components/common/Pagination";
 import { ordersAPI } from "../../api/ordersAPI";
+import { nestJSAPI } from "../../api/axiosInstances";
 import { toast } from "react-toastify";
 import authAPI from "../../api/authAPI";
 import { fetchUserPostOfficeId } from "../../api/profileAPI";
@@ -15,12 +16,15 @@ const FailedOrders = () => {
   const [openConfirm, setOpenConfirm] = useState(false);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [returningOrderId, setReturningOrderId] = useState(null);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [postOfficeId, setPostOfficeId] = useState(null);
   const [activeTab, setActiveTab] = useState("pickup"); // "pickup" or "delivery"
+  const [pickupFailedCount, setPickupFailedCount] = useState(0);
+  const [deliveryFailedCount, setDeliveryFailedCount] = useState(0);
 
   // Get post office ID from user data via API
   useEffect(() => {
@@ -43,6 +47,62 @@ const FailedOrders = () => {
 
     fetchPostOfficeId();
   }, []);
+
+  // Count failed shippings for an order based on failure status
+  const countFailedShippings = (order, failureStatus) => {
+    if (!order.shipping || !Array.isArray(order.shipping)) {
+      return 0;
+    }
+    return order.shipping.filter(
+      (ship) => ship.status === failureStatus
+    ).length;
+  };
+
+  // Get return status text
+  const getReturnStatus = (order) => {
+    if (order.order_status === "CANCELED") {
+      return "Đang hoàn hàng";
+    }
+    return null;
+  };
+
+  // Handle return order (hoàn hàng)
+  const handleReturnOrder = async (order) => {
+    if (!order.shopProfile) {
+      toast.error("Không tìm thấy thông tin shop");
+      return;
+    }
+
+    const shopLat = order.shopProfile.latitude;
+    const shopLng = order.shopProfile.longitude;
+
+    if (!shopLat || !shopLng) {
+      toast.error("Không tìm thấy tọa độ shop");
+      return;
+    }
+
+    setReturningOrderId(order.id);
+    try {
+      const payload = {
+        receiver_coordinate: `${shopLat},${shopLng}`,
+        order_status: "CANCELED"
+      };
+
+      const response = await nestJSAPI.patch(`/orders/${order.id}`, payload);
+
+      if (response && response.data) {
+        toast.success("Hoàn hàng thành công");
+        fetchOrders();
+      } else {
+        toast.error("Hoàn hàng thất bại");
+      }
+    } catch (error) {
+      console.error("Error returning order:", error);
+      toast.error(error.response?.data?.message || "Lỗi khi hoàn hàng");
+    } finally {
+      setReturningOrderId(null);
+    }
+  };
 
   // Filter orders by failed shipping status
   const filterFailedOrders = (ordersData, failureStatus) => {
@@ -91,10 +151,32 @@ const FailedOrders = () => {
     }
   };
 
+  // Fetch order counts for both tabs
+  const fetchOrderCounts = async () => {
+    if (!postOfficeId) return;
+
+    try {
+      // Fetch all pickup orders to count PICKUP_FAILED
+      const pickupRes = await ordersAPI.getPickupOrders(postOfficeId, 1, 10);
+      const allPickupOrders = pickupRes.data?.data || [];
+      const pickupFailed = filterFailedOrders(allPickupOrders, "PICKUP_FAILED");
+      setPickupFailedCount(pickupFailed.length);
+
+      // Fetch all received orders to count DELIVERY_FAILED
+      const deliveryRes = await ordersAPI.getReceivedOrders(postOfficeId, 1, 10);
+      const allDeliveryOrders = deliveryRes.data?.data || [];
+      const deliveryFailed = filterFailedOrders(allDeliveryOrders, "DELIVERY_FAILED");
+      setDeliveryFailedCount(deliveryFailed.length);
+    } catch (error) {
+      console.error("Error fetching order counts:", error);
+    }
+  };
+
   useEffect(() => {
     if (postOfficeId) {
       setPage(1);
       fetchOrders();
+      fetchOrderCounts();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postOfficeId, activeTab]);
@@ -121,7 +203,7 @@ const FailedOrders = () => {
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
-            Lấy Thất Bại
+            Lấy Thất Bại ({pickupFailedCount})
           </button>
           <button
             onClick={() => {
@@ -134,7 +216,7 @@ const FailedOrders = () => {
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
-            Giao Thất Bại
+            Giao Thất Bại ({deliveryFailedCount})
           </button>
         </div>
 
@@ -172,6 +254,10 @@ const FailedOrders = () => {
                     <th className="text-left p-3">Người nhận</th>
                     <th className="text-left p-3">COD</th>
                     <th className="text-left p-3">Ngày thất bại</th>
+                    <th className="text-left p-3">Lần thất bại</th>
+                    {activeTab === "delivery" && (
+                      <th className="text-left p-3">Trạng thái đơn hàng</th>
+                    )}
                     <th className="text-center p-3">Hành động</th>
                   </tr>
                 </thead>
@@ -187,6 +273,34 @@ const FailedOrders = () => {
                       <td className="p-3">{order.receiver_name || "N/A"}</td>
                       <td className="p-3">{(order.cod || 0).toLocaleString('vi-VN')} đ</td>
                       <td className="p-3">{new Date(order.updated_at).toLocaleDateString('vi-VN')}</td>
+                      <td className="p-3">
+                        {(() => {
+                          const failureStatus = activeTab === "pickup" ? "PICKUP_FAILED" : "DELIVERY_FAILED";
+                          const failedCount = countFailedShippings(order, failureStatus);
+                          return failedCount > 0 ? (
+                            <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700 font-medium">
+                              {failedCount} lần
+                            </span>
+                          ) : (
+                            <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                              0 lần
+                            </span>
+                          );
+                        })()}
+                      </td>
+                      {activeTab === "delivery" && (
+                        <td className="p-3">
+                          {order.order_status === "CANCELED" ? (
+                            <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">
+                              Đang hoàn hàng
+                            </span>
+                          ) : (
+                            <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                              Đang xử lý
+                            </span>
+                          )}
+                        </td>
+                      )}
                       <td className="p-3 text-center space-x-2">
                         <ProtectedComponent perm="order_external_app.can_view_order_details">
                           <button
@@ -198,6 +312,20 @@ const FailedOrders = () => {
                           <Visibility fontSize="small" /> Chi tiết
                         </button>
                         </ProtectedComponent>
+                        {activeTab === "delivery" && order.order_status !== "CANCELED" && (
+                          <button
+                            onClick={() => handleReturnOrder(order)}
+                            disabled={returningOrderId === order.id}
+                            className={`text-sm transition px-3 py-1 rounded-lg items-center gap-1 inline-flex ${
+                              returningOrderId === order.id
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : 'bg-red-500 hover:bg-red-600 text-white cursor-pointer'
+                            }`}
+                            title="Hoàn hàng"
+                          >
+                            <Undo fontSize="small" /> Hoàn hàng
+                          </button>
+                        )}
                         {/* <button
                           onClick={() => {
                             setSelectedOrder(order);

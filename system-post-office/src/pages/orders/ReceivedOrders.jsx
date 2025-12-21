@@ -196,6 +196,25 @@ const ReceivedOrders = () => {
     }
   };
 
+  // Count failed deliveries for an order
+  const countFailedDeliveries = (order) => {
+    if (!order.shipping || !Array.isArray(order.shipping)) {
+      return 0;
+    }
+    return order.shipping.filter((ship) => ship.status === "DELIVERY_FAILED").length;
+  };
+
+  // Get return status text for transfer tab
+  const getReturnStatusText = (order) => {
+    if (order.order_status === "CANCELED") {
+      return "Đang hoàn hàng";
+    }
+    if (order.order_status === "PENDING") {
+      return "Đang xử lý";
+    }
+    return "Chưa xác định";
+  };
+
   // Format time for route step
   const formatRouteStepTime = (routeSteps) => {
     if (!routeSteps || routeSteps.length === 0) {
@@ -329,12 +348,20 @@ const ReceivedOrders = () => {
                     <th className="p-3 border-b border-orange-200">Mã đơn</th>
                     <th className="p-3 border-b border-orange-200">Người gửi</th>
                     <th className="p-3 border-b border-orange-200">Người nhận</th>
-                    <th className="p-3 border-b border-orange-200">COD</th>
                     <th className="p-3 border-b border-orange-200">Phí vận chuyển</th>
                     {tab === "transfer" && (
                       <th className="p-3 border-b border-orange-200">Bưu cục tiếp theo</th>
                     )}
-                    <th className="p-3 border-b border-orange-200">Kế hoạch giao hàng</th>
+                    <th className="p-3 border-b border-orange-200">Lần giao thất bại</th>
+                    {tab !== "transfer" && (
+                      <th className="p-3 border-b border-orange-200">Trạng thái đơn hàng</th>
+                    )}
+                    {tab !== "transfer" && (
+                      <th className="p-3 border-b border-orange-200">Kế hoạch giao hàng</th>
+                    )}
+                    {tab === "transfer" && (
+                      <th className="p-3 border-b border-orange-200">Trạng thái đơn hàng</th>
+                    )}
                     <th className="p-3 border-b border-orange-200 text-center">
                       Hành động
                     </th>
@@ -362,7 +389,6 @@ const ReceivedOrders = () => {
                       <td className="p-3">
                         {order.receiver_name || "N/A"}
                       </td>
-                      <td className="p-3">{(order.cod || 0).toLocaleString('vi-VN')} đ</td>
                       <td className="p-3">{(order.shipping_cost || 0).toLocaleString('vi-VN')} đ</td>
                       {tab === "transfer" && (
                         <td className="p-3 text-xs">
@@ -375,16 +401,58 @@ const ReceivedOrders = () => {
                         </td>
                       )}
                       <td className="p-3">
-                        {order.routeSteps && order.routeSteps.length > 0 ? (
-                          <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-medium">
-                            {formatRouteStepTime(order.routeSteps)}
-                          </span>
-                        ) : (
-                          <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
-                            Chưa có
-                          </span>
-                        )}
+                        {(() => {
+                          const failedCount = countFailedDeliveries(order);
+                          return failedCount > 0 ? (
+                            <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700 font-medium">
+                              {failedCount} lần
+                            </span>
+                          ) : (
+                            <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-medium">
+                              0 lần
+                            </span>
+                          );
+                        })()}
                       </td>
+                      {tab !== "transfer" && (
+                        <td className="p-3">
+                          {order.order_status === "CANCELED" ? (
+                            <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">
+                              Đang hoàn hàng
+                            </span>
+                          ) : (
+                            <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-medium">
+                              Đang xử lý
+                            </span>
+                          )}
+                        </td>
+                      )}
+                      {tab !== "transfer" && (
+                        <td className="p-3">
+                          {order.routeSteps && order.routeSteps.length > 0 ? (
+                            <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-medium">
+                              {formatRouteStepTime(order.routeSteps)}
+                            </span>
+                          ) : (
+                            <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                              Chưa có
+                            </span>
+                          )}
+                        </td>
+                      )}
+                      {tab === "transfer" && (
+                        <td className="p-3">
+                          {order.order_status === "CANCELED" ? (
+                            <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">
+                              Đang hoàn hàng
+                            </span>
+                          ) : (
+                            <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700 font-medium">
+                              Đang xử lý
+                            </span>
+                          )}
+                        </td>
+                      )}
                       <td className="p-3 text-center items-center">
                         <button
                           onClick={() => {

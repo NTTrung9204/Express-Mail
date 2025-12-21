@@ -38,10 +38,15 @@ export class ShippingService {
           await this.orderService.getLastestShippingByOrderId(
             createShippingDto.orderId,
           );
+
+        const order = await this.orderService.findOne(
+          createShippingDto.orderId,
+        );
         console.log('Latest shipping:', latestShipping);
         if (
           latestShipping &&
-          latestShipping.status === ShippingStatus.SHIPPING
+          latestShipping.status === ShippingStatus.SHIPPING &&
+          order.order_status !== OrderStatus.CANCELED
         ) {
           await this.orderService.update(createShippingDto.orderId, {
             order_status: OrderStatus.COMPLETED,

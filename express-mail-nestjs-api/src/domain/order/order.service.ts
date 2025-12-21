@@ -32,6 +32,7 @@ import { OrderResponseDto } from './dto/order-response.dto';
 import { ShopProfileDto } from '../shop/dto/shop-profile.dto';
 import { RouteStep } from '../plan/entities/route-step.entity';
 import { OrderStatus } from './enums/order-status.enum';
+import { ShippingStatus } from './enums/shipping-status.enum';
 
 @Injectable()
 export class OrderService {
@@ -300,8 +301,9 @@ export class OrderService {
       Logger.log(
         `Fetching shipping rates for coordinates: ${receiverLatitude}, ${receiverLongitude}`,
       );
-      const shippingCostInformation: ShippingCostInformationDto =
-        await this.djangoService.fetchShippingRates(
+      let shippingCostInformation: ShippingCostInformationDto;
+      try {
+        shippingCostInformation = await this.djangoService.fetchShippingRates(
           createOrderDto.length,
           createOrderDto.width,
           createOrderDto.height,
@@ -310,6 +312,12 @@ export class OrderService {
           receiverLatitude,
           receiverLongitude,
         );
+      } catch (error) {
+        console.error('Error fetching shipping rates:', error);
+        throw new BadRequestException(
+          'Không tìm thấy đường đi, vui lòng chọn lại địa chỉ người nhận.',
+        );
+      }
       Logger.log(
         `Received shipping cost information: ${JSON.stringify(
           shippingCostInformation,
@@ -836,7 +844,12 @@ export class OrderService {
 
       if (
         status === PostOfficeOrderStatus.IN_WAREHOUSE &&
-        eventStatus == PostOfficeOrderStatus.IN_WAREHOUSE
+        eventStatus == PostOfficeOrderStatus.IN_WAREHOUSE &&
+        ((order.order_status !== OrderStatus.CANCELED &&
+          order.shipping_status === ShippingStatus.FINISHED) ||
+          order.shipping_status === ShippingStatus.DELIVERY_FAILED ||
+          (order.order_status === OrderStatus.CANCELED &&
+            order.shipping_status !== ShippingStatus.FINISHED))
       ) {
         return true;
       }

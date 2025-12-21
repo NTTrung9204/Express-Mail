@@ -209,6 +209,7 @@ const OrderHistory = () => {
 
     // Add shipping events
     if (orderData.shipping && orderData.shipping.length > 0) {
+      const orderStatus = orderData.order_status;
       orderData.shipping.forEach((ship, index) => {
         const previousShip = index > 0 ? orderData.shipping[index - 1] : null;
 
@@ -217,16 +218,16 @@ const OrderHistory = () => {
           PICKUP_FAILED: "Lấy hàng thất bại",
           DELIVERY_FAILED: "Giao hàng thất bại",
           RETURNING: "Đang trả hàng",
-          SHIPPING: "Đang giao hàng",
+          SHIPPING: orderStatus === "CANCELED" ? "Đang hoàn hàng" : "Đang giao hàng",
           FINISHED:
             previousShip?.status === "PICKUP_REQUESTED"
               ? "Lấy hàng thành công"
-              : previousShip?.status === "RETURNING"
-              ? "Trả hàng thành công"
-              : "Giao hàng thành công",
+              : previousShip?.status === "SHIPPING" && orderStatus === "CANCELED"
+              ? "Hoàn hàng thành công"
+              : "Giao hàng thành công"
         };
 
-        const isSuccess = ship.status === "FINISHED";
+        const isSuccess = ship.status === "FINISHED" && orderStatus !== "CANCELED";
         const isFailed =
           ship.status === "PICKUP_FAILED" || ship.status === "DELIVERY_FAILED";
         const isInProgress =

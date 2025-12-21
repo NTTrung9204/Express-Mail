@@ -28,7 +28,7 @@ const TransitingOrders = () => {
       // Get unique post office IDs
       const postOfficeIds = new Set();
       orders.forEach(order => {
-        const transitingTransition = order.transitions?.find(t => t.status === "TRANSITING");
+        const transitingTransition = order.transitions?.findLast(t => t.status === "TRANSITING");
         if (transitingTransition?.nextPostOfficeId) {
           postOfficeIds.add(transitingTransition.nextPostOfficeId);
         }
@@ -113,7 +113,7 @@ const TransitingOrders = () => {
 
   // Helper function to get next post office ID from transitions
   const getNextPostOfficeId = (order) => {
-    const transitingTransition = order.transitions?.find(
+    const transitingTransition = order.transitions?.findLast(
       (t) => t.status === "TRANSITING"
     );
     return transitingTransition?.nextPostOfficeId || "N/A";
@@ -121,7 +121,7 @@ const TransitingOrders = () => {
 
   // Helper function to get post office details
   const getPostOfficeDetails = (order) => {
-    const transitingTransition = order.transitions?.find(
+    const transitingTransition = order.transitions?.findLast(
       (t) => t.status === "TRANSITING"
     );
     const postOfficeId = transitingTransition?.nextPostOfficeId;
