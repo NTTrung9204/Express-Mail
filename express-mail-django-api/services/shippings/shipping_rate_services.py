@@ -26,9 +26,10 @@ class ShippingRateService:
             shipping_rate.base_fee
             + distance * shipping_rate.rate_per_km
             + max(
-                weight * shipping_rate.rate_per_kg,
+                weight,
                 (length * width * height) / shipping_rate.volumetric_divisor,
             )
+            * shipping_rate.rate_per_kg
         )
         return total_fee
 
