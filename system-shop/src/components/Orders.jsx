@@ -39,7 +39,8 @@ const Orders = ({
               <th className="p-3 w-16 text-center">STT</th>
               <th className="p-3 w-64">Mã đơn hàng</th>
               <th className="p-3 w-80">Thông tin người nhận</th>
-              <th className="p-3 text-center w-44">Giá trị đơn hàng</th>
+              <th className="p-3 text-center w-36">Giá trị đơn hàng</th>
+              <th className="p-3 text-center w-30">Phí ship</th>
               <th className="p-3 text-center w-36">Khối lượng (g)</th>
               <th className="p-3 text-center w-56">Thanh toán</th>
             </tr>
@@ -70,6 +71,10 @@ const Orders = ({
                 </td>
                 <td className="p-3 text-gray-600 text-sm leading-relaxed">
                   <div>
+                    <span className="font-semibold"> Người nhận: </span>
+                      { o.receiver }
+                  </div>
+                  <div>
                     <span className="font-semibold">Số điện thoại: </span>
                     {o.phone}
                   </div>
@@ -81,14 +86,12 @@ const Orders = ({
                 <td className="p-3 text-red-600 font-semibold text-center">
                   {o.cod}
                 </td>
+                <td className="p-3 text-blue-500 font-semibold text-center">{o.shipping_cost}</td>
                 <td className="p-3 text-center">{o.weight}</td>
                 <td className="p-3 text-center">
                   <div className="font-medium text-gray-700">{o.payer}</div>
                   <div className="text-green-600 font-semibold mt-1">
                     {o.total}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    (Bao gồm phí ship)
                   </div>
                 </td>
               </tr>

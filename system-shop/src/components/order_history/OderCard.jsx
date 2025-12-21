@@ -3,7 +3,7 @@ import AccessTime from '@mui/icons-material/AccessTime';
 import LocationOnOutlined from '@mui/icons-material/LocationOnOutlined';
 import PhoneOutlined from '@mui/icons-material/PhoneOutlined';
 import Inventory2Outlined from '@mui/icons-material/Inventory2Outlined';
-import AttachMoney from '@mui/icons-material/AttachMoney';
+import PersonOutline from '@mui/icons-material/PersonOutline';
 
 const OrderCard = ({ order, onClick }) => {
   const getStatusColor = (status) => {
@@ -55,6 +55,12 @@ const OrderCard = ({ order, onClick }) => {
             </div>
           </div>
 
+                    
+          <div className="flex items-center gap-2 text-sm">
+            <PersonOutline className="w-4 h-4 text-gray-400" />
+            <span className="text-gray-900">{order.receiver}</span>
+          </div>
+
           <div className="flex items-center gap-2 text-sm">
             <PhoneOutlined className="w-4 h-4 text-gray-400" />
             <span className="text-gray-900">{order.phone}</span>
@@ -68,8 +74,7 @@ const OrderCard = ({ order, onClick }) => {
               </span>
             </div>
             <div className="flex items-center gap-1 text-orange-600 font-semibold">
-              <AttachMoney className="w-4 h-4" />
-              <span>{order.cod}</span>
+              <span>{order.total}</span>
             </div>
           </div>
         </div>

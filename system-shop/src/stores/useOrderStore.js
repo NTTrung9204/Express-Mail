@@ -44,6 +44,7 @@ export const useOrderStore = () => {
     return data.map((o) => ({
       id: o.id,
       code: o.code || "-",
+      receiver: o.receiver_name || "-",
       phone: o.receiver_phone || "-",
       address: o.receiver_address || "-",
       cod: o.cod ? `${o.cod.toLocaleString()} đ` : "0 đ",
@@ -51,10 +52,10 @@ export const useOrderStore = () => {
       payer: o.is_receiver_pay_shipping
         ? "Bên nhận trả phí"
         : "Bên gửi trả phí",
+      shipping_cost: o.shipping_cost ? `${o.shipping_cost.toLocaleString()} đ` : "0 đ",
       total: `${(
         (o.cod || 0) +
-        (o.shipping_cost || 0) +
-        (o.shipping_cost_payper || 0)
+        (o.is_receiver_pay_shipping ? o.shipping_cost : 0)
       ).toLocaleString()} đ`,
       status: STATUS_MAP[o.shipping_status] || o.shipping_status || "Không rõ",
       rawStatus: o.shipping_status,
