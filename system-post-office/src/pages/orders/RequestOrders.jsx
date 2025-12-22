@@ -293,16 +293,17 @@ const RequestOrders = () => {
                             <Visibility fontSize="small" /> Lịch sử
                           </button>
                         </ProtectedComponent>
-
-                        <button
-                          onClick={() => {
-                            setSelectedOrder(order);
-                            setOpenConfirm(true);
-                          }}
-                          className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg items-center gap-1 inline-flex cursor-pointer"
-                        >
-                          <CheckCircle fontSize="small" /> Xác nhận đã đến
-                        </button>
+                        <ProtectedComponent perm="order_external_app.can_create_order_post_office_association">
+                          <button
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setOpenConfirm(true);
+                            }}
+                            className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg items-center gap-1 inline-flex cursor-pointer"
+                          >
+                            <CheckCircle fontSize="small" /> Xác nhận đã đến
+                          </button>
+                        </ProtectedComponent>
                       </td>
                     </tr>
                   ))}
