@@ -1,0 +1,52 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    image: express-mail-api-prod:latest
+    container_name: express_mail_api_prod
+    command: gunicorn core.wsgi:application --bind 0.0.0.0:8000 --access-logfile - --error-logfile - --log-level info
+    env_file:
+      - .env
+    ports:
+      - "${MAPPING_API_PORT}:8000"
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  db:
+    image: postgres:15
+    container_name: express_mail_postgres_prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "${MAPPING_DB_PORT}:5432"
+    volumes:
+      - data_express_mail_prod:/var/lib/postgresql/data
+
+  celery:
+    build: .
+    command: celery -A core worker --loglevel=info
+    volumes:
+      - .:/code
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    container_name: express_mail_redis_prod
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 25mb --maxmemory-policy allkeys-lru
+    ports:
+      - "${MAPPING_REDIS_PORT}:6379"
+    volumes:
+      - redis_data_prod:/data
+
+volumes:
+  data_express_mail_prod:
+  redis_data_prod:

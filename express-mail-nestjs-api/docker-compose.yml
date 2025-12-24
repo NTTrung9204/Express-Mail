@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_db
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - app_net
+
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_net
+
+  nestjs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        IMAGE_TAG: ${IMAGE_TAG:-latest}
+    image: nttrung9204/express-mail-nestjs-api:${IMAGE_TAG:-latest}
+    container_name: nestjs_app
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_DATABASE: ${DB_DATABASE}
+      REDIS_URL: redis://redis:${REDIS_PORT}
+      APP_PORT: ${APP_PORT}
+      APP_ENV: ${APP_ENV}
+      SWAGGER_USER: ${SWAGGER_USER}
+      SWAGGER_PASSWORD: ${SWAGGER_PASSWORD}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      DJANGO_BACKEND_URL: ${DJANGO_BACKEND_URL}
+      DJANGO_USERNAME: ${DJANGO_USERNAME}
+      DJANGO_PASSWORD: ${DJANGO_PASSWORD}
+      WEBHOOK_SECRET_KEY: ${WEBHOOK_SECRET_KEY}
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      - mysql
+    networks:
+      - app_net
+
+volumes:
+  db_data:
+  redis_data:
+  uploads_data:
+
+networks:
+  app_net:

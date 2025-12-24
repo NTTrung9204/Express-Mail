@@ -1,0 +1,22 @@
+export enum PermissionEnum {
+  CAN_CREATE_ORDER = 'order_external_app.can_create_order',
+  CAN_VIEW_ALL_ORDERS = 'order_external_app.can_view_all_orders',
+  CAN_VIEW_PICKUP_ORDERS = 'order_external_app.can_view_pickup_orders',
+  CAN_VIEW_ORDER_BY_CODE = 'order_external_app.can_view_order_by_code',
+  CAN_VIEW_SHOP_ORDERS = 'order_external_app.can_view_shop_orders',
+  CAN_VIEW_SHIPPER_ASSIGNED_ORDERS = 'order_external_app.can_view_shipper_assigned_orders',
+  CAN_VIEW_ORDERS_BY_STATUS = 'order_external_app.can_view_orders_by_status',
+  CAN_VIEW_ORDERS_BY_SHIPPING_STATUS = 'order_external_app.can_view_orders_by_shipping_status',
+  CAN_VIEW_ORDER_DETAILS = 'order_external_app.can_view_order_details',
+  CAN_UPDATE_ORDER = 'order_external_app.can_update_order',
+  CAN_SOFT_DELETE_ORDER = 'order_external_app.can_soft_delete_order',
+  CAN_TRANSITION_ORDER = 'order_external_app.can_transition_order',
+  CAN_CREATE_ORDER_POST_OFFICE_ASSOCIATION = 'order_external_app.can_create_order_post_office_association',
+  CAN_VIEW_ORDERS_BY_POST_OFFICE = 'order_external_app.can_view_orders_by_post_office',
+
+  CAN_CALCULATE_OPTIMAL_ROUTE = 'plan_external_app.can_calculate_optimal_route',
+  CAN_VIEW_ROUTE_PLANS = 'plan_external_app.can_view_route_plans',
+  CAN_VIEW_VEHICLE_ROUTE_BY_ID = 'plan_external_app.can_view_vehicle_route_by_id',
+  CAN_ASSIGN_VEHICLE_ROUTES_TO_SHIPPERS = 'plan_external_app.can_assign_vehicle_routes_to_shippers',
+  CAN_VIEW_SHIPPING_PLAN = 'plan_external_app.can_view_shipping_plan',
+}

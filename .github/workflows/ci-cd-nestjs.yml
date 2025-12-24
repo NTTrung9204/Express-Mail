@@ -1,0 +1,98 @@
+name: CI/CD - NestJS
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'express-mail-nestjs-api/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'express-mail-nestjs-api/**'
+  workflow_dispatch: {}
+
+jobs:
+  ci:
+    name: CI (lint, test, build)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ./express-mail-nestjs-api/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./express-mail-nestjs-api
+
+      - name: Lint
+        run: npm run lint --if-present
+        working-directory: ./express-mail-nestjs-api
+
+      - name: Run tests
+        run: npm test --if-present
+        working-directory: ./express-mail-nestjs-api
+
+      - name: Build
+        run: npm run build --if-present
+        working-directory: ./express-mail-nestjs-api
+
+  docker-deploy:
+    name: Build, Push & Deploy with Docker Compose
+    needs: ci
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build, push and run containers
+        working-directory: ./express-mail-nestjs-api
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
+          APP_PORT: ${{ secrets.APP_PORT }}
+          APP_ENV: development
+          SWAGGER_USER: ${{ secrets.SWAGGER_USER }}
+          SWAGGER_PASSWORD: ${{ secrets.SWAGGER_PASSWORD }}
+          JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
+          DJANGO_BACKEND_URL: ${{ secrets.DJANGO_BACKEND_URL }}
+          DJANGO_USERNAME: ${{ secrets.DJANGO_USERNAME }}
+          DJANGO_PASSWORD: ${{ secrets.DJANGO_PASSWORD }}
+          REDIS_PORT: ${{ secrets.REDIS_PORT }}
+          WEBHOOK_SECRET_KEY: ${{ secrets.WEBHOOK_SECRET_KEY }}
+        run: |
+          IMAGE_TAG=latest
+          COMPOSE_PROJECT_NAME=nestjs-dev
+          export IMAGE_TAG
+          export APP_PORT=${{ secrets.APP_PORT }}
+
+          echo "Building Docker image (dev mode) on port $APP_PORT..."
+
+          docker-compose -f docker-compose.yml build --no-cache --build-arg IMAGE_TAG=$IMAGE_TAG
+          docker-compose -f docker-compose.yml down || true
+          docker-compose -f docker-compose.yml up -d
+
+      - name: Clean up unused images
+        run: docker image prune -af
+

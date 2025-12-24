@@ -1,0 +1,82 @@
+[
+  {
+    "name": "Can create order",
+    "name_vi": "Tạo đơn hàng"
+  },
+  {
+    "name": "Can update order",
+    "name_vi": "Cập nhật đơn hàng"
+  },
+  {
+    "name": "Can soft delete order",
+    "name_vi": "Xóa mềm đơn hàng"
+  },
+  {
+    "name": "Can transition order",
+    "name_vi": "Chuyển trạng thái đơn hàng"
+  },
+  {
+    "name": "Can view all orders",
+    "name_vi": "Xem tất cả đơn hàng"
+  },
+  {
+    "name": "Can view pickup orders",
+    "name_vi": "Xem đơn hàng lấy hàng"
+  },
+  {
+    "name": "Can view order by code",
+    "name_vi": "Xem đơn hàng theo mã"
+  },
+  {
+    "name": "Can view shop orders",
+    "name_vi": "Xem đơn hàng của shop"
+  },
+  {
+    "name": "Can view shipper assigned orders",
+    "name_vi": "Xem đơn hàng được gán cho shipper"
+  },
+  {
+    "name": "Can view orders by status",
+    "name_vi": "Xem đơn hàng theo trạng thái"
+  },
+  {
+    "name": "Can view orders by shipping status",
+    "name_vi": "Xem đơn hàng theo trạng thái vận chuyển"
+  },
+  {
+    "name": "Can view order details",
+    "name_vi": "Xem chi tiết đơn hàng"
+  },
+  {
+    "name": "Can create order post office association",
+    "name_vi": "Tạo liên kết đơn hàng với bưu cục"
+  },
+  {
+    "name": "Can view orders by post office",
+    "name_vi": "Xem đơn hàng theo bưu cục"
+  },
+  {
+    "name": "Can calculate optimal route",
+    "name_vi": "Tính toán tuyến đường tối ưu"
+  },
+  {
+    "name": "Can view route plans",
+    "name_vi": "Xem kế hoạch tuyến đường"
+  },
+  {
+    "name": "Can view vehicle route by id",
+    "name_vi": "Xem tuyến đường xe theo ID"
+  },
+  {
+    "name": "Can assign vehicle routes to shippers",
+    "name_vi": "Gán tuyến đường cho shipper"
+  },
+  {
+    "name": "Can view shipping plan",
+    "name_vi": "Xem kế hoạch vận chuyển"
+  },
+  {
+    "name": "Can call VRP API",
+    "name_vi": "Gọi API VRP"
+  }
+]

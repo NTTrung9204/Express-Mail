@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  post-office:
+    build:
+      context: .
+      dockerfile: dockerfile
+    container_name: express-mail-post-office
+    ports:
+      - "4174:4173"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    networks:
+      - express-mail-network
+
+networks:
+  express-mail-network:
+    driver: bridge
